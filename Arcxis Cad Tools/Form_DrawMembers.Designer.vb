@@ -294,25 +294,25 @@ Partial Class Form_DrawMembers
 
     End Sub
 
-    Friend WithEvents GroupBox1 As Windows.Forms.GroupBox
-    Friend WithEvents GroupBox2 As Windows.Forms.GroupBox
-    Friend WithEvents GroupBox11 As Windows.Forms.GroupBox
-    Friend WithEvents GroupBox10 As Windows.Forms.GroupBox
-    Friend WithEvents GroupBox8 As Windows.Forms.GroupBox
-    Friend WithEvents GroupBox6 As Windows.Forms.GroupBox
-    Friend WithEvents GroupBox5 As Windows.Forms.GroupBox
-    Friend WithEvents GroupBox4 As Windows.Forms.GroupBox
-    Friend WithEvents GroupBox3 As Windows.Forms.GroupBox
-    Friend WithEvents GroupBox12 As Windows.Forms.GroupBox
-    Friend WithEvents Button2 As Windows.Forms.Button
-    Friend WithEvents Button1 As Windows.Forms.Button
-    Friend WithEvents ComboBox2 As Windows.Forms.ComboBox
-    Friend WithEvents ComboBox1 As Windows.Forms.ComboBox
-    Friend WithEvents ComboBox3 As Windows.Forms.ComboBox
-    Friend WithEvents ComboBox4 As Windows.Forms.ComboBox
-    Friend WithEvents ComboBox9 As Windows.Forms.ComboBox
-    Friend WithEvents ComboBox8 As Windows.Forms.ComboBox
-    Friend WithEvents ComboBox7 As Windows.Forms.ComboBox
-    Friend WithEvents ComboBox6 As Windows.Forms.ComboBox
-    Friend WithEvents ComboBox5 As Windows.Forms.ComboBox
+    Friend WithEvents GroupBox1 As System.Windows.Forms.GroupBox
+    Friend WithEvents GroupBox2 As System.Windows.Forms.GroupBox
+    Friend WithEvents GroupBox11 As System.Windows.Forms.GroupBox
+    Friend WithEvents GroupBox10 As System.Windows.Forms.GroupBox
+    Friend WithEvents GroupBox8 As System.Windows.Forms.GroupBox
+    Friend WithEvents GroupBox6 As System.Windows.Forms.GroupBox
+    Friend WithEvents GroupBox5 As System.Windows.Forms.GroupBox
+    Friend WithEvents GroupBox4 As System.Windows.Forms.GroupBox
+    Friend WithEvents GroupBox3 As System.Windows.Forms.GroupBox
+    Friend WithEvents GroupBox12 As System.Windows.Forms.GroupBox
+    Friend WithEvents Button2 As System.Windows.Forms.Button
+    Friend WithEvents Button1 As System.Windows.Forms.Button
+    Friend WithEvents ComboBox2 As System.Windows.Forms.ComboBox
+    Friend WithEvents ComboBox1 As System.Windows.Forms.ComboBox
+    Friend WithEvents ComboBox3 As System.Windows.Forms.ComboBox
+    Friend WithEvents ComboBox4 As System.Windows.Forms.ComboBox
+    Friend WithEvents ComboBox9 As System.Windows.Forms.ComboBox
+    Friend WithEvents ComboBox8 As System.Windows.Forms.ComboBox
+    Friend WithEvents ComboBox7 As System.Windows.Forms.ComboBox
+    Friend WithEvents ComboBox6 As System.Windows.Forms.ComboBox
+    Friend WithEvents ComboBox5 As System.Windows.Forms.ComboBox
 End Class
