@@ -231,7 +231,7 @@ Namespace Arcxis_Cad_Tools
 
             End If
 
-            frm.StartPosition = Windows.Forms.FormStartPosition.CenterParent
+            frm.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent
             frm.ShowDialog()
 
             If TagCancel = "Cancel" Then

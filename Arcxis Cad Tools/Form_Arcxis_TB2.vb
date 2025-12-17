@@ -1486,7 +1486,7 @@ Public Class Form_Arcxis_TB2
 
     Private Sub CheckBox1_CheckedChanged(sender As Object, e As EventArgs) Handles CheckBox1.CheckedChanged
 
-        If CheckBox1.CheckState = Windows.Forms.CheckState.Checked Then
+        If CheckBox1.CheckState = System.Windows.Forms.CheckState.Checked Then
 
             Module_Arcxis_TB.ATB_CheckState = "YES"
 
