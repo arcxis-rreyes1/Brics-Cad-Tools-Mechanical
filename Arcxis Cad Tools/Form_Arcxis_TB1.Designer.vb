@@ -1317,7 +1317,7 @@ Partial Class Form_Arcxis_TB1
     Friend WithEvents ComboBox4 As Windows.Forms.ComboBox
     Friend WithEvents ComboBox3 As Windows.Forms.ComboBox
     Friend WithEvents ComboBox2 As Windows.Forms.ComboBox
-    Friend WithEvents TextBox7 As Windows.Forms.TextBox
+    Friend WithEvents TextBox7 As System.Windows.Forms.TextBox
     Friend WithEvents Label12 As Windows.Forms.Label
     Friend WithEvents Label11 As Windows.Forms.Label
     Friend WithEvents TextBox8 As Windows.Forms.TextBox
