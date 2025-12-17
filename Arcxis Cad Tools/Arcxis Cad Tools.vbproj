@@ -38,14 +38,11 @@
     <UseWinFormsOutOfProcDesigner>False</UseWinFormsOutOfProcDesigner>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System.Security" />
-    <PackageReference Include="AutoCAD.NET" Version="24.3.0" />
+    <PackageReference Include="AutoCAD.NET" Version="25.1.0" />
     <PackageReference Include="AutoCAD.NET.Interop" Version="2020.23.1.47" />
     <PackageReference Include="DocumentFormat.OpenXml" Version="2.18.0" />
     <PackageReference Include="Microsoft-Windows10-APICodePack-Shell" Version="1.1.8" />
-    <PackageReference Include="PDFsharp" Version="1.50.5147" />
-    <PackageReference Include="System.Buffers" Version="4.5.1" />
-    <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+    <PackageReference Include="PDFsharp" Version="6.2.3" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{94E38DFF-614B-4CBD-B67C-F211BB35CE8B}" />
