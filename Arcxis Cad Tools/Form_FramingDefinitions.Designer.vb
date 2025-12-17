@@ -283,25 +283,25 @@ Partial Class Form_FramingDefinitions
 
     End Sub
 
-    Friend WithEvents GroupBox9 As Windows.Forms.GroupBox
-    Friend WithEvents Label1 As Windows.Forms.Label
-    Friend WithEvents Label3 As Windows.Forms.Label
-    Friend WithEvents Button2 As Windows.Forms.Button
-    Friend WithEvents Button1 As Windows.Forms.Button
-    Friend WithEvents GroupBox1 As Windows.Forms.GroupBox
-    Friend WithEvents TextBox1 As Windows.Forms.TextBox
-    Friend WithEvents Label2 As Windows.Forms.Label
-    Friend WithEvents ListBox1 As Windows.Forms.ListBox
-    Friend WithEvents GroupBox2 As Windows.Forms.GroupBox
-    Friend WithEvents TextBox2 As Windows.Forms.TextBox
-    Friend WithEvents Label6 As Windows.Forms.Label
-    Friend WithEvents ListBox2 As Windows.Forms.ListBox
-    Friend WithEvents GroupBox4 As Windows.Forms.GroupBox
-    Friend WithEvents TextBox4 As Windows.Forms.TextBox
-    Friend WithEvents Label5 As Windows.Forms.Label
-    Friend WithEvents ListBox4 As Windows.Forms.ListBox
-    Friend WithEvents GroupBox3 As Windows.Forms.GroupBox
-    Friend WithEvents TextBox3 As Windows.Forms.TextBox
-    Friend WithEvents Label4 As Windows.Forms.Label
-    Friend WithEvents ListBox3 As Windows.Forms.ListBox
+    Friend WithEvents GroupBox9 As System.Windows.Forms.GroupBox
+    Friend WithEvents Label1 As System.Windows.Forms.Label
+    Friend WithEvents Label3 As System.Windows.Forms.Label
+    Friend WithEvents Button2 As System.Windows.Forms.Button
+    Friend WithEvents Button1 As System.Windows.Forms.Button
+    Friend WithEvents GroupBox1 As System.Windows.Forms.GroupBox
+    Friend WithEvents TextBox1 As System.Windows.Forms.TextBox
+    Friend WithEvents Label2 As System.Windows.Forms.Label
+    Friend WithEvents ListBox1 As System.Windows.Forms.ListBox
+    Friend WithEvents GroupBox2 As System.Windows.Forms.GroupBox
+    Friend WithEvents TextBox2 As System.Windows.Forms.TextBox
+    Friend WithEvents Label6 As System.Windows.Forms.Label
+    Friend WithEvents ListBox2 As System.Windows.Forms.ListBox
+    Friend WithEvents GroupBox4 As System.Windows.Forms.GroupBox
+    Friend WithEvents TextBox4 As System.Windows.Forms.TextBox
+    Friend WithEvents Label5 As System.Windows.Forms.Label
+    Friend WithEvents ListBox4 As System.Windows.Forms.ListBox
+    Friend WithEvents GroupBox3 As System.Windows.Forms.GroupBox
+    Friend WithEvents TextBox3 As System.Windows.Forms.TextBox
+    Friend WithEvents Label4 As System.Windows.Forms.Label
+    Friend WithEvents ListBox3 As System.Windows.Forms.ListBox
 End Class
