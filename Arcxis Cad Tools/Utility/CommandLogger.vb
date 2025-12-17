@@ -1,8 +1,10 @@
-﻿Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.EditorInput
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports System.IO
+﻿Imports System.IO
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
 
 ' Put this OUTSIDE any class or namespace
 <Assembly: ExtensionApplication(GetType(LoggingTrial.CommandLogger))>

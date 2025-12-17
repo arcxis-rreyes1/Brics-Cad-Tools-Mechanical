@@ -9,14 +9,6 @@ Imports System.Runtime.InteropServices.ComTypes
 Imports System.Security.Policy
 Imports System.Threading
 Imports System.Windows.Forms
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.Colors
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.EditorInput
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.GraphicsInterface
-Imports Autodesk.AutoCAD.PlottingServices
-Imports Autodesk.AutoCAD.Runtime
 Imports DocumentFormat.OpenXml.Drawing
 Imports DocumentFormat.OpenXml.Drawing.Charts
 Imports DocumentFormat.OpenXml.Drawing.Diagrams
@@ -29,14 +21,19 @@ Imports Microsoft.SqlServer.Server
 Imports PdfSharp.Drawing
 Imports PdfSharp.Pdf
 Imports PdfSharp.Pdf.IO
-Imports Application = Autodesk.AutoCAD.ApplicationServices.Application
-Imports Document = Autodesk.AutoCAD.ApplicationServices.Document
 Imports Excel = Microsoft.Office.Interop.Excel
-Imports Exception = Autodesk.AutoCAD.Runtime.Exception
-Imports Layout = Autodesk.AutoCAD.DatabaseServices.Layout
 Imports Path = System.IO.Path
-Imports Polyline = Autodesk.AutoCAD.DatabaseServices.Polyline
-Imports Viewport = Autodesk.AutoCAD.DatabaseServices.Viewport
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
+Imports Bricscad.PlottingServices
+Imports Application = Bricscad.ApplicationServices.Application
+Imports Document = Bricscad.ApplicationServices.Document
+Imports Layout = Teigha.DatabaseServices.Layout
+Imports Exception = Teigha.Runtime.Exception
 
 Public Class Form_AtticVentPrinting
     ' === CSV accumulation (list of lists) ===
@@ -967,14 +964,14 @@ Public Class Form_AtticVentPrinting
 
             layoutId = acLayoutMgr.GetLayoutId(Layout(4))
 
-            Dim acLayout As Autodesk.AutoCAD.DatabaseServices.Layout = DirectCast(acTrans.GetObject(layoutId, OpenMode.ForWrite), Autodesk.AutoCAD.DatabaseServices.Layout)
+            Dim acLayout As Layout = DirectCast(acTrans.GetObject(layoutId, OpenMode.ForWrite), Layout)
 
             Try
                 Dim Layid As ObjectId
 
                 Layid = layouts.GetAt(Layout(4))
 
-                Dim lay As Autodesk.AutoCAD.DatabaseServices.Layout = TryCast(acTrans.GetObject(Layid, OpenMode.ForRead), Autodesk.AutoCAD.DatabaseServices.Layout)
+                Dim lay As Layout = TryCast(acTrans.GetObject(Layid, OpenMode.ForRead), Layout)
                 '' Open the Block table for read
                 Dim acBlkTbl As BlockTable = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead)
                 '' Open the Block table record Paper space for write
@@ -992,7 +989,7 @@ Public Class Form_AtticVentPrinting
 
                         ' Open the block reference
                         Dim RevBlockRef As BlockReference = DirectCast(acTrans.GetObject(objID, OpenMode.ForRead), BlockReference)
-                        Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+                        Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
                         Dim RevvblockName As String = RevTblRec.Name
 
                         If RevvblockName.Contains("Arcxis Title Block") Then
@@ -1049,7 +1046,7 @@ Public Class Form_AtticVentPrinting
 
                 ModifyViewPortCenter(vpIds, Layout(4), Layout(1), Layout(5))
 
-            Catch es As Autodesk.AutoCAD.Runtime.Exception
+            Catch es As Exception
                 MsgBox(es.Message)
             End Try
 
@@ -1088,7 +1085,7 @@ Public Class Form_AtticVentPrinting
 
             ' Touch ONLY the requested viewports
             For Each vpId As ObjectId In VPIDS
-                Dim vp = TryCast(tr.GetObject(vpId, OpenMode.ForRead), Autodesk.AutoCAD.DatabaseServices.Viewport)
+                Dim vp = TryCast(tr.GetObject(vpId, OpenMode.ForRead), Viewport)
                 If vp Is Nothing Then Continue For
                 'If vp.Number = 1 Then Continue For ' never touch overall PS viewport
 
@@ -1101,7 +1098,7 @@ Public Class Form_AtticVentPrinting
                 ' Do not change vp.Width / vp.Height (paper units)
 
                 ' Camera straight down, no twist
-                vp.ViewDirection = Autodesk.AutoCAD.Geometry.Vector3d.ZAxis
+                vp.ViewDirection = Teigha.Geometry.Vector3d.ZAxis
                 vp.TwistAngle = 0.0
 
                 ' Deterministic zoom: modelHeight = paperHeight * CustomScale

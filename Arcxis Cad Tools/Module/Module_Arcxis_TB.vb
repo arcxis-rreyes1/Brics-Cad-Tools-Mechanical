@@ -1,17 +1,17 @@
 ﻿Imports System
-Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.Interop
-Imports Autodesk.AutoCAD.EditorInput
 Imports System.IO
 Imports System.Drawing.Printing
-Imports Autodesk.AutoCAD.Colors
 Imports System.Windows.Documents
 Imports System.Linq
 Imports System.Text
 Imports System.Drawing.Color
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
+Imports Bricscad.PlottingServices
 Module Module_Arcxis_TB
     Public ATB_OldName As String
     Public ATB_RevNum1 As String
@@ -108,7 +108,7 @@ Module Module_Arcxis_TB
 
     Private Function GetPaths()
 
-        Dim CurTrustPath As String = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("TRUSTEDPATHS")
+        Dim CurTrustPath As String = Application.GetSystemVariable("SRCHPATH")
         Dim CurPaths As String = LCase(CurTrustPath)
         Dim RemCurTrustPathList As List(Of String) = New List(Of String)
         Dim isittrue As Integer = 0
@@ -136,21 +136,28 @@ Module Module_Arcxis_TB
         'Dim acpref As AcadPreferences = Application.Preferences
         Dim CleanedTrustPathList As List(Of String) = New List(Of String)
 
-        If CurTrustPathList.Count = 0 Then
+        ' Ensure we have a list to work with
+        If CurTrustPathList Is Nothing OrElse CurTrustPathList.Count = 0 Then
             CurTrustPathList = GetPaths()
         End If
 
         For Each curpath As String In CurTrustPathList
-            Dim hasDpis As Boolean = curpath.IndexOf("dpis", StringComparison.OrdinalIgnoreCase) >= 0
-            Dim hasSeal As Boolean = curpath.IndexOf("seal$", StringComparison.OrdinalIgnoreCase) >= 0
-            Dim hasSDrive As Boolean = curpath.IndexOf("s:\", StringComparison.OrdinalIgnoreCase) >= 0
+            If String.IsNullOrWhiteSpace(curpath) Then Continue For
+
+            ' Normalize and validate absolute paths only
+            Dim p As String = curpath.Trim()
+            Dim hasDpis As Boolean = p.IndexOf("dpis", StringComparison.OrdinalIgnoreCase) >= 0
+            Dim hasSeal As Boolean = p.IndexOf("seal$", StringComparison.OrdinalIgnoreCase) >= 0
+            Dim hasSDrive As Boolean = p.IndexOf("s:\", StringComparison.OrdinalIgnoreCase) >= 0
 
             If hasDpis OrElse hasSeal OrElse hasSDrive Then
                 ' Skip paths containing DPIS, SEAL$, or S:\ (case-insensitive)
             Else
-                ' Add only if not already present (case-insensitive)
-                If Not CleanedTrustPathList.Any(Function(p) String.Equals(p, curpath, StringComparison.OrdinalIgnoreCase)) Then
-                    CleanedTrustPathList.Add(curpath)
+                If Global.System.IO.Path.IsPathRooted(p) Then
+                    ' Add only if not already present (case-insensitive)
+                    If Not CleanedTrustPathList.Any(Function(x) String.Equals(x, p, StringComparison.OrdinalIgnoreCase)) Then
+                        CleanedTrustPathList.Add(p)
+                    End If
                 End If
             End If
         Next
@@ -158,40 +165,45 @@ Module Module_Arcxis_TB
         UNCPath()
 
         Dim TrustPathListAdd As List(Of String) = New List(Of String)
-
         Dim FinalTrustPathList As List(Of String) = New List(Of String)
 
-        TrustPathListAdd.Add(LCase("\\egnyteDrive\energyinspectors\shared\arcxis\engineering\drafting standards\cad lisp routines"))
-        TrustPathListAdd.Add(LCase(NetworkLetterForEgnyte) + LCase("shared\arcxis\engineering\drafting standards\"))
-        TrustPathListAdd.Add(LCase("\\egnyteDrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards\"))
-        TrustPathListAdd.Add(LCase("\\egnyteDrive\energyinspectors\shared\onyx file system\templates\engineering\sealsoriginal"))
-        TrustPathListAdd.Add(LCase("\\egnyteDrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards\CAD Lisp Routines\References"))
+        ' Known good UNC locations (keep as absolute paths)
 
-        For Each path As String In TrustPathListAdd
-            If Not FinalTrustPathList.Contains(LCase(path)) Then
-                FinalTrustPathList.Add(LCase(path))
+        ' Add mapped drive path only if we actually found a mapped letter
+        If Not String.IsNullOrEmpty(NetworkLetterForEgnyte) Then
+            Dim mappedEgnyte = Global.System.IO.Path.Combine(NetworkLetterForEgnyte, "shared\arcxis\engineering\drafting standards")
+            TrustPathListAdd.Add(mappedEgnyte)
+        End If
+        TrustPathListAdd.Add("\\egnytedrive\energyinspectors\shared\arcxis\engineering\drafting standards\cad lisp routines\BricsCad")
+        TrustPathListAdd.Add("\\egnytedrive\energyinspectors\shared\arcxis\engineering\drafting standards")
+        TrustPathListAdd.Add("\\egnytedrive\energyinspectors\shared\arcxis\engineering\drafting standards\cad lisp routines\BricsCad\Support Files")
+        TrustPathListAdd.Add("\\egnytedrive\energyinspectors\shared\onyx file system\templates\engineering\sealsoriginal")
+
+
+        For Each candidate In CleanedTrustPathList
+            If Not String.IsNullOrWhiteSpace(candidate) AndAlso Global.System.IO.Path.IsPathRooted(candidate) Then
+                If Not FinalTrustPathList.Any(Function(pth) String.Equals(pth, candidate, StringComparison.OrdinalIgnoreCase)) Then
+                    FinalTrustPathList.Add(candidate)
+                End If
             End If
         Next
 
-        For Each path In CleanedTrustPathList
-            If Not FinalTrustPathList.Contains(LCase(path)) Then
-                FinalTrustPathList.Add(LCase(path))
+        For Each candidate As String In TrustPathListAdd
+            If Not String.IsNullOrWhiteSpace(candidate) AndAlso Global.System.IO.Path.IsPathRooted(candidate) Then
+                If Not FinalTrustPathList.Any(Function(pth) String.Equals(pth, candidate, StringComparison.OrdinalIgnoreCase)) Then
+                    FinalTrustPathList.Add(candidate)
+                End If
             End If
         Next
-
-
-        Dim NewTrustPath As String = String.Join(";", FinalTrustPathList)
-        Application.SetSystemVariable("trustedpaths", LCase(NewTrustPath))
-
-        'acpref.Files.SupportPath = NewTrustPath & acpref.Files.SupportPath
-
-        Dim acadApp As Object = Autodesk.AutoCAD.ApplicationServices.Application.AcadApplication
-        Dim supportPaths As String = acadApp.Preferences.Files.SupportPath
 
         If FinalTrustPathList.Count > 0 Then
-            'Dim cursuppfile As String = acpref.Files.SupportPath
-            acadApp.Preferences.Files.SupportPath = LCase(NewTrustPath & ";" & supportPaths)
+            Dim NewTrustPath As String = String.Join(";", FinalTrustPathList)
+            ' Use correct system variable name and avoid altering path casing
+            Application.SetSystemVariable("SRCHPATH", NewTrustPath)
         End If
+
+
+        Dim acadApp As Object = Application.AcadApplication
 
 
         Dim NewPrinterStyleSheetDir As String = "\\EgnyteDrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards\CAD Plot Styles"
@@ -200,7 +212,6 @@ Module Module_Arcxis_TB
 
         acadApp.Preferences.Files.PrinterConfigPath = NewPrinterConfigDir
         acadApp.Preferences.Files.PrinterStyleSheetPath = NewPrinterStyleSheetDir
-        acadApp.Preferences.Files.PrinterDescPath = NewPrinterDescDir
 
     End Sub
 

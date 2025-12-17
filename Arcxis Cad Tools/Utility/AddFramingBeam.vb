@@ -1,13 +1,13 @@
 ﻿' (C) Copyright 2011 by  
 '
 Imports System
-Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.EditorInput
 Imports System.Linq
-Imports Autodesk.AutoCAD.Colors
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
 
 ' This line is not mandatory, but improves loading performances
 <Assembly: CommandClass(GetType(Arcxis_Cad_Tools.AddFramingBeam))>
@@ -52,18 +52,18 @@ Namespace Arcxis_Cad_Tools
                 Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
 
                     '' Get the current value from a system variable
-                    Dim osm As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("osmode")
-                    Dim ech As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("cmdecho")
-                    Dim otm As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("orthomode")
-                    Dim cle As String = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("clayer")
-                    Dim dsc As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("dimscale")
-                    Dim atr As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("attreq")
+                    Dim osm As Integer = Application.GetSystemVariable("osmode")
+                    Dim ech As Integer = Application.GetSystemVariable("cmdecho")
+                    Dim otm As Integer = Application.GetSystemVariable("orthomode")
+                    Dim cle As String = Application.GetSystemVariable("clayer")
+                    Dim dsc As Integer = Application.GetSystemVariable("dimscale")
+                    Dim atr As Integer = Application.GetSystemVariable("attreq")
 
                     '' Set system variable to new value
-                    Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("cmdecho", 0)
-                    'Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("osmode", 0)
-                    Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("orthomode", 1)
-                    Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("attreq", 0)
+                    Application.SetSystemVariable("cmdecho", 0)
+                    'Application.SetSystemVariable("osmode", 0)
+                    Application.SetSystemVariable("orthomode", 1)
+                    Application.SetSystemVariable("attreq", 0)
 
                     Dim pts As New Point3dCollection()
 

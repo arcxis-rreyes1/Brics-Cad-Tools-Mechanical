@@ -1,17 +1,18 @@
 ﻿' (C) Copyright 2011 by  
 '
 Imports System
-Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.EditorInput
 Imports System.Linq
-Imports Autodesk.AutoCAD.Colors
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
+Imports Bricscad.PlottingServices
 
 ' This line is not mandatory, but improves loading performances
-<Assembly: CommandClass(GetType(Arcxis_Cad_Tools.TakeOffTag))>
-Namespace Arcxis_Cad_Tools
+<Assembly: CommandClass(GetType(Arcxis_Cad_Tools_Brics.TakeOffTag))>
+Namespace Arcxis_Cad_Tools_Brics
 
     ' This class is instantiated by AutoCAD for each document when
     ' a command is called by the user the first time in the context
@@ -291,7 +292,7 @@ Namespace Arcxis_Cad_Tools
             Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
             Dim aced As Editor = acDoc.Editor
-            Dim ech As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("cmdecho")
+            Dim ech As Integer = Application.GetSystemVariable("cmdecho")
             'Dim opts As New PromptSelectionOptions()
             Dim prSelRes As PromptSelectionResult
             Dim acLine As Line
@@ -451,183 +452,183 @@ Namespace Arcxis_Cad_Tools
 
                                 If RafterAngD < 0 Then
 
-                                        RafterAngD = 360 + RafterAngD
+                                    RafterAngD = 360 + RafterAngD
 
-                                    End If
+                                End If
 
-                                    Dim RafterAngRad As Double = RafterAngD * Math.PI / 180
-                                    Dim TagAng As Double
-                                    Dim TagOffset As Point3d
-                                    Dim TagJus As AttachmentPoint = AttachmentPoint.MiddleMid
-                                    Dim TagHoriMode As TextHorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
-                                    Dim TagVertMode As TextVerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
+                                Dim RafterAngRad As Double = RafterAngD * Math.PI / 180
+                                Dim TagAng As Double
+                                Dim TagOffset As Point3d
+                                Dim TagJus As AttachmentPoint = AttachmentPoint.MiddleMid
+                                Dim TagHoriMode As TextHorizontalMode = TextHorizontalMode.TextMid
+                                Dim TagVertMode As TextVerticalMode = TextVerticalMode.TextVerticalMid
 
 
-                                    If FenceTag = "Yes" Then
+                                If FenceTag = "Yes" Then
 
-                                        acEnt.IntersectWith(acLine, Intersect.OnBothOperands, RafterIptCol, IntPtr.Zero, IntPtr.Zero)
+                                    acEnt.IntersectWith(acLine, Intersect.OnBothOperands, RafterIptCol, IntPtr.Zero, IntPtr.Zero)
 
-                                        If RafterIptCol.Count <> 0 Then
+                                    If RafterIptCol.Count <> 0 Then
 
-                                            RafterMPT = RafterIptCol.Item(0)
-                                            'aced.WriteMessage(vbLf & "WallIptCol.Count <> 0 = " & WallIptCol.Count.ToString)
-                                            If RafterAngD = 90 OrElse RafterAngD = 270 OrElse RafterAngD = -90 OrElse RafterAngD = -270 Then
+                                        RafterMPT = RafterIptCol.Item(0)
+                                        'aced.WriteMessage(vbLf & "WallIptCol.Count <> 0 = " & WallIptCol.Count.ToString)
+                                        If RafterAngD = 90 OrElse RafterAngD = 270 OrElse RafterAngD = -90 OrElse RafterAngD = -270 Then
 
-                                                TagOffset = New Point3d(RafterMPT.X + 4 * Math.Cos(3.14159265), RafterMPT.Y + 4 * Math.Sin(3.14159265), RafterMPT.Z)
-                                                TagAng = 1.57079633
+                                            TagOffset = New Point3d(RafterMPT.X + 4 * Math.Cos(3.14159265), RafterMPT.Y + 4 * Math.Sin(3.14159265), RafterMPT.Z)
+                                            TagAng = 1.57079633
 
-                                            ElseIf RafterAngD = 0 OrElse RafterAngD = 180 OrElse RafterAngD = -180 OrElse RafterAngD = 360 Then
+                                        ElseIf RafterAngD = 0 OrElse RafterAngD = 180 OrElse RafterAngD = -180 OrElse RafterAngD = 360 Then
 
-                                                TagOffset = New Point3d(RafterMPT.X + 4 * Math.Cos(1.57079633), RafterMPT.Y + 4 * Math.Sin(1.57079633), RafterMPT.Z)
-                                                TagAng = 0.0
-
-                                            End If
+                                            TagOffset = New Point3d(RafterMPT.X + 4 * Math.Cos(1.57079633), RafterMPT.Y + 4 * Math.Sin(1.57079633), RafterMPT.Z)
+                                            TagAng = 0.0
 
                                         End If
 
-                                    Else
+                                    End If
 
-                                        If RafterTagLocation = "Center" Then
+                                Else
 
-                                            RafterMPT = New Point3d(RafterSP.X + Rafterlen2 * Math.Cos(RafterAng), RafterSP.Y + Rafterlen2 * Math.Sin(RafterAng), RafterSP.Z)
-                                            If RafterAngD = 90 OrElse RafterAngD = 270 OrElse RafterAngD = -90 OrElse RafterAngD = -270 Then
+                                    If RafterTagLocation = "Center" Then
 
-                                                TagOffset = New Point3d(RafterMPT.X + 4.875 * Math.Cos(3.14159265), RafterMPT.Y + 4.875 * Math.Sin(3.14159265), RafterMPT.Z)
-                                                TagAng = 1.57079633
+                                        RafterMPT = New Point3d(RafterSP.X + Rafterlen2 * Math.Cos(RafterAng), RafterSP.Y + Rafterlen2 * Math.Sin(RafterAng), RafterSP.Z)
+                                        If RafterAngD = 90 OrElse RafterAngD = 270 OrElse RafterAngD = -90 OrElse RafterAngD = -270 Then
 
-                                            ElseIf RafterAngD = 0 OrElse RafterAngD = 180 OrElse RafterAngD = -180 OrElse RafterAngD = 360 Then
+                                            TagOffset = New Point3d(RafterMPT.X + 4.875 * Math.Cos(3.14159265), RafterMPT.Y + 4.875 * Math.Sin(3.14159265), RafterMPT.Z)
+                                            TagAng = 1.57079633
 
-                                                TagOffset = New Point3d(RafterMPT.X + 4.875 * Math.Cos(1.57079633), RafterMPT.Y + 4.875 * Math.Sin(1.57079633), RafterMPT.Z)
-                                                TagAng = 0.0
+                                        ElseIf RafterAngD = 0 OrElse RafterAngD = 180 OrElse RafterAngD = -180 OrElse RafterAngD = 360 Then
 
-                                            End If
+                                            TagOffset = New Point3d(RafterMPT.X + 4.875 * Math.Cos(1.57079633), RafterMPT.Y + 4.875 * Math.Sin(1.57079633), RafterMPT.Z)
+                                            TagAng = 0.0
 
-                                        ElseIf RafterTagLocation = "Left" Then
+                                        End If
 
-                                            If RafterAngD = 90 OrElse RafterAngD = 270 OrElse RafterAngD = -90 OrElse RafterAngD = -270 Then
+                                    ElseIf RafterTagLocation = "Left" Then
 
-                                                SortedRafterYPointsList = (From Ypnt In RafterPointsList Order By Ypnt.Y Select Ypnt).ToList
-                                                RafterMPT = SortedRafterYPointsList(0)
-                                                TagOffset = New Point3d(RafterMPT.X + 3.5 * Math.Cos(4.71238898), RafterMPT.Y + 3.5 * Math.Sin(4.71238898), RafterMPT.Z)
-                                                TagAng = 1.57079633
-                                                TagJus = AttachmentPoint.MiddleRight
-                                                TagHoriMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextRight
-                                                TagVertMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
+                                        If RafterAngD = 90 OrElse RafterAngD = 270 OrElse RafterAngD = -90 OrElse RafterAngD = -270 Then
 
-
-                                            ElseIf RafterAngD = 0 OrElse RafterAngD = 180 OrElse RafterAngD = -180 OrElse RafterAngD = 360 Then
-
-                                                SortedRafterXPointsList = (From Xpnt In RafterPointsList Order By Xpnt.X Select Xpnt).ToList
-                                                RafterMPT = SortedRafterXPointsList(0)
-                                                TagOffset = New Point3d(RafterMPT.X + 3.5 * Math.Cos(3.14159265), RafterMPT.Y + 3.5 * Math.Sin(3.14159265), RafterMPT.Z)
-                                                TagAng = 0.0
-                                                TagJus = AttachmentPoint.MiddleRight
-                                                TagHoriMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextRight
-                                                TagVertMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
-
-                                            End If
-
-                                        ElseIf RafterTagLocation = "Right" Then
-
-                                            If RafterAngD = 90 OrElse RafterAngD = 270 OrElse RafterAngD = -90 OrElse RafterAngD = -270 Then
-
-                                                SortedRafterYPointsList = (From Ypnt In RafterPointsList Order By Ypnt.Y Select Ypnt).ToList
-                                                RafterMPT = SortedRafterYPointsList(SortedRafterYPointsList.Count - 1)
-                                                TagOffset = New Point3d(RafterMPT.X + 3.5 * Math.Cos(1.57079633), RafterMPT.Y + 3.5 * Math.Sin(1.57079633), RafterMPT.Z)
-                                                TagAng = 1.57079633
-                                                TagJus = AttachmentPoint.MiddleLeft
-                                                TagHoriMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                                                TagVertMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
+                                            SortedRafterYPointsList = (From Ypnt In RafterPointsList Order By Ypnt.Y Select Ypnt).ToList
+                                            RafterMPT = SortedRafterYPointsList(0)
+                                            TagOffset = New Point3d(RafterMPT.X + 3.5 * Math.Cos(4.71238898), RafterMPT.Y + 3.5 * Math.Sin(4.71238898), RafterMPT.Z)
+                                            TagAng = 1.57079633
+                                            TagJus = AttachmentPoint.MiddleRight
+                                            TagHoriMode = TextHorizontalMode.TextRight
+                                            TagVertMode = TextVerticalMode.TextVerticalMid
 
 
-                                            ElseIf RafterAngD = 0 OrElse RafterAngD = 180 OrElse RafterAngD = -180 OrElse RafterAngD = 360 Then
+                                        ElseIf RafterAngD = 0 OrElse RafterAngD = 180 OrElse RafterAngD = -180 OrElse RafterAngD = 360 Then
 
-                                                SortedRafterXPointsList = (From Xpnt In RafterPointsList Order By Xpnt.X Select Xpnt).ToList
-                                                RafterMPT = SortedRafterXPointsList(SortedRafterXPointsList.Count - 1)
-                                                TagOffset = New Point3d(RafterMPT.X + 3.5 * Math.Cos(0), RafterMPT.Y + 3.5 * Math.Sin(0), RafterMPT.Z)
-                                                TagAng = 0.0
-                                                TagJus = AttachmentPoint.MiddleLeft
-                                                TagHoriMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                                                TagVertMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
+                                            SortedRafterXPointsList = (From Xpnt In RafterPointsList Order By Xpnt.X Select Xpnt).ToList
+                                            RafterMPT = SortedRafterXPointsList(0)
+                                            TagOffset = New Point3d(RafterMPT.X + 3.5 * Math.Cos(3.14159265), RafterMPT.Y + 3.5 * Math.Sin(3.14159265), RafterMPT.Z)
+                                            TagAng = 0.0
+                                            TagJus = AttachmentPoint.MiddleRight
+                                            TagHoriMode = TextHorizontalMode.TextRight
+                                            TagVertMode = TextVerticalMode.TextVerticalMid
+
+                                        End If
+
+                                    ElseIf RafterTagLocation = "Right" Then
+
+                                        If RafterAngD = 90 OrElse RafterAngD = 270 OrElse RafterAngD = -90 OrElse RafterAngD = -270 Then
+
+                                            SortedRafterYPointsList = (From Ypnt In RafterPointsList Order By Ypnt.Y Select Ypnt).ToList
+                                            RafterMPT = SortedRafterYPointsList(SortedRafterYPointsList.Count - 1)
+                                            TagOffset = New Point3d(RafterMPT.X + 3.5 * Math.Cos(1.57079633), RafterMPT.Y + 3.5 * Math.Sin(1.57079633), RafterMPT.Z)
+                                            TagAng = 1.57079633
+                                            TagJus = AttachmentPoint.MiddleLeft
+                                            TagHoriMode = TextHorizontalMode.TextLeft
+                                            TagVertMode = TextVerticalMode.TextVerticalMid
 
 
-                                            End If
+                                        ElseIf RafterAngD = 0 OrElse RafterAngD = 180 OrElse RafterAngD = -180 OrElse RafterAngD = 360 Then
 
+                                            SortedRafterXPointsList = (From Xpnt In RafterPointsList Order By Xpnt.X Select Xpnt).ToList
+                                            RafterMPT = SortedRafterXPointsList(SortedRafterXPointsList.Count - 1)
+                                            TagOffset = New Point3d(RafterMPT.X + 3.5 * Math.Cos(0), RafterMPT.Y + 3.5 * Math.Sin(0), RafterMPT.Z)
+                                            TagAng = 0.0
+                                            TagJus = AttachmentPoint.MiddleLeft
+                                            TagHoriMode = TextHorizontalMode.TextLeft
+                                            TagVertMode = TextVerticalMode.TextVerticalMid
 
 
                                         End If
 
 
-                                    End If
-
-
-                                    Dim RafterTag As String
-                                    Dim RafterTakeOffTag As String
-
-
-                                    If MemberSize = "2x6" Then
-
-                                        RafterTag = hyp9 & "'"
-
-                                    Else
-
-                                        RafterTag = MemberSize & "x" & hyp9 & "'"
 
                                     End If
 
-                                    RafterTakeOffTag = Grade & "-" & MemberSize & "x" & hyp9 & "'"
+
+                                End If
 
 
-                                    '' Open the Block table for read
-                                    Dim acBlkTbl As BlockTable
-                                    acBlkTbl = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead)
+                                Dim RafterTag As String
+                                Dim RafterTakeOffTag As String
 
-                                    '' Open the Block table record Model space for write
-                                    Dim acBlkTblRec As BlockTableRecord
-                                    acBlkTblRec = acTrans.GetObject(acBlkTbl(BlockTableRecord.ModelSpace), OpenMode.ForWrite)
+
+                                If MemberSize = "2x6" Then
+
+                                    RafterTag = hyp9 & "'"
+
+                                Else
+
+                                    RafterTag = MemberSize & "x" & hyp9 & "'"
+
+                                End If
+
+                                RafterTakeOffTag = Grade & "-" & MemberSize & "x" & hyp9 & "'"
+
+
+                                '' Open the Block table for read
+                                Dim acBlkTbl As BlockTable
+                                acBlkTbl = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead)
+
+                                '' Open the Block table record Model space for write
+                                Dim acBlkTblRec As BlockTableRecord
+                                acBlkTblRec = acTrans.GetObject(acBlkTbl(BlockTableRecord.ModelSpace), OpenMode.ForWrite)
 
 
 
                                 '' Create a single-line text object
                                 Dim acText As DBText = New DBText()
-                                    acText.SetDatabaseDefaults()
-                                    'acText.TextStyleName
-                                    acText.Height = 6
-                                    acText.TextString = RafterTag
-                                    acText.Layer = "S-FRM-TAGS"
-                                    acText.Rotation = TagAng
-                                    acText.WidthFactor = 0.85
-                                    acText.Oblique = 0.26179939
-                                    'acText.Justify = AttachmentPoint.MiddleMid
-                                    acText.Justify = TagJus
-                                    'acText.ColorIndex = 2
-                                    acText.IsMirroredInX = False
-                                    acText.IsMirroredInY = False
-                                    'acText.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
-                                    acText.HorizontalMode = TagHoriMode
-                                    'acText.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
-                                    acText.VerticalMode = TagVertMode
-                                    acText.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(TagOffset.X, TagOffset.Y, 0)
+                                acText.SetDatabaseDefaults()
+                                'acText.TextStyleName
+                                acText.Height = 6
+                                acText.TextString = RafterTag
+                                acText.Layer = "S-FRM-TAGS"
+                                acText.Rotation = TagAng
+                                acText.WidthFactor = 0.85
+                                acText.Oblique = 0.26179939
+                                'acText.Justify = AttachmentPoint.MiddleMid
+                                acText.Justify = TagJus
+                                'acText.ColorIndex = 2
+                                acText.IsMirroredInX = False
+                                acText.IsMirroredInY = False
+                                'acText.HorizontalMode = TextHorizontalMode.TextMid
+                                acText.HorizontalMode = TagHoriMode
+                                'acText.VerticalMode = TextVerticalMode.TextVerticalMid
+                                acText.VerticalMode = TagVertMode
+                                acText.AlignmentPoint = New Point3d(TagOffset.X, TagOffset.Y, 0)
 
 
 
                                 '' Create a single-line text object
                                 Dim acText2 As DBText = New DBText()
-                                    acText2.SetDatabaseDefaults()
-                                    acText2.Height = 6
-                                    acText2.TextString = RafterTakeOffTag
-                                    acText2.Layer = "S-FRM-TAKEOFFS"
-                                    acText2.Rotation = TagAng
-                                    acText2.WidthFactor = 0.85
-                                    acText2.Oblique = 0.26179939
-                                    acText2.Justify = TagJus
-                                    acText2.IsMirroredInX = False
-                                    acText2.IsMirroredInY = False
-                                    'acText2.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
-                                    acText2.HorizontalMode = TagHoriMode
-                                    'acText2.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
-                                    acText2.VerticalMode = TagVertMode
-                                    acText2.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(TagOffset.X, TagOffset.Y, 0)
+                                acText2.SetDatabaseDefaults()
+                                acText2.Height = 6
+                                acText2.TextString = RafterTakeOffTag
+                                acText2.Layer = "S-FRM-TAKEOFFS"
+                                acText2.Rotation = TagAng
+                                acText2.WidthFactor = 0.85
+                                acText2.Oblique = 0.26179939
+                                acText2.Justify = TagJus
+                                acText2.IsMirroredInX = False
+                                acText2.IsMirroredInY = False
+                                'acText2.HorizontalMode = TextHorizontalMode.TextMid
+                                acText2.HorizontalMode = TagHoriMode
+                                'acText2.VerticalMode = TextVerticalMode.TextVerticalMid
+                                acText2.VerticalMode = TagVertMode
+                                acText2.AlignmentPoint = New Point3d(TagOffset.X, TagOffset.Y, 0)
 
                                 'acBlkTblRec.AppendEntity(acText2)
                                 ' acTrans.AddNewlyCreatedDBObject(acText2, True)
@@ -669,7 +670,7 @@ Namespace Arcxis_Cad_Tools
 
                     End If
 
-                    Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("cmdecho", ech)
+                    Application.SetSystemVariable("cmdecho", ech)
 
                     ' Save the new object to the database
                     acTrans.Commit()
@@ -686,7 +687,7 @@ Namespace Arcxis_Cad_Tools
             Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
             Dim aced As Editor = acDoc.Editor
-            Dim ech As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("cmdecho")
+            Dim ech As Integer = Application.GetSystemVariable("cmdecho")
             'Dim opts As New PromptSelectionOptions()
             Dim prSelRes As PromptSelectionResult
             Dim acLine As Line
@@ -815,126 +816,126 @@ Namespace Arcxis_Cad_Tools
 
 
                                 Dim JoistSCLen As Double = Joistlen - 7
-                                    Dim JoistSP As Point3d = acEnt.StartPoint
-                                    Dim JoistEP As Point3d = acEnt.EndPoint
-                                    Dim JoistAng As Double = acEnt.Angle
-                                    Dim JoistAngD As Double = Math.Round((JoistAng * 180.0) / Math.PI, 0)
-                                    Dim JoistIptCol As New Point3dCollection()
-                                    JoistIptCol.Clear()
-                                    Dim JoistMPT As Point3d
+                                Dim JoistSP As Point3d = acEnt.StartPoint
+                                Dim JoistEP As Point3d = acEnt.EndPoint
+                                Dim JoistAng As Double = acEnt.Angle
+                                Dim JoistAngD As Double = Math.Round((JoistAng * 180.0) / Math.PI, 0)
+                                Dim JoistIptCol As New Point3dCollection()
+                                JoistIptCol.Clear()
+                                Dim JoistMPT As Point3d
 
-                                    If JoistAngD < 0 Then
+                                If JoistAngD < 0 Then
 
-                                        JoistAngD = 360 + JoistAngD
+                                    JoistAngD = 360 + JoistAngD
 
-                                    End If
+                                End If
 
-                                    Dim JoistAngRad As Double = JoistAngD * Math.PI / 180
+                                Dim JoistAngRad As Double = JoistAngD * Math.PI / 180
 
-                                    If FenceTag = "Yes" Then
+                                If FenceTag = "Yes" Then
 
-                                        acEnt.IntersectWith(acLine, Intersect.OnBothOperands, JoistIptCol, IntPtr.Zero, IntPtr.Zero)
+                                    acEnt.IntersectWith(acLine, Intersect.OnBothOperands, JoistIptCol, IntPtr.Zero, IntPtr.Zero)
 
-                                        If JoistIptCol.Count <> 0 Then
+                                    If JoistIptCol.Count <> 0 Then
 
-                                            JoistMPT = JoistIptCol.Item(0)
-                                            'aced.WriteMessage(vbLf & "WallIptCol.Count <> 0 = " & WallIptCol.Count.ToString)
-
-                                        End If
-
-                                    Else
-
-                                        JoistMPT = New Point3d(JoistSP.X + Joistlen2 * Math.Cos(JoistAng), JoistSP.Y + Joistlen2 * Math.Sin(JoistAng), JoistSP.Z)
+                                        JoistMPT = JoistIptCol.Item(0)
+                                        'aced.WriteMessage(vbLf & "WallIptCol.Count <> 0 = " & WallIptCol.Count.ToString)
 
                                     End If
 
-                                    Dim TagAng As Double
-                                    Dim TagOffset As Point3d
+                                Else
 
-                                    If JoistAngD = 90 OrElse JoistAngD = 270 OrElse JoistAngD = -90 OrElse JoistAngD = -270 Then
+                                    JoistMPT = New Point3d(JoistSP.X + Joistlen2 * Math.Cos(JoistAng), JoistSP.Y + Joistlen2 * Math.Sin(JoistAng), JoistSP.Z)
 
-                                        TagOffset = New Point3d(JoistMPT.X + 4.875 * Math.Cos(3.14159265), JoistMPT.Y + 4.875 * Math.Sin(3.14159265), JoistMPT.Z)
-                                        TagAng = 1.57079633
+                                End If
 
-                                    ElseIf JoistAngD = 0 OrElse JoistAngD = 180 OrElse JoistAngD = -180 OrElse JoistAngD = 360 Then
+                                Dim TagAng As Double
+                                Dim TagOffset As Point3d
 
-                                        TagOffset = New Point3d(JoistMPT.X + 4.875 * Math.Cos(1.57079633), JoistMPT.Y + 4.875 * Math.Sin(1.57079633), JoistMPT.Z)
-                                        TagAng = 0.0
+                                If JoistAngD = 90 OrElse JoistAngD = 270 OrElse JoistAngD = -90 OrElse JoistAngD = -270 Then
 
-                                    End If
+                                    TagOffset = New Point3d(JoistMPT.X + 4.875 * Math.Cos(3.14159265), JoistMPT.Y + 4.875 * Math.Sin(3.14159265), JoistMPT.Z)
+                                    TagAng = 1.57079633
 
-                                    Dim JoistTag As String
-                                    Dim JoistTakeOffTag As String
+                                ElseIf JoistAngD = 0 OrElse JoistAngD = 180 OrElse JoistAngD = -180 OrElse JoistAngD = 360 Then
 
-                                    If MemberSizeButton = "Auto" Then
+                                    TagOffset = New Point3d(JoistMPT.X + 4.875 * Math.Cos(1.57079633), JoistMPT.Y + 4.875 * Math.Sin(1.57079633), JoistMPT.Z)
+                                    TagAng = 0.0
 
-                                        If Grade = "#2" AndAlso Storage = "No Storage" Then
+                                End If
 
-                                            GetMemberSize2NS(JoistSCLen)
+                                Dim JoistTag As String
+                                Dim JoistTakeOffTag As String
 
-                                        ElseIf Grade = "#3" AndAlso Storage = "No Storage" Then
+                                If MemberSizeButton = "Auto" Then
 
-                                            GetMemberSize3NS(JoistSCLen)
+                                    If Grade = "#2" AndAlso Storage = "No Storage" Then
 
-                                        ElseIf Grade = "#2" AndAlso Storage = "With Storage" Then
+                                        GetMemberSize2NS(JoistSCLen)
 
-                                            GetMemberSize2WS(JoistSCLen)
+                                    ElseIf Grade = "#3" AndAlso Storage = "No Storage" Then
 
-                                        ElseIf Grade = "#3" AndAlso Storage = "With Storage" Then
+                                        GetMemberSize3NS(JoistSCLen)
 
-                                            GetMemberSize3WS(JoistSCLen)
+                                    ElseIf Grade = "#2" AndAlso Storage = "With Storage" Then
 
-                                        End If
+                                        GetMemberSize2WS(JoistSCLen)
 
-                                    End If
+                                    ElseIf Grade = "#3" AndAlso Storage = "With Storage" Then
 
-                                    If MemberSize = "2x6" Then
-
-                                        JoistTag = Jlen9 & "'"
-                                        JoistTakeOffTag = Grade & "-" & MemberSize & "x" & Jlen9 & "'"
-
-                                    ElseIf MemberSize = "2x8" OrElse MemberSize = "2x10" OrElse MemberSize = "2x12" Then
-
-                                        JoistTag = MemberSize & "x" & Jlen9 & "'"
-                                        JoistTakeOffTag = Grade & "-" & MemberSize & "x" & Jlen9 & "'"
-
-                                    Else
-
-                                        JoistTag = "CHANGE SPACING"
+                                        GetMemberSize3WS(JoistSCLen)
 
                                     End If
 
-                                    'If JoistTag <> "CHANGE SPACING" Then
+                                End If
 
+                                If MemberSize = "2x6" Then
+
+                                    JoistTag = Jlen9 & "'"
                                     JoistTakeOffTag = Grade & "-" & MemberSize & "x" & Jlen9 & "'"
-                                    '
-                                    'If
 
-                                    '' Open the Block table for read
-                                    Dim acBlkTbl As BlockTable
-                                    acBlkTbl = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead)
+                                ElseIf MemberSize = "2x8" OrElse MemberSize = "2x10" OrElse MemberSize = "2x12" Then
 
-                                    '' Open the Block table record Model space for write
-                                    Dim acBlkTblRec As BlockTableRecord
-                                    acBlkTblRec = acTrans.GetObject(acBlkTbl(BlockTableRecord.ModelSpace), OpenMode.ForWrite)
+                                    JoistTag = MemberSize & "x" & Jlen9 & "'"
+                                    JoistTakeOffTag = Grade & "-" & MemberSize & "x" & Jlen9 & "'"
+
+                                Else
+
+                                    JoistTag = "CHANGE SPACING"
+
+                                End If
+
+                                'If JoistTag <> "CHANGE SPACING" Then
+
+                                JoistTakeOffTag = Grade & "-" & MemberSize & "x" & Jlen9 & "'"
+                                '
+                                'If
+
+                                '' Open the Block table for read
+                                Dim acBlkTbl As BlockTable
+                                acBlkTbl = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead)
+
+                                '' Open the Block table record Model space for write
+                                Dim acBlkTblRec As BlockTableRecord
+                                acBlkTblRec = acTrans.GetObject(acBlkTbl(BlockTableRecord.ModelSpace), OpenMode.ForWrite)
 
 
-                                    '' Create a single-line text object
-                                    Dim acText As DBText = New DBText()
-                                    acText.SetDatabaseDefaults()
-                                    acText.Height = 6
-                                    acText.TextString = JoistTag
-                                    acText.Layer = "S-FRM-TAGS"
-                                    acText.Rotation = TagAng
-                                    acText.WidthFactor = 0.85
-                                    acText.Oblique = 0.26179939
-                                    acText.Justify = AttachmentPoint.MiddleMid
-                                    'acText.ColorIndex = 2
-                                    acText.IsMirroredInX = False
-                                    acText.IsMirroredInY = False
-                                    acText.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
-                                    acText.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
-                                    acText.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(TagOffset.X, TagOffset.Y, 0)
+                                '' Create a single-line text object
+                                Dim acText As DBText = New DBText()
+                                acText.SetDatabaseDefaults()
+                                acText.Height = 6
+                                acText.TextString = JoistTag
+                                acText.Layer = "S-FRM-TAGS"
+                                acText.Rotation = TagAng
+                                acText.WidthFactor = 0.85
+                                acText.Oblique = 0.26179939
+                                acText.Justify = AttachmentPoint.MiddleMid
+                                'acText.ColorIndex = 2
+                                acText.IsMirroredInX = False
+                                acText.IsMirroredInY = False
+                                acText.HorizontalMode = TextHorizontalMode.TextMid
+                                acText.VerticalMode = TextVerticalMode.TextVerticalMid
+                                acText.AlignmentPoint = New Point3d(TagOffset.X, TagOffset.Y, 0)
 
                                 ' acBlkTblRec.AppendEntity(acText)
                                 'acTrans.AddNewlyCreatedDBObject(acText, True)
@@ -953,9 +954,9 @@ Namespace Arcxis_Cad_Tools
                                 'acText2.ColorIndex = 2
                                 acText2.IsMirroredInX = False
                                 acText2.IsMirroredInY = False
-                                acText2.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
-                                acText2.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
-                                acText2.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(TagOffset.X, TagOffset.Y, 0)
+                                acText2.HorizontalMode = TextHorizontalMode.TextMid
+                                acText2.VerticalMode = TextVerticalMode.TextVerticalMid
+                                acText2.AlignmentPoint = New Point3d(TagOffset.X, TagOffset.Y, 0)
 
                                 'acBlkTblRec.AppendEntity(acText2)
                                 'acTrans.AddNewlyCreatedDBObject(acText2, True)
@@ -1000,7 +1001,7 @@ Namespace Arcxis_Cad_Tools
 
                     End If
 
-                    Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("cmdecho", ech)
+                    Application.SetSystemVariable("cmdecho", ech)
 
                     ' Save the new object to the database
                     acTrans.Commit()
@@ -1017,7 +1018,7 @@ Namespace Arcxis_Cad_Tools
             Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
             Dim aced As Editor = acDoc.Editor
-            Dim ech As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("cmdecho")
+            Dim ech As Integer = Application.GetSystemVariable("cmdecho")
             'Dim opts As New PromptSelectionOptions()
             Dim prSelRes As PromptSelectionResult
             Dim acLine As Line
@@ -1203,9 +1204,9 @@ Namespace Arcxis_Cad_Tools
                                 'acText.Justify = AttachmentPoint.MiddleMid
                                 'acText.IsMirroredInX = False
                                 'acText.IsMirroredInY = False
-                                'acText.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
-                                'acText.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
-                                'acText.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(TagOffset.X, TagOffset.Y, 0)
+                                'acText.HorizontalMode = TextHorizontalMode.TextMid
+                                'acText.VerticalMode = TextVerticalMode.TextVerticalMid
+                                'acText.AlignmentPoint = New Point3d(TagOffset.X, TagOffset.Y, 0)
 
                                 'acBlkTblRec.AppendEntity(acText)
                                 'acTrans.AddNewlyCreatedDBObject(acText, True)
@@ -1224,9 +1225,9 @@ Namespace Arcxis_Cad_Tools
                                 acText2.Justify = AttachmentPoint.MiddleMid
                                 acText2.IsMirroredInX = False
                                 acText2.IsMirroredInY = False
-                                acText2.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
-                                acText2.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
-                                acText2.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(TagOffset.X, TagOffset.Y, 0)
+                                acText2.HorizontalMode = TextHorizontalMode.TextMid
+                                acText2.VerticalMode = TextVerticalMode.TextVerticalMid
+                                acText2.AlignmentPoint = New Point3d(TagOffset.X, TagOffset.Y, 0)
 
                                 acBlkTblRec.AppendEntity(acText2)
                                 acTrans.AddNewlyCreatedDBObject(acText2, True)
@@ -1250,7 +1251,7 @@ Namespace Arcxis_Cad_Tools
 
                     End If
 
-                    Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("cmdecho", ech)
+                    Application.SetSystemVariable("cmdecho", ech)
 
                     ' Save the new object to the database
                     acTrans.Commit()
@@ -1267,7 +1268,7 @@ Namespace Arcxis_Cad_Tools
             Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
             Dim aced As Editor = acDoc.Editor
-            Dim ech As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("cmdecho")
+            Dim ech As Integer = Application.GetSystemVariable("cmdecho")
             'Dim opts As New PromptSelectionOptions()
             Dim prSelRes As PromptSelectionResult
             Dim acLine As Line
@@ -1471,9 +1472,9 @@ Namespace Arcxis_Cad_Tools
                                 'acText.Justify = AttachmentPoint.MiddleMid
                                 'acText.IsMirroredInX = False
                                 'acText.IsMirroredInY = False
-                                'acText.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
-                                'acText.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
-                                'acText.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(TagOffset.X, TagOffset.Y, 0)
+                                'acText.HorizontalMode = TextHorizontalMode.TextMid
+                                'acText.VerticalMode = TextVerticalMode.TextVerticalMid
+                                'acText.AlignmentPoint = New Point3d(TagOffset.X, TagOffset.Y, 0)
 
                                 'acBlkTblRec.AppendEntity(acText)
                                 'acTrans.AddNewlyCreatedDBObject(acText, True)
@@ -1491,9 +1492,9 @@ Namespace Arcxis_Cad_Tools
                                 'acText2.ColorIndex = 2
                                 acText2.IsMirroredInX = False
                                 acText2.IsMirroredInY = False
-                                acText2.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
-                                acText2.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
-                                acText2.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(TagOffset.X, TagOffset.Y, 0)
+                                acText2.HorizontalMode = TextHorizontalMode.TextMid
+                                acText2.VerticalMode = TextVerticalMode.TextVerticalMid
+                                acText2.AlignmentPoint = New Point3d(TagOffset.X, TagOffset.Y, 0)
 
                                 acBlkTblRec.AppendEntity(acText2)
                                 acTrans.AddNewlyCreatedDBObject(acText2, True)
@@ -1511,7 +1512,7 @@ Namespace Arcxis_Cad_Tools
 
                     End If
 
-                    Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("cmdecho", ech)
+                    Application.SetSystemVariable("cmdecho", ech)
 
                     ' Save the new object to the database
                     acTrans.Commit()
@@ -1528,7 +1529,7 @@ Namespace Arcxis_Cad_Tools
             Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
             Dim aced As Editor = acDoc.Editor
-            Dim ech As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("cmdecho")
+            Dim ech As Integer = Application.GetSystemVariable("cmdecho")
             'Dim opts As New PromptSelectionOptions()
             Dim prSelRes As PromptSelectionResult
             Dim acLine As Line
@@ -1726,9 +1727,9 @@ Namespace Arcxis_Cad_Tools
                                 'acText.Justify = AttachmentPoint.MiddleMid
                                 'acText.IsMirroredInX = False
                                 'acText.IsMirroredInY = False
-                                'acText.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
-                                'acText.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
-                                'acText.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(TagOffset.X, TagOffset.Y, 0)
+                                'acText.HorizontalMode = TextHorizontalMode.TextMid
+                                'acText.VerticalMode = TextVerticalMode.TextVerticalMid
+                                'acText.AlignmentPoint = New Point3d(TagOffset.X, TagOffset.Y, 0)
 
                                 'acBlkTblRec.AppendEntity(acText)
                                 'acTrans.AddNewlyCreatedDBObject(acText, True)
@@ -1746,9 +1747,9 @@ Namespace Arcxis_Cad_Tools
                                 'acText2.ColorIndex = 2
                                 acText2.IsMirroredInX = False
                                 acText2.IsMirroredInY = False
-                                acText2.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
-                                acText2.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
-                                acText2.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(TagOffset.X, TagOffset.Y, 0)
+                                acText2.HorizontalMode = TextHorizontalMode.TextMid
+                                acText2.VerticalMode = TextVerticalMode.TextVerticalMid
+                                acText2.AlignmentPoint = New Point3d(TagOffset.X, TagOffset.Y, 0)
 
                                 acBlkTblRec.AppendEntity(acText2)
                                 acTrans.AddNewlyCreatedDBObject(acText2, True)
@@ -1766,7 +1767,7 @@ Namespace Arcxis_Cad_Tools
 
                     End If
 
-                    Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("cmdecho", ech)
+                    Application.SetSystemVariable("cmdecho", ech)
 
                     ' Save the new object to the database
                     acTrans.Commit()
@@ -1784,7 +1785,7 @@ Namespace Arcxis_Cad_Tools
             Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
             Dim aced As Editor = acDoc.Editor
-            Dim ech As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("cmdecho")
+            Dim ech As Integer = Application.GetSystemVariable("cmdecho")
             'Dim opts As New PromptSelectionOptions()
             Dim prSelRes As PromptSelectionResult
             Dim acLine As Line
@@ -1951,8 +1952,8 @@ Namespace Arcxis_Cad_Tools
                                 Dim TagAng As Double
                                 Dim TagOffset As Point3d
                                 Dim TagJus As AttachmentPoint = AttachmentPoint.MiddleMid
-                                Dim TagHoriMode As TextHorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
-                                Dim TagVertMode As TextVerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
+                                Dim TagHoriMode As TextHorizontalMode = TextHorizontalMode.TextMid
+                                Dim TagVertMode As TextVerticalMode = TextVerticalMode.TextVerticalMid
 
                                 RafterMPT = New Point3d(RafterSP.X + Rafterlen2 * Math.Cos(RafterAng), RafterSP.Y + Rafterlen2 * Math.Sin(RafterAng), RafterSP.Z)
                                 If RafterAngD = 90 OrElse RafterAngD = 270 OrElse RafterAngD = -90 OrElse RafterAngD = -270 Then
@@ -1993,7 +1994,7 @@ Namespace Arcxis_Cad_Tools
                                 'acText.IsMirroredInY = False
                                 'acText.HorizontalMode = TagHoriMode
                                 'acText.VerticalMode = TagVertMode
-                                'acText.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(TagOffset.X, TagOffset.Y, 0)
+                                'acText.AlignmentPoint = New Point3d(TagOffset.X, TagOffset.Y, 0)
                                 'acBlkTblRec.AppendEntity(acText)
                                 'acTrans.AddNewlyCreatedDBObject(acText, True)
 
@@ -2010,11 +2011,11 @@ Namespace Arcxis_Cad_Tools
                                 acText2.Justify = TagJus
                                 acText2.IsMirroredInX = False
                                 acText2.IsMirroredInY = False
-                                'acText2.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextMid
+                                'acText2.HorizontalMode = TextHorizontalMode.TextMid
                                 acText2.HorizontalMode = TagHoriMode
-                                'acText2.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
+                                'acText2.VerticalMode = TextVerticalMode.TextVerticalMid
                                 acText2.VerticalMode = TagVertMode
-                                acText2.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(TagOffset.X, TagOffset.Y, 0)
+                                acText2.AlignmentPoint = New Point3d(TagOffset.X, TagOffset.Y, 0)
 
                                 acBlkTblRec.AppendEntity(acText2)
                                 acTrans.AddNewlyCreatedDBObject(acText2, True)
@@ -2031,7 +2032,7 @@ Namespace Arcxis_Cad_Tools
 
                     End If
 
-                    Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("cmdecho", ech)
+                    Application.SetSystemVariable("cmdecho", ech)
 
                     ' Save the new object to the database
                     acTrans.Commit()
@@ -2147,9 +2148,9 @@ Namespace Arcxis_Cad_Tools
 
                         Dim TxtStyleVar As Object
                         'Get the TextStylye SYSTEM VARIABLE
-                        TxtStyleVar = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("TextStyle")
+                        TxtStyleVar = Application.GetSystemVariable("TextStyle")
                         'SET TextStyle SYSTEM VARIABLE
-                        Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("TextStyle", "Lengths")
+                        Application.SetSystemVariable("TextStyle", "Lengths")
 
                     Else
 
@@ -2168,9 +2169,9 @@ Namespace Arcxis_Cad_Tools
                         'make as current
                         Dim TxtStyleVar As Object
                         'Get the TextStylye SYSTEM VARIABLE
-                        TxtStyleVar = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("TextStyle")
+                        TxtStyleVar = Application.GetSystemVariable("TextStyle")
                         'SET TextStyle SYSTEM VARIABLE
-                        Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("TextStyle", "Lengths")
+                        Application.SetSystemVariable("TextStyle", "Lengths")
 
                     End If
 

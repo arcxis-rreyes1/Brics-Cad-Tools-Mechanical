@@ -1,12 +1,13 @@
 ﻿Imports System.Linq
 Imports System.Windows
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.Colors
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.EditorInput
-Imports Autodesk.AutoCAD.Geometry
+Imports Bricscad.ApplicationServices
+Imports Teigha.Colors
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
 Imports DocumentFormat.OpenXml.Spreadsheet
-Imports Application = Autodesk.AutoCAD.ApplicationServices.Application
+Imports Application = Bricscad.ApplicationServices.Application
+Imports color = Teigha.Colors.Color
 
 Public Class Form_DrawMembers
     Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
@@ -513,7 +514,7 @@ Public Class Form_DrawMembers
         lt.UpgradeOpen()
         Dim newLayer As New LayerTableRecord() With {
             .Name = layerName,
-            .Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(ColorMethod.ByAci, CShort(Math.Max(1, Math.Min(255, colorIndex))))
+            .Color = Color.FromColorIndex(ColorMethod.ByAci, CShort(Math.Max(1, Math.Min(255, colorIndex))))
         }
         If Not String.Equals(lineTypeName, "BYLAYER", StringComparison.OrdinalIgnoreCase) AndAlso Not String.IsNullOrWhiteSpace(lineTypeName) Then
             Dim ltt = CType(tr.GetObject(db.LinetypeTableId, OpenMode.ForRead), LinetypeTable)

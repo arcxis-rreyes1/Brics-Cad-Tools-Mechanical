@@ -1,4 +1,4 @@
-﻿Imports Autodesk.AutoCAD.Geometry
+﻿Imports Teigha.Geometry
 Module Module_CableSection
 
     Public CableSectionTag As String

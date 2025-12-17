@@ -1,16 +1,13 @@
-﻿' (C) Copyright 2011 by  
-'
-Imports System
-Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.EditorInput
+﻿Imports System
 Imports System.Linq
 Imports System.IO
-Imports Autodesk.AutoCAD.Interop
-Imports Autodesk.AutoCAD.Colors
-
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
+Imports Bricscad.PlottingServices
 
 ' This line is not mandatory, but improves loading performances
 <Assembly: CommandClass(GetType(Arcxis_Cad_Tools.UpdateTitleBlock))>
@@ -45,10 +42,10 @@ Namespace Arcxis_Cad_Tools
         <CommandMethod("UTB")>
         Public Sub UpdateTitleBlock()
 
-            Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
             Dim TitleBlockIptList As New List(Of Point3d)
-            Dim aced As Editor = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor
+            Dim aced As Editor = Application.DocumentManager.MdiActiveDocument.Editor
 
             AddTBFiles()
 
@@ -71,7 +68,7 @@ Namespace Arcxis_Cad_Tools
 
                                 ' Open the block reference
                                 Dim BlockRef As BlockReference = DirectCast(acTrans.GetObject(brId, OpenMode.ForRead), BlockReference)
-                                Dim TblRec As BlockTableRecord = TryCast(acTrans.GetObject(BlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+                                Dim TblRec As BlockTableRecord = TryCast(acTrans.GetObject(BlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
                                 Dim BlockName As String = TblRec.Name
                                 Dim Blkacent As Entity = CType(acTrans.GetObject(brId, OpenMode.ForWrite, True), Entity)
 
@@ -125,9 +122,9 @@ Namespace Arcxis_Cad_Tools
         Private Sub AddTBFiles()
 
             '' Get the current document and database
-            Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
-            Dim ACed As Editor = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor
+            Dim ACed As Editor = Application.DocumentManager.MdiActiveDocument.Editor
             Dim BlkNameList As List(Of String) = New List(Of String)
             Dim BlkDir As String = "C:\Temp\"
 

@@ -2,17 +2,16 @@
 Imports System.IO
 Imports System.Linq
 Imports System.Windows.Forms
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.Colors
-Imports Autodesk.AutoCAD.EditorInput
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.Interop.Common
-Imports Autodesk.AutoCAD.PlottingServices
-Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.DatabaseServices
 Imports System.Windows.Controls
-Imports Application = Autodesk.AutoCAD.ApplicationServices.Application
 Imports System.Drawing
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
+Imports Bricscad.PlottingServices
+Imports Application = Bricscad.ApplicationServices.Application
 
 Public Class Form_Automated_Printing_Info
 

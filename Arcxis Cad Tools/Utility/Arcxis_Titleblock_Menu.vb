@@ -1,18 +1,15 @@
-﻿' (C) Copyright 2011 by  
-'
-Imports System
-Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.EditorInput
+﻿Imports System
 Imports System.IO
 Imports System.Drawing.Printing
-Imports Autodesk.AutoCAD.Colors
 Imports System.Windows.Documents
-Imports Autodesk.AutoCAD.Interop
 Imports System.Linq
 Imports System.Text
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
 
 
 ' This line is not mandatory, but improves loading performances
@@ -166,39 +163,26 @@ Namespace Arcxis_Cad_Tools
             CheckBlockTable()
             PurgeBlockMethod()
 
-            Dim CurTrustPath As String = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("TRUSTEDPATHS")
-            Dim CurPaths As String = LCase(CurTrustPath)
-            Dim RemCurTrustPathList As List(Of String) = New List(Of String)
-            Dim isittrue As Integer = 0
-            RemCurTrustPathList = CurPaths.Split(";").ToList
-            Dim CleanedRemCurTrustPathList As List(Of String) = New List(Of String)
+            ' Determine if SupplementalPaths should run by checking required Egnyte paths
+            Dim curSearchPath As String = CStr(Application.GetSystemVariable("SRCHPATH"))
+            Dim existingPaths = curSearchPath.Split(";"c) _
+                                            .Where(Function(p) Not String.IsNullOrWhiteSpace(p)) _
+                                            .Select(Function(p) p.Trim()) _
+                                            .Distinct(StringComparer.OrdinalIgnoreCase) _
+                                            .ToList()
 
-            For Each entry In RemCurTrustPathList
-                If entry <> "" Then
-                    If Not CleanedRemCurTrustPathList.Contains(entry) Then
-                        CleanedRemCurTrustPathList.Add(entry)
-                    End If
-                End If
-            Next
+            ' Align required list with what SupplementalPaths actually adds (without stray subfolder differences)
+            Dim requiredPaths As String() = {
+                "\\egnyteDrive\energyinspectors\shared\arcxis\engineering\drafting standards\cad lisp routines\BricsCad",
+                "\\egnyteDrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards",
+                "\\egnyteDrive\energyinspectors\shared\onyx file system\templates\engineering\sealsoriginal",
+                "\\egnyteDrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards\CAD Lisp Routines\BricsCad\Support Files"
+            }
 
-            If CleanedRemCurTrustPathList.Count = 0 Then
-                isittrue = 1
-            End If
+            Dim needsUpdate As Boolean = requiredPaths.Any(Function(rp) Not IsPathPresent(existingPaths, rp))
 
-            For Each curpath As String In CleanedRemCurTrustPathList
-
-                If Not LCase(curpath).Contains("/Shared/Arcxis/Engineering/") Then
-
-                    isittrue = isittrue + 1
-
-                End If
-
-            Next
-
-            If isittrue > 0 Then
-
-                SupplementalPaths(CleanedRemCurTrustPathList)
-
+            If needsUpdate Then
+                SupplementalPaths()
             End If
 
             ATB_FirstLayoutName = frm.ListBox1.Items(0)
@@ -206,6 +190,35 @@ Namespace Arcxis_Cad_Tools
             frm.ShowDialog()
 
         End Sub
+        Private Shared Function NormalizePath(p As String) As String
+            If String.IsNullOrWhiteSpace(p) Then Return String.Empty
+            Dim s = p.Trim()
+            s = s.Replace("/", "\")
+            ' Collapse duplicate backslashes for UNC
+            While s.Contains("\\\\")
+                s = s.Replace("\\\\", "\\")
+            End While
+            ' Remove trailing backslash except for root UNC (\\server\share)
+            If s.EndsWith("\") Then
+                ' Count segments for UNC root
+                Dim parts = s.Split("\"c).Where(Function(x) x.Length > 0).ToList()
+                If parts.Count > 2 Then ' more than \\server\share
+                    s = s.TrimEnd("\"c)
+                End If
+            End If
+            Return s.ToLowerInvariant()
+        End Function
+
+        Private Shared Function IsPathPresent(existing As List(Of String), required As String) As Boolean
+            Dim reqNorm = NormalizePath(required)
+            For Each e In existing
+                Dim en = NormalizePath(e)
+                If en = reqNorm Then Return True
+                ' Allow substring / prefix matches to reduce false negatives due to minor differences
+                If en.StartsWith(reqNorm) OrElse reqNorm.StartsWith(en) Then Return True
+            Next
+            Return False
+        End Function
 
         Private Sub CheckBlockTable()
 
@@ -269,7 +282,7 @@ Namespace Arcxis_Cad_Tools
                         Module_Arcxis_TB.DpisNewName = "Arcxis Title Block"
 
 
-                        Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("imageframe", 1)
+                        Application.SetSystemVariable("imageframe", 1)
 
                         ' Define the name and image to use
                         Dim strImgName As String = "ArcxisLogo"
@@ -531,15 +544,15 @@ Namespace Arcxis_Cad_Tools
                             acText.Justify = AttachmentPoint.BottomLeft
                             acText.IsMirroredInX = False
                             acText.IsMirroredInY = False
-                            acText.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                            acText.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBottom
-                            acText.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(15.5708, 6.25, 0)
+                            acText.HorizontalMode = TextHorizontalMode.TextLeft
+                            acText.VerticalMode = TextVerticalMode.TextBottom
+                            acText.AlignmentPoint = New Teigha.Geometry.Point3d(15.5708, 6.25, 0)
 
                             acBlkTblRec.AppendEntity(acText)
 
                         End Using
 
-                        Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("imageframe", 0)
+                        Application.SetSystemVariable("imageframe", 0)
 
                         ' Update existing block references
                         For Each objID As ObjectId In acBlkTblRec.GetBlockReferenceIds(False, True)
@@ -548,7 +561,7 @@ Namespace Arcxis_Cad_Tools
 
                         Next
 
-                        Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("imageframe", 0)
+                        Application.SetSystemVariable("imageframe", 0)
 
                         RenameTitleBlock4()
 
@@ -569,7 +582,7 @@ Namespace Arcxis_Cad_Tools
         Private Sub RenameTitleBlock3()
 
             ' Get the current database and start a transaction
-            Dim acCurDb As Autodesk.AutoCAD.DatabaseServices.Database
+            Dim acCurDb As Database
             acCurDb = Application.DocumentManager.MdiActiveDocument.Database
             Dim acdoc As Document = Application.DocumentManager.MdiActiveDocument
 
@@ -611,7 +624,7 @@ Namespace Arcxis_Cad_Tools
         Private Sub RenameTitleBlock4()
 
             ' Get the current database and start a transaction
-            Dim acCurDb As Autodesk.AutoCAD.DatabaseServices.Database
+            Dim acCurDb As Database
             acCurDb = Application.DocumentManager.MdiActiveDocument.Database
             Dim acdoc As Document = Application.DocumentManager.MdiActiveDocument
 
@@ -656,7 +669,7 @@ Namespace Arcxis_Cad_Tools
             Using db As Database = HostApplicationServices.WorkingDatabase
                 Using acLckDoc As DocumentLock = acdoc.LockDocument()
                     Using tr As Transaction = db.TransactionManager.StartTransaction()
-                        Dim ed As Editor = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor
+                        Dim ed As Editor = Application.DocumentManager.MdiActiveDocument.Editor
                         Try
                             Dim tv() As TypedValue = {New TypedValue(DxfCode.Start, "INSERT"), New TypedValue(DxfCode.BlockName, "DESIGN X")}
                             Dim sf As SelectionFilter = New SelectionFilter(tv)
@@ -682,7 +695,7 @@ Namespace Arcxis_Cad_Tools
                             db.Purge(idcoll)
                             btr.Erase(True)
                             tr.Commit()
-                        Catch ex As Autodesk.AutoCAD.Runtime.Exception
+                        Catch ex As teigha.Runtime.Exception
                             'MessageBox.Show(ex.StackTrace)
                         End Try
                     End Using

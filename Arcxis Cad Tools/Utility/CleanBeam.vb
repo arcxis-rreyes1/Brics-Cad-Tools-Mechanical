@@ -1,12 +1,11 @@
-﻿' (C) Copyright 2011 by  
-'
-Imports System
-Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.EditorInput
+﻿Imports System
 Imports System.IO
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
 
 ' This line is not mandatory, but improves loading performances
 <Assembly: CommandClass(GetType(Arcxis_Cad_Tools.CleanBeam))>
@@ -75,7 +74,7 @@ Namespace Arcxis_Cad_Tools
 
         Private Sub Eraselines(PP1 As Point3d, PP2 As Point3d)
 
-            Dim doc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+            Dim doc As Document = Application.DocumentManager.MdiActiveDocument
             Dim ed As Editor = doc.Editor
             Dim Ent As Entity
             Dim Ent2 As Entity
@@ -119,8 +118,8 @@ Namespace Arcxis_Cad_Tools
 
                         Dim tv As TypedValue() = New TypedValue() {New TypedValue(0, "*LINE"), New TypedValue(DxfCode.LayerName, "FDSHORT,S-FND-BEAM")}
                         Dim sf As SelectionFilter = New SelectionFilter(tv)
-                        Dim result As PromptSelectionResult = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor.SelectFence(pts, sf)
-                        Dim result3 As PromptSelectionResult = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor.SelectWindowPolygon(pts, sf)
+                        Dim result As PromptSelectionResult = Application.DocumentManager.MdiActiveDocument.Editor.SelectFence(pts, sf)
+                        Dim result3 As PromptSelectionResult = Application.DocumentManager.MdiActiveDocument.Editor.SelectWindowPolygon(pts, sf)
 
                         If (result.Status = PromptStatus.OK) Then
 
@@ -157,7 +156,7 @@ Namespace Arcxis_Cad_Tools
 
         Private Sub ExtendLines2(PP1 As Point3d, PP2 As Point3d)
 
-            Dim doc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+            Dim doc As Document = Application.DocumentManager.MdiActiveDocument
             Dim ed As Editor = doc.Editor
             Dim Ent As Entity
             Dim lay As String
@@ -216,7 +215,7 @@ Namespace Arcxis_Cad_Tools
 
         Private Sub IntersectLines(PP1 As Point3d, PP2 As Point3d)
 
-            Dim doc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+            Dim doc As Document = Application.DocumentManager.MdiActiveDocument
             Dim ed As Editor = doc.Editor
             Dim db As Database = doc.Database
 

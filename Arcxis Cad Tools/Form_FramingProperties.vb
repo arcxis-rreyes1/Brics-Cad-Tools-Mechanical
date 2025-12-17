@@ -5,18 +5,16 @@ Imports System.Reflection
 Imports System.Windows.Forms
 Imports Arcxis_Cad_Tools
 Imports Arcxis_Cad_Tools.Arcxis_Cad_Tools
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.Colors
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.EditorInput
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.Interop.Common
-Imports Autodesk.AutoCAD.Runtime
 Imports DocumentFormat.OpenXml.Drawing.Charts
-Imports Microsoft.WindowsAPICodePack.Shell.PropertySystem.SystemProperties.System
-Imports Application = Autodesk.AutoCAD.ApplicationServices.Application
 Imports Color = System.Drawing.Color
-Imports Document = Autodesk.AutoCAD.ApplicationServices.Document
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
+Imports Bricscad.PlottingServices
+Imports Application = Bricscad.ApplicationServices.Application
 
 Public Class Form_FramingProperties
     Private Sub Form_DrawingProperties_Load(sender As Object, e As EventArgs) Handles Me.Load
@@ -216,7 +214,7 @@ Public Class Form_FramingProperties
         Dim acDb = acDoc.Database
         Dim accurdb = acDoc.Database
         Dim ed = acDoc.Editor
-        Dim acEd As Autodesk.AutoCAD.EditorInput.Editor = acDoc.Editor
+        Dim acEd As Editor = acDoc.Editor
 
         Using acLckDoc As DocumentLock = acDoc.LockDocument()
 

@@ -1,19 +1,18 @@
 ﻿
 Imports System
-    Imports System.Linq
-    Imports System.Windows.Forms
+Imports System.Linq
+Imports System.Windows.Forms
 Imports Arcxis_Cad_Tools.Arcxis_Cad_Tools
 Imports System.Drawing
-    Imports Autodesk.AutoCAD.ApplicationServices
-    Imports Autodesk.AutoCAD.Colors
-    Imports Autodesk.AutoCAD.DatabaseServices
-    Imports Autodesk.AutoCAD.EditorInput
-    Imports Autodesk.AutoCAD.Geometry
-    Imports Autodesk.AutoCAD.Interop.Common
-    Imports Autodesk.AutoCAD.PlottingServices
-    Imports Autodesk.AutoCAD.Runtime
-    Imports Application = Autodesk.AutoCAD.ApplicationServices.Application
-    Imports Color = Autodesk.AutoCAD.Colors.Color
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
+Imports Bricscad.PlottingServices
+Imports Application = Bricscad.ApplicationServices.Application
+Imports Color = Teigha.Colors.Color
 
 Public Class Form_MEPSetup
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
@@ -102,17 +101,17 @@ Public Class Form_MEPSetup
             End If
         Next
 
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
-        Dim aced As Autodesk.AutoCAD.EditorInput.Editor = acDoc.Editor
+        Dim aced As Editor = acDoc.Editor
 
-        Dim otm As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("orthomode")
-        Dim oldos As Integer = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("osmode")
+        Dim otm As Integer = Application.GetSystemVariable("orthomode")
+        Dim oldos As Integer = Application.GetSystemVariable("osmode")
         '' Set system variable to new value
-        Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("orthomode", 1)
-        Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("osmode", 32)
-        Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("imageframe", 1)
-        Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("imageframe", 0)
+        Application.SetSystemVariable("orthomode", 1)
+        Application.SetSystemVariable("osmode", 32)
+        Application.SetSystemVariable("imageframe", 1)
+        Application.SetSystemVariable("imageframe", 0)
 
         Dim opts As New PromptPointOptions(vbLf & "Select top left corner of first layout: ")
         Dim res1 As PromptPointResult = aced.GetPoint(opts)
@@ -223,8 +222,8 @@ Public Class Form_MEPSetup
 
         End If
 
-        Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("orthomode", otm)
-        Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("osmode", oldos)
+        Application.SetSystemVariable("orthomode", otm)
+        Application.SetSystemVariable("osmode", oldos)
 
         SetCustomDwgPropReliable("PLAN", PlanName)
         SetCustomDwgPropReliable("BUILDER", Builder)
@@ -252,9 +251,9 @@ Public Class Form_MEPSetup
 
     Public Sub CreatePageBlock()
 
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
-        Dim acEd As Autodesk.AutoCAD.EditorInput.Editor = acDoc.Editor
+        Dim acEd As Editor = acDoc.Editor
 
         Using acLckDoc As DocumentLock = acDoc.LockDocument()
 
@@ -310,8 +309,8 @@ Public Class Form_MEPSetup
                 attDef.LockPositionInBlock = True
                 attDef.Layer = "0"
                 attDef.Color = Color.FromColorIndex(ColorMethod.ByAci, 3)
-                attDef.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                attDef.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBase
+                attDef.HorizontalMode = TextHorizontalMode.TextLeft
+                attDef.VerticalMode = TextVerticalMode.TextBase
 
                 Dim attDef1 As New AttributeDefinition()
                 attDef1.Position = New Point3d(363.5456, 7.6399, 0)
@@ -328,8 +327,8 @@ Public Class Form_MEPSetup
                 attDef1.LockPositionInBlock = True
                 attDef1.Layer = "0"
                 attDef1.Color = Color.FromColorIndex(ColorMethod.ByAci, 3)
-                attDef1.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                attDef1.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBase
+                attDef1.HorizontalMode = TextHorizontalMode.TextLeft
+                attDef1.VerticalMode = TextVerticalMode.TextBase
 
                 Dim attDef2 As New AttributeDefinition()
                 attDef2.Position = New Point3d(741.7474, 7.6399, 0)
@@ -346,16 +345,16 @@ Public Class Form_MEPSetup
                 attDef2.LockPositionInBlock = False
                 attDef2.Layer = "0"
                 attDef2.Color = Color.FromColorIndex(ColorMethod.ByAci, 2)
-                attDef2.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                attDef2.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBase
+                attDef2.HorizontalMode = TextHorizontalMode.TextLeft
+                attDef2.VerticalMode = TextVerticalMode.TextBase
 
                 Dim attdef3 As New AttributeDefinition()
                 attdef3.Position = New Point3d(-6.3382, -471.8082, 0)
                 attdef3.Height = 48.0092
                 attdef3.TextStyleId = acCurDb.Textstyle ' Uses current text style ("romans" if already set)
                 attdef3.Justify = AttachmentPoint.BaseLeft
-                attdef3.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                attdef3.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBase
+                attdef3.HorizontalMode = TextHorizontalMode.TextLeft
+                attdef3.VerticalMode = TextVerticalMode.TextBase
                 attdef3.Tag = "SW"
                 attdef3.Prompt = "LEFT OR RIGHT"
                 attdef3.TextString = "SW"
@@ -372,8 +371,8 @@ Public Class Form_MEPSetup
                 attDef4.Height = 48.0092
                 attDef4.TextStyleId = acCurDb.Textstyle ' Uses current text style ("romans" if already set)
                 attDef4.Justify = AttachmentPoint.BaseLeft
-                attDef4.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                attDef4.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBase
+                attDef4.HorizontalMode = TextHorizontalMode.TextLeft
+                attDef4.VerticalMode = TextVerticalMode.TextBase
                 attDef4.Tag = "PRNT"
                 attDef4.Prompt = "PRINTING ORDER"
                 attDef4.TextString = "1"
@@ -390,8 +389,8 @@ Public Class Form_MEPSetup
                 attdef5.Height = 48.0092
                 attdef5.TextStyleId = acCurDb.Textstyle ' Uses current text style ("romans" if already set)
                 attdef5.Justify = AttachmentPoint.BaseLeft
-                attdef5.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                attdef5.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBase
+                attdef5.HorizontalMode = TextHorizontalMode.TextLeft
+                attdef5.VerticalMode = TextVerticalMode.TextBase
                 attdef5.Tag = "SIZE"
                 attdef5.Prompt = "SIZE OF PAGE"
                 attdef5.TextString = "11x17"
@@ -408,8 +407,8 @@ Public Class Form_MEPSetup
                 attdef6.Height = 23.9247
                 attdef6.TextStyleId = acCurDb.Textstyle ' Uses current text style ("romans" if already set)
                 attdef6.Justify = AttachmentPoint.BaseLeft
-                attdef6.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                attdef6.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBase
+                attdef6.HorizontalMode = TextHorizontalMode.TextLeft
+                attdef6.VerticalMode = TextVerticalMode.TextBase
                 attdef6.Tag = "OPTIONS"
                 attdef6.Prompt = "OPTIONS"
                 attdef6.TextString = "OPTIONS"
@@ -426,8 +425,8 @@ Public Class Form_MEPSetup
                 attdef7.Height = 48.0092
                 attdef7.TextStyleId = acCurDb.Textstyle ' Uses current text style ("romans" if already set)
                 attdef7.Justify = AttachmentPoint.BaseLeft
-                attdef7.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                attdef7.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBase
+                attdef7.HorizontalMode = TextHorizontalMode.TextLeft
+                attdef7.VerticalMode = TextVerticalMode.TextBase
                 attdef7.Tag = "ELEV"
                 attdef7.Prompt = "ELEVATION"
                 attdef7.TextString = "ELEV"
@@ -472,9 +471,9 @@ Public Class Form_MEPSetup
 
     Private Sub PageBlockInsert(insPt As Point3d, SequenceCounter As Integer, Elevation As String, LayoutType As String, Swing As String, PaperSpaceScale As String, Optional ByVal Options As String = "", Optional ByVal venttype As String = "", Optional ByVal encapsulated As Boolean = False)
 
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
-        Dim aced As Autodesk.AutoCAD.EditorInput.Editor = acDoc.Editor
+        Dim aced As Editor = acDoc.Editor
 
         Using acLckDoc As DocumentLock = acDoc.LockDocument()
 
@@ -552,35 +551,35 @@ Public Class Form_MEPSetup
 
                             ElseIf tagvalue = "MOD" Then
 
-                                    attRef.TextString = LayoutType
+                                attRef.TextString = LayoutType
 
-                                ElseIf tagvalue = "OPTIONS" Then
+                            ElseIf tagvalue = "OPTIONS" Then
 
-                                    If Options <> "" Then
+                                If Options <> "" Then
 
-                                        attRef.TextString = Options
+                                    attRef.TextString = Options
 
-                                    Else
+                                Else
 
-                                        attRef.TextString = ""
+                                    attRef.TextString = ""
 
-                                    End If
+                                End If
 
-                                ElseIf tagvalue = "PRNT" Then
+                            ElseIf tagvalue = "PRNT" Then
 
-                                    attRef.TextString = SequenceCounter
+                                attRef.TextString = SequenceCounter
 
-                                ElseIf tagvalue = "ELEV" Then
+                            ElseIf tagvalue = "ELEV" Then
 
-                                    attRef.TextString = Elevation
+                                attRef.TextString = Elevation
 
-                                ElseIf tagvalue = "SW" Then
+                            ElseIf tagvalue = "SW" Then
 
-                                    attRef.TextString = Swing
+                                attRef.TextString = Swing
 
-                                ElseIf tagvalue = "SIZE" Then
+                            ElseIf tagvalue = "SIZE" Then
 
-                                    attRef.TextString = PaperSpaceScale
+                                attRef.TextString = PaperSpaceScale
 
                             End If
 
@@ -606,9 +605,9 @@ Public Class Form_MEPSetup
 
     Public Sub CreateWorkSpaceBlock()
 
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
-        Dim acEd As Autodesk.AutoCAD.EditorInput.Editor = acDoc.Editor
+        Dim acEd As Editor = acDoc.Editor
 
         Using acLckDoc As DocumentLock = acDoc.LockDocument()
 
@@ -653,9 +652,9 @@ Public Class Form_MEPSetup
 
     Private Sub WorkSpaceBlockInsert(insPt As Point3d)
 
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
-        Dim aced As Autodesk.AutoCAD.EditorInput.Editor = acDoc.Editor
+        Dim aced As Editor = acDoc.Editor
 
         Using acLckDoc As DocumentLock = acDoc.LockDocument()
 
@@ -709,9 +708,9 @@ Public Class Form_MEPSetup
     End Sub
     Public Shared Sub CreatePlanInfoBlock()
 
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
-        Dim acEd As Autodesk.AutoCAD.EditorInput.Editor = acDoc.Editor
+        Dim acEd As Editor = acDoc.Editor
 
         Using acLckDoc As DocumentLock = acDoc.LockDocument()
 
@@ -786,8 +785,8 @@ Public Class Form_MEPSetup
                 attDef.LockPositionInBlock = True
                 attDef.Layer = "0"
                 attDef.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
-                attDef.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                attDef.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBase
+                attDef.HorizontalMode = TextHorizontalMode.TextLeft
+                attDef.VerticalMode = TextVerticalMode.TextBase
 
                 ' Create attribute definition
                 Dim attdef1 As New AttributeDefinition()
@@ -807,8 +806,8 @@ Public Class Form_MEPSetup
                 attdef1.LockPositionInBlock = True
                 attdef1.Layer = "0"
                 attdef1.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
-                attdef1.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                attdef1.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBase
+                attdef1.HorizontalMode = TextHorizontalMode.TextLeft
+                attdef1.VerticalMode = TextVerticalMode.TextBase
 
                 Dim attdef2 As New AttributeDefinition()
                 attdef2.Position = New Point3d(-70.9474, 1, 0)
@@ -827,8 +826,8 @@ Public Class Form_MEPSetup
                 attdef2.LockPositionInBlock = True
                 attdef2.Layer = "0"
                 attdef2.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
-                attdef2.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                attdef2.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBase
+                attdef2.HorizontalMode = TextHorizontalMode.TextLeft
+                attdef2.VerticalMode = TextVerticalMode.TextBase
 
                 btr1.AppendEntity(attDef)
                 acTrans.AddNewlyCreatedDBObject(attDef, True)
@@ -883,9 +882,9 @@ Public Class Form_MEPSetup
     End Sub
     Public Shared Sub PlanInfoBlockInsert(insPt As Point3d, Builder As String, Plan As String, SealLoop As List(Of String))
 
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
-        Dim aced As Autodesk.AutoCAD.EditorInput.Editor = acDoc.Editor
+        Dim aced As Editor = acDoc.Editor
 
         Using acLckDoc As DocumentLock = acDoc.LockDocument()
 
@@ -1046,7 +1045,7 @@ Public Class Form_MEPSetup
     Private Shared Function IsBlockRefOfName(br As BlockReference, target As String, tr As Transaction) As Boolean
         Dim name As String = br.Name
         If br.IsDynamicBlock Then
-            Dim dyn = DirectCast(tr.GetObject(br.DynamicBlockTableRecord, OpenMode.ForRead), BlockTableRecord)
+            Dim dyn = DirectCast(tr.GetObject(br.BlockTableRecord, OpenMode.ForRead), BlockTableRecord)
             name = dyn.Name
         End If
         Return String.Equals(name, target, StringComparison.OrdinalIgnoreCase)

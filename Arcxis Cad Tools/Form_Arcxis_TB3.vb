@@ -1,17 +1,16 @@
 ﻿Imports System
-Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.EditorInput
-Imports Autodesk.AutoCAD.PlottingServices
 Imports System.Drawing.Printing
 Imports System.IO
-Imports Autodesk.AutoCAD.Colors
-Imports Autodesk.AutoCAD.GraphicsInterface
 Imports System.Collections.Generic
 Imports System.Linq
 Imports System.Text
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
+Imports Bricscad.PlottingServices
 
 Public Class Form_Arcxis_TB3
 
@@ -417,7 +416,7 @@ Public Class Form_Arcxis_TB3
                         ' Open the block reference
                         Dim RevBlockRef As BlockReference = DirectCast(acTrans.GetObject(objID, OpenMode.ForRead), BlockReference)
 
-                        Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+                        Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
 
                         Dim RevvblockName As String = RevTblRec.Name
 
@@ -452,7 +451,7 @@ Public Class Form_Arcxis_TB3
 
                 For Each vpId As ObjectId In vpIds
 
-                    Dim layoutviewport = TryCast(acTrans.GetObject(vpId, OpenMode.ForWrite), Autodesk.AutoCAD.DatabaseServices.Viewport)
+                    Dim layoutviewport = TryCast(acTrans.GetObject(vpId, OpenMode.ForWrite), Viewport)
 
                     If layoutviewport IsNot Nothing Then
 

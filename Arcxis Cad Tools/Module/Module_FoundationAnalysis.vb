@@ -1,4 +1,8 @@
-﻿Imports Autodesk.AutoCAD.Geometry
+﻿Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
 
 Module Module_FoundationAnalysis
 

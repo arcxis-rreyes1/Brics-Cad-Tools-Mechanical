@@ -9,14 +9,6 @@ Imports System.Runtime.InteropServices.ComTypes
 Imports System.Security.Policy
 Imports System.Threading
 Imports System.Windows.Forms
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.Colors
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.EditorInput
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.GraphicsInterface
-Imports Autodesk.AutoCAD.PlottingServices
-Imports Autodesk.AutoCAD.Runtime
 Imports DocumentFormat.OpenXml.Drawing
 Imports DocumentFormat.OpenXml.Drawing.Charts
 Imports DocumentFormat.OpenXml.Drawing.Diagrams
@@ -27,18 +19,23 @@ Imports DocumentFormat.OpenXml.Wordprocessing
 Imports Microsoft.Office.Interop
 Imports Microsoft.SqlServer.Server
 Imports PdfSharp.Drawing
+Imports PdfSharp
 Imports PdfSharp.Pdf
 Imports PdfSharp.Pdf.IO
-Imports Application = Autodesk.AutoCAD.ApplicationServices.Application
-Imports Color = Autodesk.AutoCAD.Colors.Color
-Imports Document = Autodesk.AutoCAD.ApplicationServices.Document
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
+Imports Bricscad.PlottingServices
 Imports Excel = Microsoft.Office.Interop.Excel
-Imports Exception = Autodesk.AutoCAD.Runtime.Exception
-Imports Layout = Autodesk.AutoCAD.DatabaseServices.Layout
 Imports Path = System.IO.Path
-Imports Polyline = Autodesk.AutoCAD.DatabaseServices.Polyline
-Imports Tuple = System.Tuple
-Imports Viewport = Autodesk.AutoCAD.DatabaseServices.Viewport
+Imports Bricscad.ApplicationServices
+Imports Application = Bricscad.ApplicationServices.Application
+Imports Document = Bricscad.ApplicationServices.Document
+Imports Exception = Teigha.Runtime.Exception
+Imports Layout = Teigha.DatabaseServices.Layout
+Imports Color = Teigha.Colors.Color
 
 
 ' This line is not mandatory, but improves loading performances
@@ -59,6 +56,40 @@ Namespace Arcxis_Cad_Tools
             Dim frm As New Form_DrawMembers
             frm.Show()
         End Sub
+        ' Temporary: installable first-chance hook to break in VS when Teigha throws
+        <CommandMethod("InstallFirstChanceHook")>
+        Public Sub InstallFirstChanceHook()
+            Try
+                AddHandler AppDomain.CurrentDomain.FirstChanceException, AddressOf OnFirstChance
+                Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage(vbLf & "FirstChance hook installed")
+            Catch ex As System.Exception
+                ' avoid throwing during install
+            End Try
+        End Sub
+
+        Private Shared _lastTeigha As Teigha.Runtime.Exception
+
+        <CommandMethod("RemoveFirstChanceHook")>
+        Public Sub RemoveFirstChanceHook()
+            Try
+                RemoveHandler AppDomain.CurrentDomain.FirstChanceException, AddressOf OnFirstChance
+                Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage(vbLf & "FirstChance hook removed")
+            Catch
+            End Try
+        End Sub
+
+        Private Sub OnFirstChance(sender As Object, e As System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs)
+            Try
+                Dim odEx = TryCast(e.Exception, Teigha.Runtime.Exception)
+                If odEx Is Nothing Then Return
+                _lastTeigha = odEx ' inspect this anytime in debugger
+                Application.DocumentManager.MdiActiveDocument.Editor.WriteMessage(
+            vbLf & $"Teigha thrown: {odEx.ErrorStatus} - {odEx.Message}")
+                Debugger.Break()
+            Catch
+            End Try
+        End Sub
+
 
         <CommandMethod("SDFT")>
         Sub SetupDrawings()
@@ -1214,14 +1245,14 @@ Namespace Arcxis_Cad_Tools
 
                 layoutId = acLayoutMgr.GetLayoutId(Layout(4))
 
-                Dim acLayout As Autodesk.AutoCAD.DatabaseServices.Layout = DirectCast(acTrans.GetObject(layoutId, OpenMode.ForWrite), Autodesk.AutoCAD.DatabaseServices.Layout)
+                Dim acLayout As Layout = DirectCast(acTrans.GetObject(layoutId, OpenMode.ForWrite), Layout)
 
                 Try
                     Dim Layid As ObjectId
 
                     Layid = layouts.GetAt(Layout(4))
 
-                    Dim lay As Autodesk.AutoCAD.DatabaseServices.Layout = TryCast(acTrans.GetObject(Layid, OpenMode.ForRead), Autodesk.AutoCAD.DatabaseServices.Layout)
+                    Dim lay As Layout = TryCast(acTrans.GetObject(Layid, OpenMode.ForRead), Layout)
                     '' Open the Block table for read
                     Dim acBlkTbl As BlockTable = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead)
                     '' Open the Block table record Paper space for write
@@ -1239,7 +1270,7 @@ Namespace Arcxis_Cad_Tools
 
                             ' Open the block reference
                             Dim RevBlockRef As BlockReference = DirectCast(acTrans.GetObject(objID, OpenMode.ForRead), BlockReference)
-                            Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+                            Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
                             Dim RevvblockName As String = RevTblRec.Name
 
                             If RevvblockName.Contains("Arcxis Title Block") Then
@@ -1347,7 +1378,7 @@ Namespace Arcxis_Cad_Tools
 
                     ModifyViewPortCenter(vpIds, Layout(4), Layout(1), Layout(5))
 
-                Catch es As Autodesk.AutoCAD.Runtime.Exception
+                Catch es As Exception
                     MsgBox(es.Message)
                 End Try
 
@@ -1478,7 +1509,7 @@ Namespace Arcxis_Cad_Tools
 
                 ' Touch ONLY the requested viewports
                 For Each vpId As ObjectId In VPIDS
-                    Dim vp = TryCast(tr.GetObject(vpId, OpenMode.ForRead), Autodesk.AutoCAD.DatabaseServices.Viewport)
+                    Dim vp = TryCast(tr.GetObject(vpId, OpenMode.ForRead), Viewport)
                     If vp Is Nothing Then Continue For
                     'If vp.Number = 1 Then Continue For ' never touch overall PS viewport
 
@@ -1491,7 +1522,7 @@ Namespace Arcxis_Cad_Tools
                     ' Do not change vp.Width / vp.Height (paper units)
 
                     ' Camera straight down, no twist
-                    vp.ViewDirection = Autodesk.AutoCAD.Geometry.Vector3d.ZAxis
+                    vp.ViewDirection = Teigha.Geometry.Vector3d.ZAxis
                     vp.TwistAngle = 0.0
 
                     ' Deterministic zoom: modelHeight = paperHeight * CustomScale
@@ -1923,9 +1954,9 @@ Namespace Arcxis_Cad_Tools
 
         Public Shared Sub CreateViewportSizeRectangle(layoutid As ObjectId)
 
-            Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
-            Dim acEd As Autodesk.AutoCAD.EditorInput.Editor = acDoc.Editor
+            Dim acEd As Editor = acDoc.Editor
 
             Using acLckDoc As DocumentLock = acDoc.LockDocument()
 
@@ -2035,9 +2066,9 @@ Namespace Arcxis_Cad_Tools
         <CommandMethod("CleanUpFile")>
         Sub CleanUpFile()
 
-            Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
-            Dim acEd As Autodesk.AutoCAD.EditorInput.Editor = acDoc.Editor
+            Dim acEd As Editor = acDoc.Editor
 
             Using acLckDoc As DocumentLock = acDoc.LockDocument()
 
@@ -2187,7 +2218,7 @@ Namespace Arcxis_Cad_Tools
         End Function
 
         Public Shared Sub CreateViewport(layoutid)
-            Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
 
             Using acDoc.LockDocument()
@@ -2318,9 +2349,7 @@ Namespace Arcxis_Cad_Tools
 
                         Dim layoutId As ObjectId
                         KeepNames.Add(layoutName)
-                        If lm.LayoutExists(layoutName) Then
-                            'acEd.WriteMessage(vbLf & $"Layout '{layoutName}' already exists, skipping.")
-                            'Continue For
+                        If LayoutExistsByDictionary(acCurdb, layoutName) Then
                             layoutId = lm.GetLayoutId(layoutName)
                         Else
                             layoutId = lm.CreateLayout(layoutName)
@@ -2471,6 +2500,21 @@ Namespace Arcxis_Cad_Tools
 
         End Sub
 
+        Public Shared Function LayoutExistsByDictionary(db As Database, layoutName As String) As Boolean
+            Using tr As Transaction = db.TransactionManager.StartTransaction()
+                Dim layouts As DBDictionary = TryCast(tr.GetObject(db.LayoutDictionaryId, OpenMode.ForRead), DBDictionary)
+                If layouts Is Nothing Then Return False
+                For Each entry As DBDictionaryEntry In layouts
+                    Dim lo As Layout = TryCast(tr.GetObject(entry.Value, OpenMode.ForRead), Layout)
+                    If lo IsNot Nothing AndAlso String.Equals(lo.LayoutName, layoutName, StringComparison.OrdinalIgnoreCase) Then
+                        Return True
+                    End If
+                Next
+                tr.Commit()
+            End Using
+            Return False
+        End Function
+
         Public Shared Sub PageSetUp11x17(layoutname As String, Optional ByVal CTBFile As String = "")
             ' Get the current document and database, and start a transaction
             Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
@@ -2514,7 +2558,7 @@ Namespace Arcxis_Cad_Tools
                         Dim acPlSetVdr As PlotSettingsValidator = PlotSettingsValidator.Current
                         acPlSetVdr.SetPlotConfigurationName(acPlSet, "ARCXIS - DWG To PDF.pc3", "ANSI_full_bleed_B_(11.00_x_17.00_Inches)")
                         acPlSetVdr.SetZoomToPaperOnUpdate(acPlSet, True)
-                        acPlSetVdr.SetPlotType(acPlSet, Autodesk.AutoCAD.DatabaseServices.PlotType.Extents)
+                        acPlSetVdr.SetPlotType(acPlSet, Teigha.DatabaseServices.PlotType.Extents)
                         Dim lowerLeft As New Point2d(0, 0)
                         Dim upperRight As New Point2d(17, 11)
                         Dim extents As New Extents2d(lowerLeft, upperRight)
@@ -2536,7 +2580,7 @@ Namespace Arcxis_Cad_Tools
                         acPlSetVdr.SetPlotRotation(acPlSet, PlotRotation.Degrees270)
                         acPlSetVdr.SetCurrentStyleSheet(acPlSet, CTBFile)
 
-                    Catch es As Autodesk.AutoCAD.Runtime.Exception
+                    Catch es As Exception
                         MsgBox(es.Message)
                     End Try
 
@@ -2692,7 +2736,7 @@ Namespace Arcxis_Cad_Tools
             Dim acDb = acDoc.Database
             Dim accurdb = acDoc.Database
             Dim ed = acDoc.Editor
-            Dim acEd As Autodesk.AutoCAD.EditorInput.Editor = acDoc.Editor
+            Dim acEd As Editor = acDoc.Editor
             Dim BlockBuilder As String = ""
             Dim BlockPlan As String = ""
             Dim BlockStamps As String = ""
@@ -3322,17 +3366,17 @@ Namespace Arcxis_Cad_Tools
 
         Private Function SnapSysVars() As SysVarSnapshot
             Return New SysVarSnapshot With {
-        .BackGroundPlot = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("BackGroundPlot"),
-        .CMDDIA = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("CMDDIA"),
-        .FILEDIA = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("FILEDIA")
+        .BackGroundPlot = Application.GetSystemVariable("BackGroundPlot"),
+        .CMDDIA = Application.GetSystemVariable("CMDDIA"),
+        .FILEDIA = Application.GetSystemVariable("FILEDIA")
     }
         End Function
 
         Private Sub RestoreSysVars(s As SysVarSnapshot)
             Try
-                Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("BackGroundPlot", s.BackGroundPlot)
-                Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("CMDDIA", s.CMDDIA)
-                Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("FILEDIA", s.FILEDIA)
+                Application.SetSystemVariable("BackGroundPlot", s.BackGroundPlot)
+                Application.SetSystemVariable("CMDDIA", s.CMDDIA)
+                Application.SetSystemVariable("FILEDIA", s.FILEDIA)
             Catch
                 ' swallow – we’re restoring best-effort
             End Try
@@ -3743,9 +3787,9 @@ Namespace Arcxis_Cad_Tools
                             Next
 
                             If crossingFound Then
-                                rect.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(ColorMethod.ByAci, 1) ' Red
+                                rect.Color = Color.FromColorIndex(ColorMethod.ByAci, 1) ' Red
                             Else
-                                rect.Color = Autodesk.AutoCAD.Colors.Color.FromColorIndex(ColorMethod.ByLayer, 0) ' ByLayer
+                                rect.Color = Color.FromColorIndex(ColorMethod.ByLayer, 0) ' ByLayer
                             End If
                         Next
 
@@ -3992,7 +4036,7 @@ Namespace Arcxis_Cad_Tools
                                             angle = 240
                                             fontSize = 240
                                             ' Prepare font and brush with alpha
-                                            Dim font As New XFont(fontName, fontSize, XFontStyle.Regular)
+                                            Dim font As New XFont(fontName, fontSize, XFontStyleEx.Regular)
                                             Dim col As XColor = XColor.FromArgb(CInt(255.0 * Math.Max(0.0, Math.Min(1.0, opacity))), XColors.Black)
                                             Dim brush As New XSolidBrush(col)
 
@@ -4178,7 +4222,7 @@ Namespace Arcxis_Cad_Tools
                                 Using gfx As PdfSharp.Drawing.XGraphics = PdfSharp.Drawing.XGraphics.FromPdfPage(added, PdfSharp.Drawing.XGraphicsPdfPageOptions.Append)
                                     Dim pageW = added.Width.Point
                                     Dim pageH = added.Height.Point
-                                    Dim font As New PdfSharp.Drawing.XFont(fontName, fontSize, PdfSharp.Drawing.XFontStyle.Bold)
+                                    Dim font As New PdfSharp.Drawing.XFont(fontName, fontSize, PdfSharp.Drawing.XFontStyleEx.Bold)
                                     Dim col As PdfSharp.Drawing.XColor = PdfSharp.Drawing.XColor.FromArgb(CInt(255.0 * Math.Max(0.0, Math.Min(1.0, opacity))), PdfSharp.Drawing.XColors.Black)
                                     Dim brush As New PdfSharp.Drawing.XSolidBrush(col)
 
@@ -4327,7 +4371,7 @@ Namespace Arcxis_Cad_Tools
             Dim ed As Editor = acDoc.Editor
 
             ' Prompt for Excel file
-            Dim ofd As New Windows.Forms.OpenFileDialog() With {
+            Dim ofd As New System.Windows.Forms.OpenFileDialog() With {
                 .Title = "Select Excel file with layer definitions",
                 .Filter = "Excel Files|*.xlsx;*.xls|All Files|*.*",
                 .Multiselect = False

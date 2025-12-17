@@ -1,15 +1,13 @@
-﻿' (C) Copyright 2011 by  
-'
-Imports System
-Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.EditorInput
+﻿Imports System
 Imports System.Linq
 Imports System.IO
-Imports Autodesk.AutoCAD.Interop
-Imports Autodesk.AutoCAD.Colors
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
+Imports Bricscad.PlottingServices
 
 
 ' This line is not mandatory, but improves loading performances
@@ -51,7 +49,7 @@ Namespace Arcxis_Cad_Tools
             Dim LineList As New List(Of Entity)
             Dim PLineList As New List(Of Entity)
 
-            Autodesk.AutoCAD.ApplicationServices.Application.SetSystemVariable("imageframe", 0)
+            Application.SetSystemVariable("imageframe", 0)
 
             Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
 
@@ -300,9 +298,9 @@ Namespace Arcxis_Cad_Tools
                         acText.Justify = AttachmentPoint.BottomLeft
                         acText.IsMirroredInX = False
                         acText.IsMirroredInY = False
-                        acText.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextLeft
-                        acText.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextBottom
-                        acText.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(15.6874, 8.2728, 0)
+                        acText.HorizontalMode = TextHorizontalMode.TextLeft
+                        acText.VerticalMode = TextVerticalMode.TextBottom
+                        acText.AlignmentPoint = New Teigha.Geometry.Point3d(15.6874, 8.2728, 0)
 
                         acBlkTblRec.AppendEntity(acText)
 

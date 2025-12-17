@@ -1,14 +1,20 @@
 ﻿Imports System
-Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.EditorInput
-Imports Autodesk.AutoCAD.PlottingServices
 Imports System.Drawing.Printing
 Imports System.IO
-Imports Autodesk.AutoCAD.Colors
-Imports Autodesk.AutoCAD.GraphicsInterface
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
+Imports Bricscad.PlottingServices
+Imports PlotType = Teigha.DatabaseServices.PlotType
+Imports Exception = Teigha.Runtime.Exception
+Imports Teigha.GraphicsInterface
+Imports Viewport = Teigha.DatabaseServices.Viewport
+Imports OpenMode = Teigha.DatabaseServices.OpenMode
+Imports System.Windows.Media
+Imports Color = Teigha.Colors.Color
 
 Public Class Form_Arcxis_TB1
 
@@ -36,7 +42,7 @@ Public Class Form_Arcxis_TB1
     'Private Sub ListBox1_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ListBox1.SelectedIndexChanged
 
     '    ' Get the current document and database
-    '    Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+    '    Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
     '    Dim acCurDb As Database = acDoc.Database
     '    Dim aced As Editor = acDoc.Editor
     '    Dim selectList As New ArrayList
@@ -109,7 +115,7 @@ Public Class Form_Arcxis_TB1
     '                                ' Open the block reference
     '                                Dim TBBlockRef As BlockReference = DirectCast(acTrans.GetObject(brId, OpenMode.ForRead), BlockReference)
 
-    '                                Dim TBTblRec As BlockTableRecord = TryCast(acTrans.GetObject(TBBlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+    '                                Dim TBTblRec As BlockTableRecord = TryCast(acTrans.GetObject(TBBlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
     '                                Dim TBName As String = TBTblRec.Name
 
 
@@ -350,7 +356,7 @@ Public Class Form_Arcxis_TB1
     Private Sub ListBox1_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ListBox1.SelectedIndexChanged
 
         ' Get the current document and database
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
         Dim aced As Editor = acDoc.Editor
         Dim selectList As New ArrayList
@@ -434,7 +440,7 @@ Public Class Form_Arcxis_TB1
                                     ' Open the block reference
                                     Dim TBBlockRef As BlockReference = DirectCast(acTrans.GetObject(brId, OpenMode.ForRead), BlockReference)
 
-                                    Dim TBTblRec As BlockTableRecord = TryCast(acTrans.GetObject(TBBlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+                                    Dim TBTblRec As BlockTableRecord = TryCast(acTrans.GetObject(TBBlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
                                     Dim TBName As String = TBTblRec.Name
 
 
@@ -640,7 +646,7 @@ Public Class Form_Arcxis_TB1
     End Sub
 
     Private Sub ReadForm(curitem)
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
         Dim aced As Editor = acDoc.Editor
 
@@ -669,7 +675,7 @@ Public Class Form_Arcxis_TB1
                                 ' Open the block reference
                                 Dim TBBlockRef As BlockReference = DirectCast(acTrans.GetObject(brId, OpenMode.ForRead), BlockReference)
 
-                                Dim TBTblRec As BlockTableRecord = TryCast(acTrans.GetObject(TBBlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+                                Dim TBTblRec As BlockTableRecord = TryCast(acTrans.GetObject(TBBlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
                                 Dim TBName As String = TBTblRec.Name
 
 
@@ -870,7 +876,7 @@ Public Class Form_Arcxis_TB1
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
 
         Dim frm As New Form_Arcxis_TB1
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
 
         Dim selectedtabs As New ArrayList
@@ -902,7 +908,7 @@ Public Class Form_Arcxis_TB1
 
                                     ' Open the block reference
                                     Dim RevBlockRef As BlockReference = DirectCast(acTrans.GetObject(brId, OpenMode.ForRead), BlockReference)
-                                    Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+                                    Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
                                     Dim RevvblockName As String = RevTblRec.Name
 
                                     ' Iterate the attribute collection
@@ -1254,8 +1260,8 @@ Public Class Form_Arcxis_TB1
                             Dim dsdEntry As New DsdEntry()
 
                             Dim lays As DBDictionary = acTrans.GetObject(acCurDb.LayoutDictionaryId, OpenMode.ForRead)
-                            Dim dwgprefix As String = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("dwgprefix")
-                            Dim DWGnm As String = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("dwgName")
+                            Dim dwgprefix As String = Application.GetSystemVariable("dwgprefix")
+                            Dim DWGnm As String = Application.GetSystemVariable("dwgName")
                             Dim dwgFile As String = dwgprefix & DWGnm
 
                             'Step through layout list
@@ -1457,7 +1463,7 @@ Public Class Form_Arcxis_TB1
                             acPlSetVdr.SetPlotConfigurationName(acPlSet, ATB_PlotterName, ATB_PlotSize)
 
                             ' Set the plot type
-                            acPlSetVdr.SetPlotType(acPlSet, Autodesk.AutoCAD.DatabaseServices.PlotType.Extents)
+                            acPlSetVdr.SetPlotType(acPlSet, PlotType.Extents)
 
                             ' Set the plot Centered
                             acPlSetVdr.SetPlotCentered(acPlSet, True)
@@ -1506,7 +1512,7 @@ Public Class Form_Arcxis_TB1
 
 
                             'Check to see if a plot is already in progress
-                            If PlotFactory.ProcessPlotState = Autodesk.AutoCAD.PlottingServices.ProcessPlotState.NotPlotting Then
+                            If PlotFactory.ProcessPlotState = ProcessPlotState.NotPlotting Then
 
                                 Using acPlEng As PlotEngine = PlotFactory.CreatePublishEngine()
 
@@ -1639,9 +1645,9 @@ Public Class Form_Arcxis_TB1
 
                     ' Set to plot to the current display
                     'If accLayout.ModelType = False Then
-                    'acPlSetVdr.SetPlotType(acPlSet, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout)
+                    'acPlSetVdr.SetPlotType(acPlSet, PlotType.Layout)
                     'Else
-                    acPlSetVdr.SetPlotType(acPlSet, Autodesk.AutoCAD.DatabaseServices.PlotType.Extents)
+                    acPlSetVdr.SetPlotType(acPlSet, PlotType.Extents)
 
                     'acPlSetVdr.SetPlotCentered(acPlSet, True)
                     'End If
@@ -1688,7 +1694,7 @@ Public Class Form_Arcxis_TB1
 
                     ' Zoom to show the whole paper
                     acPlSetVdr.SetZoomToPaperOnUpdate(acPlSet, True)
-                Catch es As Autodesk.AutoCAD.Runtime.Exception
+                Catch es As Exception
                     MsgBox(es.Message)
                 End Try
 
@@ -1763,9 +1769,9 @@ Public Class Form_Arcxis_TB1
 
                         ' Set to plot to the current display
                         'If accLayout.ModelType = False Then
-                        'acPlSetVdr.SetPlotType(acPlSet, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout)
+                        'acPlSetVdr.SetPlotType(acPlSet, PlotType.Layout)
                         'Else
-                        acPlSetVdr.SetPlotType(acPlSet, Autodesk.AutoCAD.DatabaseServices.PlotType.Extents)
+                        acPlSetVdr.SetPlotType(acPlSet, PlotType.Extents)
 
                         'acPlSetVdr.SetPlotCentered(acPlSet, True)
                         'End If
@@ -1813,7 +1819,7 @@ Public Class Form_Arcxis_TB1
                         ' Zoom to show the whole paper
                         acPlSetVdr.SetZoomToPaperOnUpdate(acPlSet, True)
 
-                    Catch es As Autodesk.AutoCAD.Runtime.Exception
+                    Catch es As Exception
                         MsgBox(es.Message)
                     End Try
 
@@ -1900,9 +1906,9 @@ Public Class Form_Arcxis_TB1
 
                         ' Set to plot to the current display
                         'If accLayout.ModelType = False Then
-                        'acPlSetVdr.SetPlotType(acPlSet, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout)
+                        'acPlSetVdr.SetPlotType(acPlSet, PlotType.Layout)
                         'Else
-                        acPlSetVdr.SetPlotType(acPlSet, Autodesk.AutoCAD.DatabaseServices.PlotType.Extents)
+                        acPlSetVdr.SetPlotType(acPlSet, PlotType.Extents)
 
                         'acPlSetVdr.SetPlotCentered(acPlSet, True)
                         'End If
@@ -1949,7 +1955,7 @@ Public Class Form_Arcxis_TB1
 
                         ' Zoom to show the whole paper
                         acPlSetVdr.SetZoomToPaperOnUpdate(acPlSet, True)
-                    Catch es As Autodesk.AutoCAD.Runtime.Exception
+                    Catch es As Exception
                         MsgBox(es.Message)
                     End Try
 
@@ -2090,8 +2096,8 @@ Public Class Form_Arcxis_TB1
 
                     'acText.AlignmentPoint = New Point3d(midPt.X, midPt.Y, 0)
                     'acText.AlignmentPoint = New Point3d(0.5, 0.5, 0)
-                    Dim trpy As Autodesk.AutoCAD.Colors.Transparency
-                    trpy = New Autodesk.AutoCAD.Colors.Transparency(CByte(80))
+                    Dim trpy As Transparency
+                    trpy = New Transparency(CByte(80))
                     acText.Transparency = trpy
 
                     If ATB_WaterMarkText = "FOR REVIEW ONLY" OrElse ATB_WaterMarkText = "MASTER SET" Then
@@ -2123,17 +2129,17 @@ Public Class Form_Arcxis_TB1
                     acText.Rotation = 0.523599
                     acText.Justify = AttachmentPoint.MiddleCenter
                     acText.ColorIndex = 254
-                    'acText.Position = New Autodesk.AutoCAD.Geometry.Point3d(2, 2, 0)
-                    acText.HorizontalMode = Autodesk.AutoCAD.DatabaseServices.TextHorizontalMode.TextCenter
-                    acText.VerticalMode = Autodesk.AutoCAD.DatabaseServices.TextVerticalMode.TextVerticalMid
+                    'acText.Position = New Teigha.Geometry.Point3d(2, 2, 0)
+                    acText.HorizontalMode = TextHorizontalMode.TextCenter
+                    acText.VerticalMode = TextVerticalMode.TextVerticalMid
 
                     If psize = "11x17" Then
 
-                        acText.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(8.5, 5.5, 0)
+                        acText.AlignmentPoint = New Teigha.Geometry.Point3d(8.5, 5.5, 0)
 
                     ElseIf psize = "24x36" Then
 
-                        acText.AlignmentPoint = New Autodesk.AutoCAD.Geometry.Point3d(18, 12, 0)
+                        acText.AlignmentPoint = New Teigha.Geometry.Point3d(18, 12, 0)
 
                     End If
 
@@ -2169,7 +2175,7 @@ Public Class Form_Arcxis_TB1
     Private Sub DeleteWaterMark()
 
         '' Get the current document and database
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
 
         Using acLckDoc As DocumentLock = acDoc.LockDocument()
@@ -2185,7 +2191,7 @@ Public Class Form_Arcxis_TB1
 
                 Dim acSelFtr As SelectionFilter = New SelectionFilter(acTypValAr)
 
-                Dim result As PromptSelectionResult = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor.SelectAll(acSelFtr)
+                Dim result As PromptSelectionResult = Application.DocumentManager.MdiActiveDocument.Editor.SelectAll(acSelFtr)
                 If (result.Status = PromptStatus.OK) Then
                     ' There are selected entities
                     ' Put your command using pickfirst set code here
@@ -2349,7 +2355,7 @@ Public Class Form_Arcxis_TB1
         Dim frm As New Form_Arcxis_TB1
 
 
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
         Dim ed As Editor = acDoc.Editor
 
@@ -2388,7 +2394,7 @@ Public Class Form_Arcxis_TB1
                                     ' Open the block reference
                                     Dim BlockRef As BlockReference = DirectCast(acTrans.GetObject(brId, OpenMode.ForRead), BlockReference)
 
-                                    Dim TblRec As BlockTableRecord = TryCast(acTrans.GetObject(BlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+                                    Dim TblRec As BlockTableRecord = TryCast(acTrans.GetObject(BlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
 
                                     Dim RevvblockName As String = TblRec.Name
 
@@ -2727,7 +2733,7 @@ Public Class Form_Arcxis_TB1
 
             End If
 
-            Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
 
             '' Lock the new document
@@ -2759,7 +2765,7 @@ Public Class Form_Arcxis_TB1
                                     ' Open the block reference
                                     Dim RevBlockRef As BlockReference = DirectCast(acTrans.GetObject(brId, OpenMode.ForRead), BlockReference)
 
-                                    Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+                                    Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
 
                                     Dim RevvblockName As String = RevTblRec.Name
 
@@ -2804,7 +2810,7 @@ Public Class Form_Arcxis_TB1
             Button3.Enabled = True
             Button3.BackColor = System.Drawing.SystemColors.Control
 
-            'Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+            'Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             'Dim acCurDb As Database = acDoc.Database
 
             ' Lock the new document
@@ -2836,7 +2842,7 @@ Public Class Form_Arcxis_TB1
             '                        ' Open the block reference
             '                        Dim RevBlockRef As BlockReference = DirectCast(acTrans.GetObject(brId, OpenMode.ForRead), BlockReference)
 
-            '                        Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+            '                        Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
 
             '                        Dim RevvblockName As String = RevTblRec.Name
 
@@ -2883,7 +2889,7 @@ Public Class Form_Arcxis_TB1
 
     '        End If
 
-    '        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+    '        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
     '        Dim acCurDb As Database = acDoc.Database
 
     '        '' Lock the new document
@@ -2914,7 +2920,7 @@ Public Class Form_Arcxis_TB1
     '                                ' Open the block reference
     '                                Dim RevBlockRef As BlockReference = DirectCast(acTrans.GetObject(brId, OpenMode.ForRead), BlockReference)
 
-    '                                Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+    '                                Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
 
     '                                Dim RevvblockName As String = RevTblRec.Name
 
@@ -3347,85 +3353,85 @@ Public Class Form_Arcxis_TB1
 
                         If pagch2 = pagch Then
 
+                            If Not layStrg.Contains("(LC)") Then
+
+                                layoutlist.Add(layStrg)
+
+                            End If
+
+                        End If
+
+                    ElseIf laynmlen = 6 Then
+
+                        '''''''''''''''''''''''''''''''''''''''''''
+                        If laynm.Contains(".") Then
+
+                            Dim laynmsplit As String() = laynm.Split(".")
+
+                            Dim fs1 As String = laynmsplit(1)
+                            pagch2 = "." & fs1
+
+                            If pagch2 = pagch Then
+
                                 If Not layStrg.Contains("(LC)") Then
 
                                     layoutlist.Add(layStrg)
 
+
                                 End If
+
 
                             End If
 
-                        ElseIf laynmlen = 6 Then
 
-                            '''''''''''''''''''''''''''''''''''''''''''
-                            If laynm.Contains(".") Then
+                        Else
 
-                                Dim laynmsplit As String() = laynm.Split(".")
+                            '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+                            pagch2 = laynm.Substring(4, 1)
 
-                                Dim fs1 As String = laynmsplit(1)
-                                pagch2 = "." & fs1
+                            Dim i As Integer = Asc(pagch2)
+
+                            If i >= 48 AndAlso i <= 57 Then
+
+                                pagch2 = laynm.Substring(5)
 
                                 If pagch2 = pagch Then
+
 
                                     If Not layStrg.Contains("(LC)") Then
 
                                         layoutlist.Add(layStrg)
 
-
                                     End If
-
 
                                 End If
 
 
                             Else
 
-                                '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-                                pagch2 = laynm.Substring(4, 1)
+                                pagch2 = laynm.Substring(4)
 
-                                Dim i As Integer = Asc(pagch2)
-
-                                If i >= 48 AndAlso i <= 57 Then
-
-                                    pagch2 = laynm.Substring(5)
-
-                                    If pagch2 = pagch Then
+                                If pagch2 = pagch Then
 
 
-                                        If Not layStrg.Contains("(LC)") Then
+                                    If Not layStrg.Contains("(LC)") Then
 
-                                            layoutlist.Add(layStrg)
-
-                                        End If
+                                        layoutlist.Add(layStrg)
 
                                     End If
-
-
-                                Else
-
-                                    pagch2 = laynm.Substring(4)
-
-                                    If pagch2 = pagch Then
-
-
-                                        If Not layStrg.Contains("(LC)") Then
-
-                                            layoutlist.Add(layStrg)
-
-                                        End If
-
-                                    End If
-
 
                                 End If
 
+
                             End If
-                            '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-                        ElseIf laynmlen = 7 Then
+                        End If
+                        '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-                            ''''''''''''''''''''''''''''''''''''''
-                            If laynm.Contains(".") Then
+                    ElseIf laynmlen = 7 Then
+
+                        ''''''''''''''''''''''''''''''''''''''
+                        If laynm.Contains(".") Then
 
                             Dim laynmsplit As String() = laynm.Split(".")
 
@@ -3685,7 +3691,7 @@ Public Class Form_Arcxis_TB1
 
                             ' Open the block reference
                             Dim RevBlockRef As BlockReference = DirectCast(acTrans.GetObject(objID, OpenMode.ForRead), BlockReference)
-                            Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+                            Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
                             Dim RevvblockName As String = RevTblRec.Name
 
                             If RevvblockName.Contains("Arcxis Title Block") Then
@@ -3718,7 +3724,7 @@ Public Class Form_Arcxis_TB1
 
                     For Each vpId As ObjectId In vpIds
 
-                        Dim layoutviewport = TryCast(acTrans.GetObject(vpId, OpenMode.ForWrite), Autodesk.AutoCAD.DatabaseServices.Viewport)
+                        Dim layoutviewport = TryCast(acTrans.GetObject(vpId, OpenMode.ForWrite), Viewport)
 
                         If layoutviewport IsNot Nothing Then
 
@@ -3884,7 +3890,7 @@ Public Class Form_Arcxis_TB1
                                 ' Open the block reference
                                 Dim TBBlockRef As BlockReference = DirectCast(acTrans.GetObject(brId, OpenMode.ForRead), BlockReference)
 
-                                Dim TBTblRec As BlockTableRecord = TryCast(acTrans.GetObject(TBBlockRef.DynamicBlockTableRecord, OpenMode.ForRead), BlockTableRecord)
+                                Dim TBTblRec As BlockTableRecord = TryCast(acTrans.GetObject(TBBlockRef.BlockTableRecord, OpenMode.ForRead), BlockTableRecord)
 
                                 Dim TBName As String = TBTblRec.Name
 
@@ -4075,35 +4081,35 @@ Public Class Form_Arcxis_TB1
                 End If
 
                 For Each layer In lytab
-                        Dim lytr As LayerTableRecord = acTrans.GetObject(layer, OpenMode.ForWrite)
-                        If Not lytr.Name Like selectedlayer Then
-                            For Each item In ComboBox8.Items
-                                fulllayerstring = "*S-SEAL-" & item
-                                If lytr.Name Like fulllayerstring And lytr.Name <> selectedlayer Then
+                    Dim lytr As LayerTableRecord = acTrans.GetObject(layer, OpenMode.ForWrite)
+                    If Not lytr.Name Like selectedlayer Then
+                        For Each item In ComboBox8.Items
+                            fulllayerstring = "*S-SEAL-" & item
+                            If lytr.Name Like fulllayerstring And lytr.Name <> selectedlayer Then
 
-                                    lytab.UpgradeOpen()
-                                    lytr.IsFrozen = True
-                                    lytr.IsOff = True
-                                End If
-                            Next
-                        Else
-                            lytab.UpgradeOpen()
-                            lytr.IsFrozen = False
-                            lytr.IsOff = False
+                                lytab.UpgradeOpen()
+                                lytr.IsFrozen = True
+                                lytr.IsOff = True
+                            End If
+                        Next
+                    Else
+                        lytab.UpgradeOpen()
+                        lytr.IsFrozen = False
+                        lytr.IsOff = False
 
-                        End If
+                    End If
 
 
-                    Next
-                    acTrans.Commit()
-                    aced.Regen()
+                Next
+                acTrans.Commit()
+                aced.Regen()
             End Using
         End Using
     End Sub
 
     Private Sub Button7_Click(sender As Object, e As EventArgs) Handles Button7.Click
         Dim frm As New Form_Arcxis_TB1
-        Dim acDoc As Document = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim ed As Editor = acDoc.Editor
         Dim acCurDb As Database = acDoc.Database
 
@@ -4136,7 +4142,7 @@ Public Class Form_Arcxis_TB1
 
                                     ' Open the block reference
                                     Dim RevBlockRef As BlockReference = DirectCast(acTrans.GetObject(brId, OpenMode.ForRead), BlockReference)
-                                    Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.DynamicBlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+                                    Dim RevTblRec As BlockTableRecord = TryCast(acTrans.GetObject(RevBlockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
                                     Dim RevvblockName As String = RevTblRec.Name
                                     Dim revisionline = New ArrayList
                                     Dim revisionline1 = New ArrayList
@@ -4327,7 +4333,7 @@ Public Class Form_Arcxis_TB1
 
     End Sub
 
-    Private Sub Button6_Click(sender As Object, e As EventArgs) 
+    Private Sub Button6_Click(sender As Object, e As EventArgs)
 
         If RadioButton7.Checked <> True Then
 
@@ -4366,7 +4372,7 @@ Public Class Form_Arcxis_TB1
                     Dim layoutManager__2 As LayoutManager = LayoutManager.Current
                     layoutManager__2.CurrentLayout = ATB_FirstLayoutName
 
-                    Dim DWGnm As String = Autodesk.AutoCAD.ApplicationServices.Application.GetSystemVariable("dwgName")
+                    Dim DWGnm As String = Application.GetSystemVariable("dwgName")
 
                     'Dim outputDir As String = "c:\temp\"
                     Dim outputDir As String = My.Computer.FileSystem.SpecialDirectories.MyDocuments & "\"

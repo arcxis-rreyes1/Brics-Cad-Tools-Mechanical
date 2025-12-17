@@ -1,15 +1,16 @@
-﻿Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.ApplicationServices
-Imports Autodesk.AutoCAD.DatabaseServices
-Imports Autodesk.AutoCAD.EditorInput
-Imports Autodesk.AutoCAD.Geometry
-Imports Autodesk.AutoCAD.Colors
+﻿Imports System
+Imports System.Reflection
+Imports Bricscad.ApplicationServices
+Imports Teigha.Runtime
+Imports Teigha.DatabaseServices
+Imports Bricscad.EditorInput
+Imports Teigha.Geometry
+Imports Teigha.Colors
+Imports Bricscad.PlottingServices
+Imports Exception = Teigha.Runtime.Exception
 
 Imports Excel = Microsoft.Office.Interop.Excel
 Imports System.Runtime.InteropServices
-Imports System.Collections.Generic
-Imports System.Threading
-
 
 <Assembly: CommandClass(GetType(Arcxis_Cad_Tools.MechanicalFunctions))>
 
@@ -25,7 +26,11 @@ Namespace Arcxis_Cad_Tools
             ' --- Get Excel selection ---
             Dim xlApp As Excel.Application = Nothing
             Try
-                xlApp = CType(Marshal.GetActiveObject("Excel.Application"), Excel.Application)
+                ' Use VB Interaction.GetObject to bind to the running Excel instance (COM ROT)
+                xlApp = CType(Interaction.GetObject("", "Excel.Application"), Excel.Application)
+            Catch ex As COMException
+                ed.WriteMessage(vbLf & "Excel is not running or no selection found.")
+                Return
             Catch
                 ed.WriteMessage(vbLf & "Excel is not running or no selection found.")
                 Return
@@ -69,8 +74,8 @@ Namespace Arcxis_Cad_Tools
             Using doc.LockDocument()
                 Using tr = db.TransactionManager.StartTransaction()
 
-                    Dim bt = CType(tr.GetObject(db.BlockTableId, OpenMode.ForRead), BlockTable)
-                    Dim btr = CType(tr.GetObject(db.CurrentSpaceId, OpenMode.ForWrite), BlockTableRecord)
+                    Dim bt = CType(tr.GetObject(db.BlockTableId, Teigha.DatabaseServices.OpenMode.ForRead), BlockTable)
+                    Dim btr = CType(tr.GetObject(db.CurrentSpaceId, Teigha.DatabaseServices.OpenMode.ForWrite), BlockTableRecord)
 
                     ' --- Create AutoCAD table with visible row/column count ---
                     Dim tbl As New Table()
