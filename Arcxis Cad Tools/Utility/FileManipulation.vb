@@ -3992,7 +3992,7 @@ Namespace Arcxis_Cad_Tools
                                             angle = 240
                                             fontSize = 240
                                             ' Prepare font and brush with alpha
-                                            Dim font As New XFont(fontName, fontSize, XFontStyle.Bold)
+                                            Dim font As New XFont(fontName, fontSize, XFontStyle.Regular)
                                             Dim col As XColor = XColor.FromArgb(CInt(255.0 * Math.Max(0.0, Math.Min(1.0, opacity))), XColors.Black)
                                             Dim brush As New XSolidBrush(col)
 
