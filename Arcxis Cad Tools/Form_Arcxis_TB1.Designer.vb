@@ -1274,7 +1274,7 @@ Partial Class Form_Arcxis_TB1
     Friend WithEvents RadioButton9 As Windows.Forms.RadioButton
     Friend WithEvents GroupBox6 As Windows.Forms.GroupBox
     Friend WithEvents TextBox41 As System.Windows.Forms.TextBox
-    Friend WithEvents TextBox39 As Windows.Forms.TextBox
+    Friend WithEvents TextBox39 As System.Windows.Forms.TextBox
     Friend WithEvents RadioButton1 As Windows.Forms.RadioButton
     Friend WithEvents TextBox40 As Windows.Forms.TextBox
     Friend WithEvents RadioButton4 As Windows.Forms.RadioButton
