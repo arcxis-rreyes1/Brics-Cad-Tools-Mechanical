@@ -1328,7 +1328,7 @@ Partial Class Form_Arcxis_TB1
     Friend WithEvents TextBox4 As Windows.Forms.TextBox
     Friend WithEvents TextBox3 As Windows.Forms.TextBox
     Friend WithEvents TextBox2 As Windows.Forms.TextBox
-    Friend WithEvents Label9 As Windows.Forms.Label
+    Friend WithEvents Label9 As System.Windows.Forms.Label
     Friend WithEvents Label8 As Windows.Forms.Label
     Friend WithEvents Label7 As Windows.Forms.Label
     Friend WithEvents Label6 As Windows.Forms.Label
