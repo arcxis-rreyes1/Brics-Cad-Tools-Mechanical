@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11205.157
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Arcxis Cad Tools", "Arcxis Cad Tools\Arcxis Cad Tools.vbproj", "{AF00B58F-0FC5-4F69-ABEE-D7A23A895966}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AF00B58F-0FC5-4F69-ABEE-D7A23A895966}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF00B58F-0FC5-4F69-ABEE-D7A23A895966}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF00B58F-0FC5-4F69-ABEE-D7A23A895966}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF00B58F-0FC5-4F69-ABEE-D7A23A895966}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C86101B0-865C-476E-83E1-7D89835F803B}
+	EndGlobalSection
+EndGlobal
