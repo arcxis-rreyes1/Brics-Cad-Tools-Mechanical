@@ -202,17 +202,17 @@ Partial Class Form_MechanicalPrinting
 
     End Sub
 
-    Friend WithEvents GroupBox1 As Windows.Forms.GroupBox
-    Friend WithEvents Manufacturers As Windows.Forms.GroupBox
-    Friend WithEvents ManList As Windows.Forms.CheckedListBox
-    Friend WithEvents GasType As Windows.Forms.GroupBox
-    Friend WithEvents GasList As Windows.Forms.CheckedListBox
-    Friend WithEvents Button2 As Windows.Forms.Button
-    Friend WithEvents Button1 As Windows.Forms.Button
-    Friend WithEvents GroupBox3 As Windows.Forms.GroupBox
-    Friend WithEvents TextBox2 As Windows.Forms.TextBox
-    Friend WithEvents GroupBox2 As Windows.Forms.GroupBox
-    Friend WithEvents TextBox1 As Windows.Forms.TextBox
-    Friend WithEvents Counties As Windows.Forms.GroupBox
-    Friend WithEvents CountyList As Windows.Forms.CheckedListBox
+    Friend WithEvents GroupBox1 As System.Windows.Forms.GroupBox
+    Friend WithEvents Manufacturers As System.Windows.Forms.GroupBox
+    Friend WithEvents ManList As System.Windows.Forms.CheckedListBox
+    Friend WithEvents GasType As System.Windows.Forms.GroupBox
+    Friend WithEvents GasList As System.Windows.Forms.CheckedListBox
+    Friend WithEvents Button2 As System.Windows.Forms.Button
+    Friend WithEvents Button1 As System.Windows.Forms.Button
+    Friend WithEvents GroupBox3 As System.Windows.Forms.GroupBox
+    Friend WithEvents TextBox2 As System.Windows.Forms.TextBox
+    Friend WithEvents GroupBox2 As System.Windows.Forms.GroupBox
+    Friend WithEvents TextBox1 As System.Windows.Forms.TextBox
+    Friend WithEvents Counties As System.Windows.Forms.GroupBox
+    Friend WithEvents CountyList As System.Windows.Forms.CheckedListBox
 End Class
