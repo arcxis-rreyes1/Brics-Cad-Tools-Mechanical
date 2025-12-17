@@ -1287,7 +1287,7 @@ Partial Class Form_Arcxis_TB1
     Friend WithEvents Button2 As Windows.Forms.Button
     Friend WithEvents GroupBox4 As Windows.Forms.GroupBox
     Friend WithEvents TextBox9 As System.Windows.Forms.TextBox
-    Friend WithEvents Label19 As Windows.Forms.Label
+    Friend WithEvents Label19 As System.Windows.Forms.Label
     Friend WithEvents ComboBox5 As Windows.Forms.ComboBox
     Friend WithEvents DateTimePicker1 As Windows.Forms.DateTimePicker
     Friend WithEvents Label17 As Windows.Forms.Label
