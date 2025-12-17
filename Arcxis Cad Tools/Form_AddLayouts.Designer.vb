@@ -118,11 +118,11 @@ Partial Class Form_AddLayouts
 
     End Sub
 
-    Friend WithEvents GroupBox1 As Windows.Forms.GroupBox
-    Friend WithEvents Label2 As Windows.Forms.Label
-    Friend WithEvents Label1 As Windows.Forms.Label
-    Friend WithEvents TextBox1 As Windows.Forms.TextBox
-    Friend WithEvents ComboBox1 As Windows.Forms.ComboBox
-    Friend WithEvents Button2 As Windows.Forms.Button
-    Friend WithEvents Button1 As Windows.Forms.Button
+    Friend WithEvents GroupBox1 as system.windows.forms.GroupBox
+    Friend WithEvents Label2 as system.windows.forms.Label
+    Friend WithEvents Label1 as system.windows.forms.Label
+    Friend WithEvents TextBox1 as system.windows.forms.TextBox
+    Friend WithEvents ComboBox1 as system.windows.forms.ComboBox
+    Friend WithEvents Button2 as system.windows.forms.Button
+    Friend WithEvents Button1 as system.windows.forms.Button
 End Class

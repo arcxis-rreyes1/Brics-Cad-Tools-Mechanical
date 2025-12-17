@@ -736,53 +736,53 @@ Partial Class Form_TakeOffTag
     Friend WithEvents Button1 As System.Windows.Forms.Button
     Friend WithEvents GroupBox10 As System.Windows.Forms.GroupBox
     Friend WithEvents CheckBox1 As System.Windows.Forms.CheckBox
-    Friend WithEvents GroupBox9 As Windows.Forms.GroupBox
-    Friend WithEvents RadioButton31 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton30 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton29 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton28 As Windows.Forms.RadioButton
+    Friend WithEvents GroupBox9 As System.Windows.Forms.GroupBox
+    Friend WithEvents RadioButton31 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton30 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton29 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton28 As System.Windows.Forms.RadioButton
     Friend WithEvents GroupBox8 As System.Windows.Forms.GroupBox
-    Friend WithEvents RadioButton23 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton22 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton21 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton20 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton19 As Windows.Forms.RadioButton
+    Friend WithEvents RadioButton23 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton22 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton21 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton20 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton19 As System.Windows.Forms.RadioButton
     Friend WithEvents GroupBox7 As System.Windows.Forms.GroupBox
-    Friend WithEvents RadioButton17 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton16 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton15 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton14 As Windows.Forms.RadioButton
+    Friend WithEvents RadioButton17 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton16 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton15 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton14 As System.Windows.Forms.RadioButton
     Friend WithEvents GroupBox5 As System.Windows.Forms.GroupBox
-    Friend WithEvents RadioButton11 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton10 As Windows.Forms.RadioButton
+    Friend WithEvents RadioButton11 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton10 As System.Windows.Forms.RadioButton
     Friend WithEvents GroupBox4 As System.Windows.Forms.GroupBox
-    Friend WithEvents RadioButton9 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton8 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton7 As Windows.Forms.RadioButton
+    Friend WithEvents RadioButton9 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton8 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton7 As System.Windows.Forms.RadioButton
     Friend WithEvents GroupBox2 As System.Windows.Forms.GroupBox
     Friend WithEvents ComboBox1 As System.Windows.Forms.ComboBox
     Friend WithEvents Label1 As System.Windows.Forms.Label
     Friend WithEvents GroupBox1 As System.Windows.Forms.GroupBox
-    Friend WithEvents RadioButton6 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton5 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton3 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton2 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton1 As Windows.Forms.RadioButton
+    Friend WithEvents RadioButton6 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton5 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton3 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton2 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton1 As System.Windows.Forms.RadioButton
     Friend WithEvents GroupBox3 As System.Windows.Forms.GroupBox
     Friend WithEvents Label3 As System.Windows.Forms.Label
     Friend WithEvents ComboBox2 As System.Windows.Forms.ComboBox
     Friend WithEvents GroupBox6 As System.Windows.Forms.GroupBox
-    Friend WithEvents RadioButton13 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton12 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton18 As Windows.Forms.RadioButton
+    Friend WithEvents RadioButton13 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton12 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton18 As System.Windows.Forms.RadioButton
     Friend WithEvents Button3 As System.Windows.Forms.Button
     Friend WithEvents Button4 As System.Windows.Forms.Button
-    Friend WithEvents RadioButton4 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton27 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton26 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton25 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton24 As Windows.Forms.RadioButton
+    Friend WithEvents RadioButton4 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton27 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton26 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton25 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton24 As System.Windows.Forms.RadioButton
     Friend WithEvents GroupBox11 As System.Windows.Forms.GroupBox
-    Friend WithEvents RadioButton33 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton32 As Windows.Forms.RadioButton
+    Friend WithEvents RadioButton33 As System.Windows.Forms.RadioButton
+    Friend WithEvents RadioButton32 As System.Windows.Forms.RadioButton
 End Class

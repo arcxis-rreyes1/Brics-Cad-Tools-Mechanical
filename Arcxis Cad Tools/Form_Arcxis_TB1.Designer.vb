@@ -1258,41 +1258,41 @@ Partial Class Form_Arcxis_TB1
 
     End Sub
 
-    Friend WithEvents Button5 As Windows.Forms.Button
-    Friend WithEvents Button4 As Windows.Forms.Button
-    Friend WithEvents Button3 As Windows.Forms.Button
-    Friend WithEvents PDF24x36 As Windows.Forms.Button
-    Friend WithEvents Plot As Windows.Forms.Button
-    Friend WithEvents PlotPDF11x17 As Windows.Forms.Button
-    Friend WithEvents GroupBox8 As Windows.Forms.GroupBox
-    Friend WithEvents RadioButton8 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton7 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton6 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton5 As Windows.Forms.RadioButton
-    Friend WithEvents GroupBox7 As Windows.Forms.GroupBox
-    Friend WithEvents RadioButton10 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton9 As Windows.Forms.RadioButton
-    Friend WithEvents GroupBox6 As Windows.Forms.GroupBox
+    Friend WithEvents Button5 as system.windows.forms.Button
+    Friend WithEvents Button4 as system.windows.forms.Button
+    Friend WithEvents Button3 as system.windows.forms.Button
+    Friend WithEvents PDF24x36 as system.windows.forms.Button
+    Friend WithEvents Plot as system.windows.forms.Button
+    Friend WithEvents PlotPDF11x17 as system.windows.forms.Button
+    Friend WithEvents GroupBox8 as system.windows.forms.GroupBox
+    Friend WithEvents RadioButton8 as system.windows.forms.RadioButton
+    Friend WithEvents RadioButton7 as system.windows.forms.RadioButton
+    Friend WithEvents RadioButton6 as system.windows.forms.RadioButton
+    Friend WithEvents RadioButton5 as system.windows.forms.RadioButton
+    Friend WithEvents GroupBox7 as system.windows.forms.GroupBox
+    Friend WithEvents RadioButton10 as system.windows.forms.RadioButton
+    Friend WithEvents RadioButton9 as system.windows.forms.RadioButton
+    Friend WithEvents GroupBox6 as system.windows.forms.GroupBox
     Friend WithEvents TextBox41 As System.Windows.Forms.TextBox
     Friend WithEvents TextBox39 As System.Windows.Forms.TextBox
-    Friend WithEvents RadioButton1 As Windows.Forms.RadioButton
+    Friend WithEvents RadioButton1 as system.windows.forms.RadioButton
     Friend WithEvents TextBox40 As System.Windows.Forms.TextBox
-    Friend WithEvents RadioButton4 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton3 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton2 As Windows.Forms.RadioButton
-    Friend WithEvents ComboBox7 As Windows.Forms.ComboBox
-    Friend WithEvents GroupBox5 As Windows.Forms.GroupBox
+    Friend WithEvents RadioButton4 as system.windows.forms.RadioButton
+    Friend WithEvents RadioButton3 as system.windows.forms.RadioButton
+    Friend WithEvents RadioButton2 as system.windows.forms.RadioButton
+    Friend WithEvents ComboBox7 as system.windows.forms.ComboBox
+    Friend WithEvents GroupBox5 as system.windows.forms.GroupBox
     Friend WithEvents Label20 As System.Windows.Forms.Label
-    Friend WithEvents ComboBox6 As Windows.Forms.ComboBox
-    Friend WithEvents Button2 As Windows.Forms.Button
-    Friend WithEvents GroupBox4 As Windows.Forms.GroupBox
+    Friend WithEvents ComboBox6 as system.windows.forms.ComboBox
+    Friend WithEvents Button2 as system.windows.forms.Button
+    Friend WithEvents GroupBox4 as system.windows.forms.GroupBox
     Friend WithEvents TextBox9 As System.Windows.Forms.TextBox
     Friend WithEvents Label19 As System.Windows.Forms.Label
-    Friend WithEvents ComboBox5 As Windows.Forms.ComboBox
-    Friend WithEvents DateTimePicker1 As Windows.Forms.DateTimePicker
+    Friend WithEvents ComboBox5 as system.windows.forms.ComboBox
+    Friend WithEvents DateTimePicker1 as system.windows.forms.DateTimePicker
     Friend WithEvents Label17 As System.Windows.Forms.Label
     Friend WithEvents Label18 As System.Windows.Forms.Label
-    Friend WithEvents GroupBox3 As Windows.Forms.GroupBox
+    Friend WithEvents GroupBox3 as system.windows.forms.GroupBox
     Friend WithEvents TextBox33 As System.Windows.Forms.TextBox
     Friend WithEvents TextBox32 As System.Windows.Forms.TextBox
     Friend WithEvents TextBox29 As System.Windows.Forms.TextBox
@@ -1307,62 +1307,62 @@ Partial Class Form_Arcxis_TB1
     Friend WithEvents TextBox12 As System.Windows.Forms.TextBox
     Friend WithEvents Label16 As System.Windows.Forms.Label
     Friend WithEvents Label15 As System.Windows.Forms.Label
-    Friend WithEvents GroupBox2 As Windows.Forms.GroupBox
+    Friend WithEvents GroupBox2 as system.windows.forms.GroupBox
     Friend WithEvents Label23 As System.Windows.Forms.Label
     Friend WithEvents Label22 As System.Windows.Forms.Label
     Friend WithEvents TextBox43 As System.Windows.Forms.TextBox
     Friend WithEvents TextBox42 As System.Windows.Forms.TextBox
     Friend WithEvents Label21 As System.Windows.Forms.Label
     Friend WithEvents TextBox38 As System.Windows.Forms.TextBox
-    Friend WithEvents ComboBox4 As Windows.Forms.ComboBox
-    Friend WithEvents ComboBox3 As Windows.Forms.ComboBox
-    Friend WithEvents ComboBox2 As Windows.Forms.ComboBox
+    Friend WithEvents ComboBox4 as system.windows.forms.ComboBox
+    Friend WithEvents ComboBox3 as system.windows.forms.ComboBox
+    Friend WithEvents ComboBox2 as system.windows.forms.ComboBox
     Friend WithEvents TextBox7 As System.Windows.Forms.TextBox
     Friend WithEvents Label12 As System.Windows.Forms.Label
     Friend WithEvents Label11 As System.Windows.Forms.Label
     Friend WithEvents TextBox8 As System.Windows.Forms.TextBox
     Friend WithEvents Label10 As System.Windows.Forms.Label
-    Friend WithEvents ComboBox1 As Windows.Forms.ComboBox
-    Friend WithEvents TextBox6 As Windows.Forms.TextBox
-    Friend WithEvents TextBox5 As Windows.Forms.TextBox
-    Friend WithEvents TextBox4 As Windows.Forms.TextBox
-    Friend WithEvents TextBox3 As Windows.Forms.TextBox
-    Friend WithEvents TextBox2 As Windows.Forms.TextBox
+    Friend WithEvents ComboBox1 as system.windows.forms.ComboBox
+    Friend WithEvents TextBox6 as system.windows.forms.TextBox
+    Friend WithEvents TextBox5 as system.windows.forms.TextBox
+    Friend WithEvents TextBox4 as system.windows.forms.TextBox
+    Friend WithEvents TextBox3 as system.windows.forms.TextBox
+    Friend WithEvents TextBox2 as system.windows.forms.TextBox
     Friend WithEvents Label9 As System.Windows.Forms.Label
     Friend WithEvents Label8 As System.Windows.Forms.Label
     Friend WithEvents Label7 As System.Windows.Forms.Label
     Friend WithEvents Label6 As System.Windows.Forms.Label
-    Friend WithEvents Label5 As Windows.Forms.Label
-    Friend WithEvents Label4 As Windows.Forms.Label
-    Friend WithEvents Label3 As Windows.Forms.Label
-    Friend WithEvents Label2 As Windows.Forms.Label
-    Friend WithEvents TextBox1 As Windows.Forms.TextBox
-    Friend WithEvents Label1 As Windows.Forms.Label
-    Friend WithEvents GroupBox1 As Windows.Forms.GroupBox
-    Friend WithEvents CheckBox1 As Windows.Forms.CheckBox
-    Friend WithEvents ListBox1 As Windows.Forms.ListBox
-    Friend WithEvents Label24 As Windows.Forms.Label
-    Friend WithEvents Label25 As Windows.Forms.Label
-    Friend WithEvents TextBox44 As Windows.Forms.TextBox
-    Friend WithEvents TextBox45 As Windows.Forms.TextBox
-    Friend WithEvents GroupBox9 As Windows.Forms.GroupBox
-    Friend WithEvents GroupBox10 As Windows.Forms.GroupBox
-    Friend WithEvents Label27 As Windows.Forms.Label
-    Friend WithEvents TextBox47 As Windows.Forms.TextBox
-    Friend WithEvents Label26 As Windows.Forms.Label
-    Friend WithEvents TextBox46 As Windows.Forms.TextBox
-    Friend WithEvents Button8 As Windows.Forms.Button
-    Friend WithEvents Button1 As Windows.Forms.Button
-    Friend WithEvents GroupBox11 As Windows.Forms.GroupBox
-    Friend WithEvents Button7 As Windows.Forms.Button
-    Friend WithEvents ComboBox8 As Windows.Forms.ComboBox
-    Friend WithEvents TextBox30 As Windows.Forms.TextBox
-    Friend WithEvents TextBox26 As Windows.Forms.TextBox
-    Friend WithEvents TextBox22 As Windows.Forms.TextBox
-    Friend WithEvents TextBox18 As Windows.Forms.TextBox
-    Friend WithEvents TextBox14 As Windows.Forms.TextBox
-    Friend WithEvents TextBox10 As Windows.Forms.TextBox
-    Friend WithEvents Label13 As Windows.Forms.Label
-    Friend WithEvents RadioButton11 As Windows.Forms.RadioButton
-    Friend WithEvents RadioButton12 As Windows.Forms.RadioButton
+    Friend WithEvents Label5 As System.Windows.Forms.Label
+    Friend WithEvents Label4 as system.windows.forms.Label
+    Friend WithEvents Label3 as system.windows.forms.Label
+    Friend WithEvents Label2 as system.windows.forms.Label
+    Friend WithEvents TextBox1 as system.windows.forms.TextBox
+    Friend WithEvents Label1 as system.windows.forms.Label
+    Friend WithEvents GroupBox1 as system.windows.forms.GroupBox
+    Friend WithEvents CheckBox1 as system.windows.forms.CheckBox
+    Friend WithEvents ListBox1 as system.windows.forms.ListBox
+    Friend WithEvents Label24 as system.windows.forms.Label
+    Friend WithEvents Label25 as system.windows.forms.Label
+    Friend WithEvents TextBox44 as system.windows.forms.TextBox
+    Friend WithEvents TextBox45 as system.windows.forms.TextBox
+    Friend WithEvents GroupBox9 as system.windows.forms.GroupBox
+    Friend WithEvents GroupBox10 as system.windows.forms.GroupBox
+    Friend WithEvents Label27 as system.windows.forms.Label
+    Friend WithEvents TextBox47 as system.windows.forms.TextBox
+    Friend WithEvents Label26 as system.windows.forms.Label
+    Friend WithEvents TextBox46 as system.windows.forms.TextBox
+    Friend WithEvents Button8 as system.windows.forms.Button
+    Friend WithEvents Button1 as system.windows.forms.Button
+    Friend WithEvents GroupBox11 as system.windows.forms.GroupBox
+    Friend WithEvents Button7 as system.windows.forms.Button
+    Friend WithEvents ComboBox8 as system.windows.forms.ComboBox
+    Friend WithEvents TextBox30 as system.windows.forms.TextBox
+    Friend WithEvents TextBox26 as system.windows.forms.TextBox
+    Friend WithEvents TextBox22 as system.windows.forms.TextBox
+    Friend WithEvents TextBox18 as system.windows.forms.TextBox
+    Friend WithEvents TextBox14 as system.windows.forms.TextBox
+    Friend WithEvents TextBox10 as system.windows.forms.TextBox
+    Friend WithEvents Label13 as system.windows.forms.Label
+    Friend WithEvents RadioButton11 as system.windows.forms.RadioButton
+    Friend WithEvents RadioButton12 as system.windows.forms.RadioButton
 End Class
