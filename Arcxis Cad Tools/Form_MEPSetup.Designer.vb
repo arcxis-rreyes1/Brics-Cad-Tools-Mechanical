@@ -296,27 +296,27 @@ Partial Class Form_MEPSetup
 
     End Sub
 
-    Friend WithEvents GroupBox1 As Windows.Forms.GroupBox
-    Friend WithEvents GroupBox5 As Windows.Forms.GroupBox
-    Friend WithEvents TextBox3 As Windows.Forms.TextBox
-    Friend WithEvents GroupBox3 As Windows.Forms.GroupBox
-    Friend WithEvents TextBox2 As Windows.Forms.TextBox
-    Friend WithEvents GroupBox2 As Windows.Forms.GroupBox
-    Friend WithEvents TextBox1 As Windows.Forms.TextBox
-    Friend WithEvents PaperSpaceSetup As Windows.Forms.ComboBox
-    Friend WithEvents Label7 As Windows.Forms.Label
-    Friend WithEvents ViewportScale As Windows.Forms.ComboBox
-    Friend WithEvents Label6 As Windows.Forms.Label
-    Friend WithEvents PageCount As Windows.Forms.TextBox
-    Friend WithEvents Label2 As Windows.Forms.Label
-    Friend WithEvents ElevCount As Windows.Forms.TextBox
-    Friend WithEvents Label1 As Windows.Forms.Label
-    Friend WithEvents Label4 As Windows.Forms.Label
-    Friend WithEvents Label3 As Windows.Forms.Label
-    Friend WithEvents Button2 As Windows.Forms.Button
-    Friend WithEvents Button1 As Windows.Forms.Button
-    Friend WithEvents PlanSwing As Windows.Forms.ComboBox
-    Friend WithEvents Label5 As Windows.Forms.Label
-    Friend WithEvents ComboBox2 As Windows.Forms.ComboBox
-    Friend WithEvents ComboBox1 As Windows.Forms.ComboBox
+    Friend WithEvents GroupBox1 As System.Windows.Forms.GroupBox
+    Friend WithEvents GroupBox5 As System.Windows.Forms.GroupBox
+    Friend WithEvents TextBox3 As System.Windows.Forms.TextBox
+    Friend WithEvents GroupBox3 As System.Windows.Forms.GroupBox
+    Friend WithEvents TextBox2 As System.Windows.Forms.TextBox
+    Friend WithEvents GroupBox2 As System.Windows.Forms.GroupBox
+    Friend WithEvents TextBox1 As System.Windows.Forms.TextBox
+    Friend WithEvents PaperSpaceSetup As System.Windows.Forms.ComboBox
+    Friend WithEvents Label7 As System.Windows.Forms.Label
+    Friend WithEvents ViewportScale As System.Windows.Forms.ComboBox
+    Friend WithEvents Label6 As System.Windows.Forms.Label
+    Friend WithEvents PageCount As System.Windows.Forms.TextBox
+    Friend WithEvents Label2 As System.Windows.Forms.Label
+    Friend WithEvents ElevCount As System.Windows.Forms.TextBox
+    Friend WithEvents Label1 As System.Windows.Forms.Label
+    Friend WithEvents Label4 As System.Windows.Forms.Label
+    Friend WithEvents Label3 As System.Windows.Forms.Label
+    Friend WithEvents Button2 As System.Windows.Forms.Button
+    Friend WithEvents Button1 As System.Windows.Forms.Button
+    Friend WithEvents PlanSwing As System.Windows.Forms.ComboBox
+    Friend WithEvents Label5 As System.Windows.Forms.Label
+    Friend WithEvents ComboBox2 As System.Windows.Forms.ComboBox
+    Friend WithEvents ComboBox1 As System.Windows.Forms.ComboBox
 End Class
