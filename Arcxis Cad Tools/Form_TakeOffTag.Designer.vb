@@ -734,7 +734,7 @@ Partial Class Form_TakeOffTag
     Friend WithEvents Label2 As Windows.Forms.Label
     Friend WithEvents Button2 As Windows.Forms.Button
     Friend WithEvents Button1 As Windows.Forms.Button
-    Friend WithEvents GroupBox10 As Windows.Forms.GroupBox
+    Friend WithEvents GroupBox10 As System.Windows.Forms.GroupBox
     Friend WithEvents CheckBox1 As Windows.Forms.CheckBox
     Friend WithEvents GroupBox9 As Windows.Forms.GroupBox
     Friend WithEvents RadioButton31 As Windows.Forms.RadioButton
