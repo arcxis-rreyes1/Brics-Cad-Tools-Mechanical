@@ -1282,7 +1282,7 @@ Partial Class Form_Arcxis_TB1
     Friend WithEvents RadioButton2 As Windows.Forms.RadioButton
     Friend WithEvents ComboBox7 As Windows.Forms.ComboBox
     Friend WithEvents GroupBox5 As Windows.Forms.GroupBox
-    Friend WithEvents Label20 As Windows.Forms.Label
+    Friend WithEvents Label20 As System.Windows.Forms.Label
     Friend WithEvents ComboBox6 As Windows.Forms.ComboBox
     Friend WithEvents Button2 As Windows.Forms.Button
     Friend WithEvents GroupBox4 As Windows.Forms.GroupBox
