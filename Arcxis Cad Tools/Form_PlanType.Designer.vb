@@ -84,8 +84,8 @@ Partial Class Form_PlanType
 
     End Sub
 
-    Friend WithEvents GroupBox7 As Windows.Forms.GroupBox
-    Friend WithEvents ListBox1 As Windows.Forms.ListBox
-    Friend WithEvents Button2 As Windows.Forms.Button
-    Friend WithEvents Button1 As Windows.Forms.Button
+    Friend WithEvents GroupBox7 As System.Windows.Forms.GroupBox
+    Friend WithEvents ListBox1 As System.Windows.Forms.ListBox
+    Friend WithEvents Button2 As System.Windows.Forms.Button
+    Friend WithEvents Button1 As System.Windows.Forms.Button
 End Class
