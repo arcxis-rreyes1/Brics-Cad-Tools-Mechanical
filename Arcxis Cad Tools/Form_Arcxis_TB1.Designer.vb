@@ -1,4 +1,5 @@
 ﻿Imports System.Drawing
+Imports System.Windows.Forms
 
 <Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class Form_Arcxis_TB1
