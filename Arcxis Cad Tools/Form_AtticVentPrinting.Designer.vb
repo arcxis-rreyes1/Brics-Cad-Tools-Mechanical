@@ -307,25 +307,25 @@ Partial Class Form_AtticVentPrinting
 
     End Sub
 
-    Friend WithEvents GroupBox1 As Windows.Forms.GroupBox
-    Friend WithEvents GroupBox5 As Windows.Forms.GroupBox
-    Friend WithEvents CheckedListBox1 As Windows.Forms.CheckedListBox
-    Friend WithEvents GroupBox6 As Windows.Forms.GroupBox
-    Friend WithEvents ListBox2 As Windows.Forms.ListBox
-    Friend WithEvents GroupBox7 As Windows.Forms.GroupBox
-    Friend WithEvents OptionsList As Windows.Forms.CheckedListBox
-    Friend WithEvents GroupBox4 As Windows.Forms.GroupBox
-    Friend WithEvents CheckedListBox4 As Windows.Forms.CheckedListBox
-    Friend WithEvents Button2 As Windows.Forms.Button
-    Friend WithEvents Button1 As Windows.Forms.Button
-    Friend WithEvents GroupBox3 As Windows.Forms.GroupBox
-    Friend WithEvents TextBox2 As Windows.Forms.TextBox
-    Friend WithEvents GroupBox2 As Windows.Forms.GroupBox
-    Friend WithEvents TextBox1 As Windows.Forms.TextBox
-    Friend WithEvents GroupBox8 As Windows.Forms.GroupBox
-    Friend WithEvents CheckedListBox2 As Windows.Forms.CheckedListBox
-    Friend WithEvents GroupBox9 As Windows.Forms.GroupBox
-    Friend WithEvents CheckedListBox3 As Windows.Forms.CheckedListBox
-    Friend WithEvents GroupBox10 As Windows.Forms.GroupBox
-    Friend WithEvents CheckedListBox5 As Windows.Forms.CheckedListBox
+    Friend WithEvents GroupBox1 As System.Windows.Forms.GroupBox
+    Friend WithEvents GroupBox5 As System.Windows.Forms.GroupBox
+    Friend WithEvents CheckedListBox1 As System.Windows.Forms.CheckedListBox
+    Friend WithEvents GroupBox6 As System.Windows.Forms.GroupBox
+    Friend WithEvents ListBox2 As System.Windows.Forms.ListBox
+    Friend WithEvents GroupBox7 As System.Windows.Forms.GroupBox
+    Friend WithEvents OptionsList As System.Windows.Forms.CheckedListBox
+    Friend WithEvents GroupBox4 As System.Windows.Forms.GroupBox
+    Friend WithEvents CheckedListBox4 As System.Windows.Forms.CheckedListBox
+    Friend WithEvents Button2 As System.Windows.Forms.Button
+    Friend WithEvents Button1 As System.Windows.Forms.Button
+    Friend WithEvents GroupBox3 As System.Windows.Forms.GroupBox
+    Friend WithEvents TextBox2 As System.Windows.Forms.TextBox
+    Friend WithEvents GroupBox2 As System.Windows.Forms.GroupBox
+    Friend WithEvents TextBox1 As System.Windows.Forms.TextBox
+    Friend WithEvents GroupBox8 As System.Windows.Forms.GroupBox
+    Friend WithEvents CheckedListBox2 As System.Windows.Forms.CheckedListBox
+    Friend WithEvents GroupBox9 As System.Windows.Forms.GroupBox
+    Friend WithEvents CheckedListBox3 As System.Windows.Forms.CheckedListBox
+    Friend WithEvents GroupBox10 As System.Windows.Forms.GroupBox
+    Friend WithEvents CheckedListBox5 As System.Windows.Forms.CheckedListBox
 End Class
