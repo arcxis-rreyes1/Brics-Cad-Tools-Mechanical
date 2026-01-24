@@ -12,6 +12,7 @@ Imports Bricscad.EditorInput
 Imports Teigha.Geometry
 Imports Teigha.Colors
 Imports Bricscad.PlottingServices
+Imports exception = Teigha.Runtime.Exception
 Module Module_Arcxis_TB
     Public ATB_OldName As String
     Public ATB_RevNum1 As String
@@ -83,13 +84,37 @@ Module Module_Arcxis_TB
     Public DpisNewName As String
 
     Public NetworkLetterForEgnyte As String
+    Public NetworkUNCPathForEgnyte As String ' Store the full UNC base path
 
     Public LispCompany As String
     Public LispTeam As String
 
+    Public PlotStyleName As String
+
+
     Public Declare Function WNetGetConnection Lib "mpr.dll" Alias _
          "WNetGetConnectionA" (ByVal lpszLocalName As String,
          ByVal lpszRemoteName As StringBuilder, ByRef cbRemoteName As Integer) As Integer
+
+    Public Sub InitializeArcxisPaths()
+        ' Automatically configure Arcxis paths if not already present
+        Dim currentPaths As List(Of String) = GetPaths()
+        Dim hasArcxisPath As Boolean = False
+
+        ' Check if ANY path contains the Arcxis engineering path
+        For Each curpath As String In currentPaths
+            If Not String.IsNullOrWhiteSpace(curpath) AndAlso
+               curpath.IndexOf("arcxis\engineering", StringComparison.OrdinalIgnoreCase) >= 0 Then
+                hasArcxisPath = True
+                Exit For
+            End If
+        Next
+
+        ' Only call SupplementalPaths if no Arcxis path exists or list is empty
+        If Not hasArcxisPath OrElse currentPaths.Count = 0 Then
+            SupplementalPaths(currentPaths)
+        End If
+    End Sub
 
     Public Sub UNCPath()
         Dim answer As String
@@ -99,21 +124,49 @@ Module Module_Arcxis_TB
                 WNetGetConnection(drv.Name.Replace("\", ""), UncPath, UncPath.Capacity)
                 answer = UncPath.ToString
                 answer = LCase(answer)
-                If answer = "\\egnytedrive\energyinspectors" Then
-                    NetworkLetterForEgnyte = drv.Name
+
+                ' Check if the UNC path starts with \\egnytedrive\
+                If answer.StartsWith("\\egnytedrive\") Then
+                    ' Now check if \shared exists under this path
+                    Dim sharedPath As String = Global.System.IO.Path.Combine(answer, "shared")
+                    If Directory.Exists(sharedPath) Then
+                        NetworkLetterForEgnyte = drv.Name
+                        NetworkUNCPathForEgnyte = sharedPath ' Store the full path to \shared
+                        Exit For ' Found it, no need to continue
+                    End If
                 End If
             End If
         Next
     End Sub
 
-    Private Function GetPaths()
+    Private Function ValidateSealsAccess() As Boolean
+        ' Check if the seals directory exists
+        If String.IsNullOrEmpty(NetworkUNCPathForEgnyte) Then
+            Return False
+        End If
 
+        Dim sealsPath As String = Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "onyx file system\templates\engineering\sealsoriginal")
+
+        If Not Directory.Exists(sealsPath) Then
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
+            Dim acEd As Editor = acDoc.Editor
+            Dim errorMsg As String = vbCrLf & "Active access to seals drive does not exist." & vbCrLf &
+                                     "Please reach out to IT for access to:" & vbCrLf & vbCrLf &
+                                     Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "onyx file system\Templates\Engineering\SealsOriginal")
+            acEd.WriteMessage(errorMsg)
+            Return False
+        End If
+
+        Return True
+    End Function
+
+    Private Function GetPaths() As List(Of String)
         Dim CurTrustPath As String = Application.GetSystemVariable("SRCHPATH")
         Dim CurPaths As String = LCase(CurTrustPath)
         Dim RemCurTrustPathList As List(Of String) = New List(Of String)
         Dim isittrue As Integer = 0
         RemCurTrustPathList = CurPaths.Split(";").ToList
-        Dim CleanedRemCurTrustPathList As List(Of String) = New List(Of String)
+        Dim CleanedRemCurTrustPathList As New List(Of String)
 
         For Each entry In RemCurTrustPathList
             If entry <> "" Then
@@ -122,9 +175,43 @@ Module Module_Arcxis_TB
                 End If
             End If
         Next
-        GetPaths = CleanedRemCurTrustPathList
+        Return CleanedRemCurTrustPathList
 
     End Function
+
+    ' Function to validate if a path is reachable
+    Private Function IsPathValid(ByVal path As String) As Boolean
+        Try
+            ' Normalize the path
+            Dim normalizedPath As String = Global.System.IO.Path.GetFullPath(path)
+
+            ' Check if the path exists
+            Return Directory.Exists(normalizedPath) OrElse File.Exists(normalizedPath)
+        Catch ex As Exception
+            ' Handle any exception (e.g., path format is invalid)
+            Return False
+        End Try
+    End Function
+
+    ' Subroutine to show a message box for path errors
+    Private Sub ShowPathErrorMessage(ByVal invalidPaths As List(Of String))
+        Try
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
+            Dim acEd As Editor = acDoc.Editor
+
+            ' Build the error message
+            Dim errorMessage As String = "The following paths are invalid or unreachable:" & Environment.NewLine
+            For Each path In invalidPaths
+                errorMessage &= "- " & path & Environment.NewLine
+            Next
+            errorMessage &= "Please check your network connections or contact support."
+
+            ' Show the message box
+            acEd.WriteMessage(errorMessage)
+        Catch ex As exception
+            ' Ignore any exception in the error handling code
+        End Try
+    End Sub
 
     <CommandMethod("SupplementalPaths", CommandFlags.Modal)>
     Public Sub SupplementalPaths(Optional ByVal CurTrustPathList As List(Of String) = Nothing)
@@ -167,18 +254,31 @@ Module Module_Arcxis_TB
         Dim TrustPathListAdd As List(Of String) = New List(Of String)
         Dim FinalTrustPathList As List(Of String) = New List(Of String)
 
-        ' Known good UNC locations (keep as absolute paths)
-
+        ' Build dynamic paths based on discovered Egnyte configuration
         ' Add mapped drive path only if we actually found a mapped letter
         If Not String.IsNullOrEmpty(NetworkLetterForEgnyte) Then
             Dim mappedEgnyte = Global.System.IO.Path.Combine(NetworkLetterForEgnyte, "shared\arcxis\engineering\drafting standards")
             TrustPathListAdd.Add(mappedEgnyte)
         End If
-        TrustPathListAdd.Add("\\egnytedrive\energyinspectors\shared\arcxis\engineering\drafting standards\cad lisp routines\BricsCad")
-        TrustPathListAdd.Add("\\egnytedrive\energyinspectors\shared\arcxis\engineering\drafting standards")
-        TrustPathListAdd.Add("\\egnytedrive\energyinspectors\shared\arcxis\engineering\drafting standards\cad lisp routines\BricsCad\Support Files")
-        TrustPathListAdd.Add("\\egnytedrive\energyinspectors\shared\onyx file system\templates\engineering\sealsoriginal")
 
+        ' Add UNC paths using the discovered base path
+        If Not String.IsNullOrEmpty(NetworkUNCPathForEgnyte) Then
+            TrustPathListAdd.Add(Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "arcxis\engineering\drafting standards\cad lisp routines\bricscad"))
+            TrustPathListAdd.Add(Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "arcxis\engineering\drafting standards\bricscad"))
+            TrustPathListAdd.Add(Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "arcxis\engineering\drafting standards\cad lisp routines\bricscad\support files"))
+
+            ' Only add seals path if it exists
+            Dim sealsPath As String = Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "onyx file system\templates\engineering\sealsoriginal")
+            If Directory.Exists(sealsPath) Then
+                TrustPathListAdd.Add(sealsPath)
+            Else
+                ' Notify user that seals access is not available
+                Dim sealsFullPath As String = Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "onyx file system\Templates\Engineering\SealsOriginal")
+                Dim errorMsg As String = vbCrLf & "Active access to seals drive does not exist." & vbCrLf &
+                                         "Please reach out to IT for access to:" & vbCrLf & vbCrLf & sealsFullPath
+                aced.WriteMessage(errorMsg)
+            End If
+        End If
 
         For Each candidate In CleanedTrustPathList
             If Not String.IsNullOrWhiteSpace(candidate) AndAlso Global.System.IO.Path.IsPathRooted(candidate) Then
@@ -195,24 +295,47 @@ Module Module_Arcxis_TB
                 End If
             End If
         Next
+        Dim acadApp As Object = Application.AcadApplication
 
         If FinalTrustPathList.Count > 0 Then
             Dim NewTrustPath As String = String.Join(";", FinalTrustPathList)
             ' Use correct system variable name and avoid altering path casing
             Application.SetSystemVariable("SRCHPATH", NewTrustPath)
+
+            ' Get existing support paths and merge without duplicates
+            Dim existingSupportPath As String = acadApp.Preferences.Files.SupportPath
+            Dim existingPaths As List(Of String) = If(String.IsNullOrEmpty(existingSupportPath),
+                                                       New List(Of String),
+                                                       existingSupportPath.Split(";").ToList())
+
+            ' Add new paths from FinalTrustPathList that aren't already in the support path
+            ' Insert at the beginning to prioritize new paths
+            Dim insertIndex As Integer = 0
+            For Each newPath In FinalTrustPathList
+                If Not existingPaths.Any(Function(p) String.Equals(p, newPath, StringComparison.OrdinalIgnoreCase)) Then
+                    existingPaths.Insert(insertIndex, newPath)
+                    insertIndex += 1
+                End If
+            Next
+
+            ' Set the merged support path
+            acadApp.Preferences.Files.SupportPath = String.Join(";", existingPaths)
         End If
 
+        ' Build dynamic printer paths using discovered Egnyte configuration
+        Dim NewPrinterStyleSheetDir As String = ""
+        Dim NewPrinterConfigDir As String = ""
 
-        Dim acadApp As Object = Application.AcadApplication
+        If Not String.IsNullOrEmpty(NetworkUNCPathForEgnyte) Then
+            NewPrinterStyleSheetDir = Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "Arcxis\Engineering\Drafting Standards\CAD Plot Styles")
+            NewPrinterConfigDir = NewPrinterStyleSheetDir
+        End If
 
+        If Not String.IsNullOrEmpty(NewPrinterConfigDir) Then
+            acadApp.Preferences.Files.PrinterConfigPath = NewPrinterConfigDir
+            acadApp.Preferences.Files.PrinterStyleSheetPath = NewPrinterStyleSheetDir
 
-        Dim NewPrinterStyleSheetDir As String = "\\EgnyteDrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards\CAD Plot Styles"
-        Dim NewPrinterConfigDir As String = "\\EgnyteDrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards\CAD Plot Styles"
-        Dim NewPrinterDescDir As String = "\\EgnyteDrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards\CAD Plot Styles"
-
-        acadApp.Preferences.Files.PrinterConfigPath = NewPrinterConfigDir
-        acadApp.Preferences.Files.PrinterStyleSheetPath = NewPrinterStyleSheetDir
-
+        End If
     End Sub
 
 End Module

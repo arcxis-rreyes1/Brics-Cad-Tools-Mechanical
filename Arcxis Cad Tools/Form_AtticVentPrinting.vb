@@ -326,6 +326,8 @@ Public Class Form_AtticVentPrinting
 
         SetCustomDwgPropReliable("PLAN", planname)
 
+        SetCustomDwgPropReliable("PLAN TYPE", "ATTIC VENT")
+
 
         If Not CheckedListBox1.CheckedItems.Contains("All") Then
             CustomPrinting = True
@@ -548,8 +550,8 @@ Public Class Form_AtticVentPrinting
 
         Dim NewFolderLocation As String
 
-        Dim IECCList As New List(Of String) From {"2015", "2028", "2021", "2024"}
-        Dim IRCList As New List(Of String) From {"2015", "2028", "2021", "2024"}
+        Dim IECCList As New List(Of String) From {"2015", "2018", "2021", "2024"}
+        Dim IRCList As New List(Of String) From {"2015", "2018", "2021", "2024"}
 
         If OptionsList.CheckedItems.Contains("All") Then
             Options.Clear()
@@ -664,10 +666,23 @@ Public Class Form_AtticVentPrinting
         Dim TodaysDate As String = Date.Today.ToString("MM dd yy", CultureInfo.InvariantCulture)
         Dim SealToStamp As String = "Master Seal File|S-SEAL-TML-TX"
 
-        TurnOnOrOffLayer(SealToStamp, True)
+        Application.SetSystemVariable("imageframe", 1)
+        Application.SetSystemVariable("imageframe", 0)
+
+        TurnOnOrOffLayer(SealToStamp, False)
         Dim CounterSkip As Boolean = False
         For Each type In PlanType
             For Each AttiType In AtticType
+
+                Dim SheetAbbrev As String = ""
+                Dim PlanAbbrev As String = ""
+
+                If UCase(type) = "FR" Or UCase(type) = "FIRE RATED" Then
+                    PlanAbbrev = " - FR"
+                Else
+                    PlanAbbrev = ""
+                End If
+
                 For Each iecc In IECCList
 
                     NewFolderLocation = SelectedFolder & "\" & planname & "\" & iecc & " IECC"
@@ -688,6 +703,7 @@ Public Class Form_AtticVentPrinting
 
                         End If
 
+                        UpdateIrcIeccOnGeneralNotes(irc, iecc)
 
                         For Each ElevValue In Elevations
                             For Each opt In Options
@@ -784,7 +800,7 @@ Public Class Form_AtticVentPrinting
                                     Next
 
                                 End If
-                                NewFolderLocation = SelectedFolder & "\" & TodaysDate & "\" & planname & "\" & type
+                                'NewFolderLocation = SelectedFolder & "\" & TodaysDate & "\" & planname & "\" & type
 
                                 If FinalRightList.Count <> 0 Then
 
@@ -794,7 +810,7 @@ Public Class Form_AtticVentPrinting
 
                                     End If
 
-                                    pdfname = UCase("RIGHT " & type & " " & planname & " " & ElevValue & " " & type)
+                                    pdfname = UCase("RIGHT ATTIC VENT " & planname & " " & ElevValue & PlanAbbrev & " " & iecc & " IECC" & " " & irc & " IRC")
 
                                 End If
 
@@ -826,7 +842,7 @@ Public Class Form_AtticVentPrinting
                                     End If
 
 
-                                    pdfname = UCase("LEFT " & type & " " & planname & " " & ElevValue & " " & type)
+                                    pdfname = UCase("LEFT ATTIC VENT " & planname & " " & ElevValue & PlanAbbrev & " " & iecc & " IECC" & " " & irc & " IRC")
 
                                 End If
 
@@ -848,14 +864,14 @@ Public Class Form_AtticVentPrinting
             Next
         Next
 
-        Dim masterfolderpath As String = SelectedFolder & "\" & TodaysDate & "\" & planname
-        Dim out = Path.Combine(masterfolderpath, planname & " MASTER.pdf")
-        Dim res = CombineRegisteredPdfs(out, "For Review")
-        If res IsNot Nothing Then
-            acEd.WriteMessage(vbLf & "Combined PDF written: " & res)
-        Else
-            acEd.WriteMessage(vbLf & "Failed to create combined PDF.")
-        End If
+        'Dim masterfolderpath As String = SelectedFolder & "\" & TodaysDate & "\" & planname
+        'Dim out = Path.Combine(masterfolderpath, planname & " MASTER.pdf")
+        'Dim res = CombineRegisteredPdfs(out, "For Review")
+        'If res IsNot Nothing Then
+        '    acEd.WriteMessage(vbLf & "Combined PDF written: " & res)
+        'Else
+        '    acEd.WriteMessage(vbLf & "Failed to create combined PDF.")
+        'End If
 
         TurnOnOrOffLayer(SealToStamp, False)
         Dim lm As LayoutManager = LayoutManager.Current
@@ -875,6 +891,56 @@ Public Class Form_AtticVentPrinting
         End If
 
     End Sub
+
+    ''' <summary>
+    ''' Updates IRC and IECC attribute values on every "AV-General Notes" block in ModelSpace.
+    ''' Returns the number of blocks updated.
+    ''' </summary>
+    Public Function UpdateIrcIeccOnGeneralNotes(newIrc As String, newIecc As String) As Integer
+        Dim doc = Application.DocumentManager.MdiActiveDocument
+        If doc Is Nothing Then Return 0
+        Dim db = doc.Database
+        Dim ed = doc.Editor
+        Dim updated As Integer = 0
+
+        Using doc.LockDocument()
+            Using tr As Transaction = db.TransactionManager.StartTransaction()
+                Dim bt As BlockTable = CType(tr.GetObject(db.BlockTableId, OpenMode.ForRead), BlockTable)
+                Dim ms As BlockTableRecord = CType(tr.GetObject(bt(BlockTableRecord.ModelSpace), OpenMode.ForRead), BlockTableRecord)
+
+                For Each id As ObjectId In ms
+                    Dim br As BlockReference = TryCast(tr.GetObject(id, OpenMode.ForRead, True), BlockReference)
+                    If br Is Nothing OrElse br.IsErased Then Continue For
+
+                    Dim def As BlockTableRecord = TryCast(tr.GetObject(br.BlockTableRecord, OpenMode.ForRead), BlockTableRecord)
+                    If def Is Nothing Then Continue For
+                    If Not def.Name.Equals("AV-General Notes", StringComparison.OrdinalIgnoreCase) Then Continue For
+
+                    Dim touched As Boolean = False
+                    For Each attId As ObjectId In br.AttributeCollection
+                        Dim attRef As AttributeReference = TryCast(tr.GetObject(attId, OpenMode.ForWrite), AttributeReference)
+                        If attRef Is Nothing Then Continue For
+
+                        Dim tag = If(attRef.Tag, String.Empty).Trim()
+                        If tag.Equals("IRC", StringComparison.OrdinalIgnoreCase) Then
+                            attRef.TextString = newIrc
+                            touched = True
+                        ElseIf tag.Equals("IECC", StringComparison.OrdinalIgnoreCase) Then
+                            attRef.TextString = newIecc
+                            touched = True
+                        End If
+                    Next
+
+                    If touched Then updated += 1
+                Next
+
+                tr.Commit()
+            End Using
+        End Using
+
+        'ed.WriteMessage(vbLf & $"AV-General Notes updated: {updated} instance(s).")
+        Return updated
+    End Function
 
     Public Function PromptForPathOrFolder(Optional ByRef userChoseFilePath As Boolean = False) As String
         Dim startPath As String = GetCurrentDwgFolder()
@@ -956,6 +1022,15 @@ Public Class Form_AtticVentPrinting
             Swing = "RIGHT"
         End If
 
+        Dim SheetAbbrev As String = ""
+        Dim PlanAbbrev As String = ""
+
+        If UCase(Layout(9)) = "FR" Or UCase(Layout(9)) = "FIRE RATED" Then
+            SheetAbbrev = "FR-"
+        Else
+            SheetAbbrev = "AV-"
+        End If
+
         Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
 
             ' Reference the Layout Manager
@@ -1009,7 +1084,7 @@ Public Class Form_AtticVentPrinting
 
                                 ElseIf tagvalue.Contains("OPTIONAL") Then
 
-                                    attref.TextString = "ATTIC VENTILATION PLAN"
+                                    attref.TextString = "ATTIC VENTILATION DESIGN"
 
                                 ElseIf tagvalue.Contains("ELEVATION") Then
 
@@ -1025,14 +1100,17 @@ Public Class Form_AtticVentPrinting
 
                                 ElseIf tagvalue.Contains("FR-1") Then
 
-                                    attref.TextString = "AV-" & Layout(4)
+                                    attref.TextString = SheetAbbrev & Layout(4)
 
                                 ElseIf tagvalue.Contains("1/8"" = 1'-0""") Then
-                                    If Layout(5) = "1/8" Then
-                                        attref.TextString = "1/8"" = 1'-0"""
-                                    ElseIf Layout(5) = "3/32" Then
-                                        attref.TextString = "3/32"" = 1'-0"""
-                                    End If
+
+                                    attref.TextString = "NTS"
+
+                                    'If Layout(5) = "1/8" Then
+                                    '    attref.TextString = "1/8"" = 1'-0"""
+                                    'ElseIf Layout(5) = "3/32" Then
+                                    '    attref.TextString = "3/32"" = 1'-0"""
+                                    'End If
                                 End If
 
                             Next
@@ -1246,12 +1324,11 @@ Public Class Form_AtticVentPrinting
                     ' 6) Pick PDF PC3 (or pass Nothing)
                     Dim pc As PlotConfig = Nothing
                     Try
-                        pc = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF.pc3")
+                        pc = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF - Brics.pc3")
                     Catch
                         ' ignore; Publisher can still use per-layout NPS
                     End Try
 
-                    ' 7) Publish silently
                     ' 7) Publish silently
                     Application.Publisher.PublishExecute(dsd, pc)
 
@@ -1511,6 +1588,40 @@ Public Class Form_AtticVentPrinting
             End Using
         End Using
     End Sub
+
+    Public Shared Function GetCustomDwgPropForDoc(db As Database, propName As String) As String
+        'Dim db = Application.DocumentManager.MdiActiveDocument.Database
+
+        ' Build from current summary info (brings along custom props)
+        Dim b As New DatabaseSummaryInfoBuilder(db.SummaryInfo)
+
+        ' Prefer the builder's editable table
+        Dim tbl = TryCast(b.CustomPropertyTable, IDictionary)
+        If tbl IsNot Nothing Then
+            For Each de As DictionaryEntry In tbl
+                If String.Equals(CStr(de.Key), propName, StringComparison.OrdinalIgnoreCase) Then
+                    Return If(de.Value, Nothing)?.ToString()
+                End If
+            Next
+            Return Nothing
+        End If
+
+        ' Fallback: enumerate si.CustomProperties if available (handles odd versions)
+        Dim si = db.SummaryInfo
+        Dim propsObj As Object = si.CustomProperties
+        If propsObj IsNot Nothing Then
+            For Each kv As Object In DirectCast(propsObj, IEnumerable)
+                Dim t = kv.GetType()
+                Dim k As String = CStr(t.GetProperty("Key").GetValue(kv, Nothing))
+                If String.Equals(k, propName, StringComparison.OrdinalIgnoreCase) Then
+                    Dim v = t.GetProperty("Value").GetValue(kv, Nothing)
+                    Return If(v, Nothing)?.ToString()
+                End If
+            Next
+        End If
+
+        Return Nothing
+    End Function
 
     Private NotInheritable Class WindowWrapper
         Implements IWin32Window

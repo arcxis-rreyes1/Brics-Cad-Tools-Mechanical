@@ -279,14 +279,14 @@ Public Class Form_MEPSetup
 
                 ' Create vertical line (0,14.2833) to (0,-14.2833)
                 Dim vertLine As New Line(New Point3d(0, 14.2833, 0), New Point3d(0, -14.2833, 0))
-                vertLine.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
+                vertLine.Color = Color.FromColorIndex(ColorMethod.ByAci, 7)
                 vertLine.Layer = "0"
                 btr.AppendEntity(vertLine)
                 acTrans.AddNewlyCreatedDBObject(vertLine, True)
 
                 ' Create horizontal line (-14.2833,0) to (14.2833,0)
                 Dim horizLine As New Line(New Point3d(-14.2833, 0, 0), New Point3d(14.2833, 0, 0))
-                horizLine.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
+                horizLine.Color = Color.FromColorIndex(ColorMethod.ByAci, 7)
                 horizLine.Layer = "0"
                 btr.AppendEntity(horizLine)
                 acTrans.AddNewlyCreatedDBObject(horizLine, True)
@@ -504,7 +504,7 @@ Public Class Form_MEPSetup
                     ' Create new layer
                     Dim newLayer As New LayerTableRecord()
                     newLayer.Name = "S-ANNO-AUTOMATION"
-                    newLayer.Color = Color.FromColorIndex(ColorMethod.ByAci, 0) ' Set color to 41
+                    newLayer.Color = Color.FromColorIndex(ColorMethod.ByAci, 7) ' Set color to 41
                     newLayer.IsPlottable = False ' Set layer to non-plot
 
                     ' Add to layer table and transaction
@@ -735,21 +735,21 @@ Public Class Form_MEPSetup
 
                 ' Create vertical line (0,6) to (-92,6)
                 Dim vertLine As New Line(New Point3d(0, 6, 0), New Point3d(-92, 6, 0))
-                vertLine.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
+                vertLine.Color = Color.FromColorIndex(ColorMethod.ByAci, 7)
                 vertLine.Layer = "0"
                 btr1.AppendEntity(vertLine)
                 acTrans.AddNewlyCreatedDBObject(vertLine, True)
 
                 ' Create vertical line (0,6) to (-92,6)
                 Dim vertLine1 As New Line(New Point3d(0, 12, 0), New Point3d(-92, 12, 0))
-                vertLine1.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
+                vertLine1.Color = Color.FromColorIndex(ColorMethod.ByAci, 7)
                 vertLine1.Layer = "0"
                 btr1.AppendEntity(vertLine1)
                 acTrans.AddNewlyCreatedDBObject(vertLine1, True)
 
                 ' Create vertical line (0,6) to (-92,6)
                 Dim vertLine2 As New Line(New Point3d(-72, 0, 0), New Point3d(-72, 18, 0))
-                vertLine2.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
+                vertLine2.Color = Color.FromColorIndex(ColorMethod.ByAci, 7)
                 vertLine1.Layer = "0"
                 btr1.AppendEntity(vertLine2)
                 acTrans.AddNewlyCreatedDBObject(vertLine2, True)
@@ -784,7 +784,7 @@ Public Class Form_MEPSetup
                 attDef.Invisible = False
                 attDef.LockPositionInBlock = True
                 attDef.Layer = "0"
-                attDef.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
+                attDef.Color = Color.FromColorIndex(ColorMethod.ByAci, 7)
                 attDef.HorizontalMode = TextHorizontalMode.TextLeft
                 attDef.VerticalMode = TextVerticalMode.TextBase
 
@@ -805,7 +805,7 @@ Public Class Form_MEPSetup
                 attdef1.Invisible = False
                 attdef1.LockPositionInBlock = True
                 attdef1.Layer = "0"
-                attdef1.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
+                attdef1.Color = Color.FromColorIndex(ColorMethod.ByAci, 7)
                 attdef1.HorizontalMode = TextHorizontalMode.TextLeft
                 attdef1.VerticalMode = TextVerticalMode.TextBase
 
@@ -825,7 +825,7 @@ Public Class Form_MEPSetup
                 attdef2.Invisible = False
                 attdef2.LockPositionInBlock = True
                 attdef2.Layer = "0"
-                attdef2.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
+                attdef2.Color = Color.FromColorIndex(ColorMethod.ByAci, 7)
                 attdef2.HorizontalMode = TextHorizontalMode.TextLeft
                 attdef2.VerticalMode = TextVerticalMode.TextBase
 
@@ -843,7 +843,7 @@ Public Class Form_MEPSetup
                 dbText1.TextString = "BUILDER"
                 dbText1.Layer = "0"
                 dbText1.WidthFactor = 0.8
-                dbText1.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
+                dbText1.Color = Color.FromColorIndex(ColorMethod.ByAci, 7)
                 dbText1.Justify = AttachmentPoint.MiddleCenter
                 dbText1.AlignmentPoint = dbText1.Position
                 btr1.AppendEntity(dbText1)
@@ -855,7 +855,7 @@ Public Class Form_MEPSetup
                 dbText2.TextString = "PLAN"
                 dbText2.Layer = "0"
                 dbText2.WidthFactor = 0.8
-                dbText2.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
+                dbText2.Color = Color.FromColorIndex(ColorMethod.ByAci, 7)
                 dbText2.Justify = AttachmentPoint.MiddleCenter
                 dbText2.AlignmentPoint = dbText2.Position
                 btr1.AppendEntity(dbText2)
@@ -867,7 +867,7 @@ Public Class Form_MEPSetup
                 dbText3.TextString = "STAMPS"
                 dbText3.Layer = "0"
                 dbText3.WidthFactor = 0.8
-                dbText3.Color = Color.FromColorIndex(ColorMethod.ByAci, 0)
+                dbText3.Color = Color.FromColorIndex(ColorMethod.ByAci, 7)
                 dbText3.Justify = AttachmentPoint.MiddleCenter
                 dbText3.AlignmentPoint = dbText3.Position
                 btr1.AppendEntity(dbText3)

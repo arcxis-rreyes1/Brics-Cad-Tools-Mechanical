@@ -36,6 +36,8 @@ Imports Document = Bricscad.ApplicationServices.Document
 Imports Exception = Teigha.Runtime.Exception
 Imports Layout = Teigha.DatabaseServices.Layout
 Imports Color = Teigha.Colors.Color
+Imports System.Collections.Specialized
+
 
 
 ' This line is not mandatory, but improves loading performances
@@ -50,7 +52,25 @@ Namespace Arcxis_Cad_Tools
 
         ' === CSV accumulation (list of lists) ===
         Private Shared _pendingRows As New List(Of List(Of String))()
+        ' Add this at the top of your FileManipulation class
+        Private Shared _fontResolverInitialized As Boolean = False
+        Private Shared ReadOnly _fontResolverLock As New Object()
 
+        Private Shared Sub EnsureFontResolver()
+            If _fontResolverInitialized Then Return
+
+            SyncLock _fontResolverLock
+                If Not _fontResolverInitialized Then
+                    Try
+                        PdfSharp.Fonts.GlobalFontSettings.FontResolver = New SystemFontResolver()
+                        _fontResolverInitialized = True
+                    Catch ex As Exception
+                        ' Log but don't fail - let individual operations handle font issues
+                        Debug.WriteLine($"Failed to initialize font resolver: {ex.Message}")
+                    End Try
+                End If
+            End SyncLock
+        End Sub
         <CommandMethod("ASA")>
         Sub DrawMember()
             Dim frm As New Form_DrawMembers
@@ -627,13 +647,13 @@ Namespace Arcxis_Cad_Tools
 
             Dim TempElevs As New List(Of String)
 
+            acEd.Regen()
 
             Using acTrans3 As Transaction = acCurDb.TransactionManager.StartTransaction()
 
                 Dim lytab As LayerTable = acTrans3.GetObject(acCurDb.LayerTableId, OpenMode.ForRead)
                 Dim alllayers As New ArrayList
                 Dim fulllayerstring As String
-                Dim selectedlayer As String
                 Dim CurrentLayer As LayerTableRecord = acTrans3.GetObject(CurrentLayerID, OpenMode.ForRead)
 
                 acCurDb.Clayer = lytab("0")
@@ -1121,7 +1141,8 @@ Namespace Arcxis_Cad_Tools
 
                 ' Build MASTER (this clears the registry)
                 Dim out = Path.Combine(masterfolderpath, planname & " MASTER.pdf")
-                Dim res = CombineRegisteredPdfs(out, "For Review")
+                Dim res = CombineRegisteredPdfs(out, "For Review",, 240, 0.06, 330.35)
+
                 If res IsNot Nothing Then
                     acEd.WriteMessage(vbLf & "Combined PDF written: " & res)
 
@@ -1135,6 +1156,10 @@ Namespace Arcxis_Cad_Tools
                 Else
                     acEd.WriteMessage(vbLf & "Failed to create combined PDF.")
                 End If
+
+                out = Path.Combine(masterfolderpath, planname & " PERMIT.pdf")
+                res = CombineRegisteredPdfs(out, "For Permit Only",, 150, 0.06, 330.35)
+                _publishedPdfs.Clear()
 
             Next
 
@@ -1828,7 +1853,7 @@ Namespace Arcxis_Cad_Tools
                         ' 6) Pick PDF PC3 (or pass Nothing)
                         Dim pc As PlotConfig = Nothing
                         Try
-                            pc = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF.pc3")
+                            pc = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF - Brics.pc3")
                         Catch
                             ' ignore; Publisher can still use per-layout NPS
                         End Try
@@ -1936,7 +1961,7 @@ Namespace Arcxis_Cad_Tools
 
                     ' Use PC3 (or pass Nothing)
                     Dim pc As PlotConfig = Nothing
-                    Try : pc = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF.pc3") : Catch : End Try
+                    Try : pc = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF - Brics.pc3") : Catch : End Try
 
                     ' Go!
                     Application.Publisher.PublishExecute(dsd, pc)
@@ -2269,7 +2294,7 @@ Namespace Arcxis_Cad_Tools
                     targetVp.TwistAngle = 0.0
                     targetVp.On = True
                     targetVp.Layer = "0"
-                    targetVp.UpdateDisplay()
+                    'targetVp.UpdateDisplay()
                     acTrans.Commit()
                 End Using
             End Using
@@ -2516,11 +2541,8 @@ Namespace Arcxis_Cad_Tools
         End Function
 
         Public Shared Sub PageSetUp11x17(layoutname As String, Optional ByVal CTBFile As String = "")
-            ' Get the current document and database, and start a transaction
             Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
-
-            ' Set the layout as current before making changes
             Dim acLayoutMgr As LayoutManager = LayoutManager.Current
             acLayoutMgr.CurrentLayout = layoutname
 
@@ -2533,30 +2555,35 @@ Namespace Arcxis_Cad_Tools
             End If
 
             Using acLckDoc As DocumentLock = acDoc.LockDocument()
+                ' TRANSACTION 1: Create the named plot settings if it doesn't exist
                 Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
                     Dim plSets As DBDictionary = acTrans.GetObject(acCurDb.PlotSettingsDictionaryId, OpenMode.ForRead)
-                    Dim vStyles As DBDictionary = acTrans.GetObject(acCurDb.VisualStyleDictionaryId, OpenMode.ForRead)
-
-                    Dim acPlSet As PlotSettings
-                    Dim createNew As Boolean = False
-
                     Dim layoutId As ObjectId = acLayoutMgr.GetLayoutId(layoutname)
                     Dim acLayout As Layout = DirectCast(acTrans.GetObject(layoutId, OpenMode.ForWrite), Layout)
 
-                    ' Check to see if the page setup exists
-                    If plSets.Contains("Arcxis") = False Then
-                        acPlSet = New PlotSettings(acLayout.ModelType)
+                    If Not plSets.Contains("Arcxis") Then
+                        Dim acPlSet As New PlotSettings(False) ' False = PaperSpace
                         acPlSet.CopyFrom(acLayout)
                         acPlSet.PlotSettingsName = "Arcxis"
-                        acPlSet.AddToPlotSettingsDictionary(acCurDb)
+                        plSets.UpgradeOpen()
+                        plSets.SetAt("Arcxis", acPlSet)
                         acTrans.AddNewlyCreatedDBObject(acPlSet, True)
-                    Else
-                        acPlSet = plSets.GetAt("Arcxis").GetObject(OpenMode.ForWrite)
                     End If
+
+                    acTrans.Commit()
+                End Using
+
+                ' TRANSACTION 2: Now configure the plot settings
+                Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
+                    Dim plSets As DBDictionary = acTrans.GetObject(acCurDb.PlotSettingsDictionaryId, OpenMode.ForRead)
+                    Dim layoutId As ObjectId = acLayoutMgr.GetLayoutId(layoutname)
+                    Dim acLayout As Layout = DirectCast(acTrans.GetObject(layoutId, OpenMode.ForWrite), Layout)
+
+                    Dim acPlSet As PlotSettings = CType(acTrans.GetObject(plSets.GetAt("Arcxis"), OpenMode.ForWrite), PlotSettings)
 
                     Try
                         Dim acPlSetVdr As PlotSettingsValidator = PlotSettingsValidator.Current
-                        acPlSetVdr.SetPlotConfigurationName(acPlSet, "ARCXIS - DWG To PDF.pc3", "ANSI_full_bleed_B_(11.00_x_17.00_Inches)")
+                        acPlSetVdr.SetPlotConfigurationName(acPlSet, "ARCXIS - DWG To PDF - Brics.pc3", "ANSI_full_bleed_B_(11.00_x_17.00_Inches)")
                         acPlSetVdr.SetZoomToPaperOnUpdate(acPlSet, True)
                         acPlSetVdr.SetPlotType(acPlSet, Teigha.DatabaseServices.PlotType.Extents)
                         Dim lowerLeft As New Point2d(0, 0)
@@ -2580,29 +2607,141 @@ Namespace Arcxis_Cad_Tools
                         acPlSetVdr.SetPlotRotation(acPlSet, PlotRotation.Degrees270)
                         acPlSetVdr.SetCurrentStyleSheet(acPlSet, CTBFile)
 
+                        ' Copy all settings to the layout
+                        acLayout.CopyFrom(acPlSet)
                     Catch es As Exception
-                        MsgBox(es.Message)
+                        MsgBox(es.Message & vbCrLf & "Error setting plot configuration. Check PC3 and paper size name.")
                     End Try
 
-                    ' Copy all settings to the layout
-                    acLayout.CopyFrom(acPlSet)
-                    ' Save the changes made
                     acTrans.Commit()
                 End Using
             End Using
         End Sub
 
+        <CommandMethod("ListPaperSizes")>
+        Public Shared Sub ListAvailablePaperSizes()
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
+            Dim acCurDb As Database = acDoc.Database
+            Dim ed As Editor = acDoc.Editor
+
+            Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
+                Try
+                    ' Get the current layout to copy settings from
+                    Dim lm As LayoutManager = LayoutManager.Current
+                    Dim layoutId As ObjectId = lm.GetLayoutId(lm.CurrentLayout)
+                    Dim layout As Layout = acTrans.GetObject(layoutId, OpenMode.ForRead)
+
+                    ' Create a temporary PlotSettings and copy from layout
+                    Dim tempPlotSettings As New PlotSettings(False)
+                    tempPlotSettings.CopyFrom(layout)
+
+                    Dim validator As PlotSettingsValidator = PlotSettingsValidator.Current
+
+                    ' Get list of available plotters first
+                    Dim devices As StringCollection = validator.GetPlotDeviceList()
+
+                    Dim targetDevice As String = "ARCXIS - DWG To PDF - Brics.pc3"
+                    Dim foundDevice As Boolean = devices.Cast(Of String)().Any(Function(d) d.Equals(targetDevice, StringComparison.OrdinalIgnoreCase))
+
+                    If Not foundDevice Then
+                        ed.WriteMessage(vbLf & "ERROR: PC3 file '" & targetDevice & "' not found!")
+                        acTrans.Commit()
+                        Return
+                    End If
+
+                    ' **KEY FIX: Set the device with a known-good paper size first**
+                    ' Try common 11x17 paper size names that typically exist
+                    Dim tryMediaNames As String() = {
+                "ANSI B (11.00 x 17.00 Inches)",
+                "ANSI_B_(11.00_x_17.00_Inches)",
+                "Tabloid (11 x 17 in)",
+                "11x17"
+            }
+
+                    Dim successMedia As String = Nothing
+                    For Each mediaName In tryMediaNames
+                        Try
+                            validator.SetPlotConfigurationName(tempPlotSettings, targetDevice, mediaName)
+                            successMedia = mediaName
+                            Exit For
+                        Catch
+                            ' Try next one
+                        End Try
+                    Next
+
+                    If successMedia Is Nothing Then
+                        ' Last resort: try with first available media from a default plotter
+                        Try
+                            ' Use DWG To PDF.pc3 (built-in) to get a valid media name
+                            Dim tempPs As New PlotSettings(False)
+                            tempPs.CopyFrom(layout)
+                            validator.SetPlotConfigurationName(tempPs, "DWG To PDF.pc3", Nothing)
+                            Dim defaultMedia As StringCollection = validator.GetCanonicalMediaNameList(tempPs)
+                            If defaultMedia.Count > 0 Then
+                                ' Try the first media from built-in plotter
+                                validator.SetPlotConfigurationName(tempPlotSettings, targetDevice, defaultMedia(0))
+                                successMedia = defaultMedia(0)
+                            End If
+                        Catch
+                            ed.WriteMessage(vbLf & "ERROR: Could not initialize plot device with any paper size.")
+                            ed.WriteMessage(vbLf & "Your PC3 file may be corrupted or incompatible.")
+                            acTrans.Commit()
+                            Return
+                        End Try
+                    End If
+
+                    ' Now get the full list of available media
+                    Dim mediaNames As StringCollection = validator.GetCanonicalMediaNameList(tempPlotSettings)
+
+                    ed.WriteMessage(vbLf & vbLf & "=== Available Paper Sizes for '" & targetDevice & "' ===" & vbLf)
+                    ed.WriteMessage(vbLf & "(Successfully initialized with: " & successMedia & ")" & vbLf)
+
+                    Dim count As Integer = 0
+                    For Each mediaName As String In mediaNames
+                        Dim localName As String = validator.GetLocaleMediaName(tempPlotSettings, mediaName)
+                        ed.WriteMessage(vbLf & $"  [{count}] Canonical: '{mediaName}'")
+                        ed.WriteMessage(vbLf & $"      Display:   '{localName}'")
+                        count += 1
+                    Next
+
+                    ed.WriteMessage(vbLf & vbLf & $"Total: {count} paper sizes found.")
+                    ed.WriteMessage(vbLf & "Use the CANONICAL name in SetPlotConfigurationName()." & vbLf)
+
+                Catch ex As Exception
+                    ed.WriteMessage(vbLf & "Error: " & ex.Message)
+                    ed.WriteMessage(vbLf & "Stack: " & ex.StackTrace)
+                End Try
+
+                acTrans.Commit()
+            End Using
+        End Sub
+
         Public Shared Sub ReloadNestedXrefs(db As Database, tr As Transaction)
             Dim bt As BlockTable = tr.GetObject(db.BlockTableId, OpenMode.ForWrite)
+            Dim xrefsToReload As New ObjectIdCollection()
+
             For Each id In bt
                 Dim btr As BlockTableRecord = tr.GetObject(id, OpenMode.ForWrite)
-                If btr.IsFromExternalReference AndAlso btr.XrefStatus = XrefStatus.Unresolved Then
-                    If btr.Name = "Master Seal File" Then
-                        db.ReloadXrefs(New ObjectIdCollection({btr.ObjectId}))
+
+                ' Reload any xref, not just unresolved ones
+                If btr.IsFromExternalReference Then
+                    ' Special handling for Master Seal File
+                    If btr.Name = "Master Seal File" OrElse btr.XrefStatus = XrefStatus.Unresolved Then
+                        xrefsToReload.Add(btr.ObjectId)
                     End If
                 End If
             Next
+
+            ' Reload collected xrefs
+            If xrefsToReload.Count > 0 Then
+                Try
+                    db.ReloadXrefs(xrefsToReload)
+                Catch
+                    ' Ignore reload errors
+                End Try
+            End If
         End Sub
+
         Public Shared Sub DetachXrefs(db As Database, tr As Transaction, xref As String)
 
             ' Also handle raster image definitions that reference the given xref string
@@ -4014,8 +4153,10 @@ Namespace Arcxis_Cad_Tools
 
         ' --- Updated combine + watermark support ---
         ' Replace the existing CombineRegisteredPdfs, CombinePdfsCommand and AutoCombinePdfsCommand with these.
+        Public Shared Function CombineRegisteredPdfs(outputPath As String, Optional watermark As String = Nothing, Optional fontName As String = "Arial", Optional fontSize As Double = 144, Optional opacity As Double = 0.15, Optional angle As Double = 52.35) As String
+            ' Initialize font resolver if needed
+            EnsureFontResolver()
 
-        Public Shared Function CombineRegisteredPdfs(outputPath As String, Optional watermark As String = Nothing, Optional fontName As String = "Arial", Optional fontSize As Double = 144, Optional opacity As Double = 0.15, Optional angle As Double = 232.35) As String
             SyncLock _publishedPdfsLock
                 If _publishedPdfs Is Nothing OrElse _publishedPdfs.Count = 0 Then Return Nothing
                 Try
@@ -4033,8 +4174,8 @@ Namespace Arcxis_Cad_Tools
                                         Using gfx As XGraphics = XGraphics.FromPdfPage(added, XGraphicsPdfPageOptions.Append)
                                             Dim pageW = added.Width.Point
                                             Dim pageH = added.Height.Point
-                                            angle = 240
-                                            fontSize = 240
+                                            'angle = 240
+                                            'fontSize = 240
                                             ' Prepare font and brush with alpha
                                             Dim font As New XFont(fontName, fontSize, XFontStyleEx.Regular)
                                             Dim col As XColor = XColor.FromArgb(CInt(255.0 * Math.Max(0.0, Math.Min(1.0, opacity))), XColors.Black)
@@ -4050,9 +4191,34 @@ Namespace Arcxis_Cad_Tools
                                     End If
                                 Next
                             End Using
+                        Catch ex As System.InvalidOperationException
+                            ' Log which file failed
+                            Try
+                                Dim doc = Application.DocumentManager.MdiActiveDocument
+                                If doc IsNot Nothing Then
+                                    doc.Editor.WriteMessage(vbLf & $"ERROR: Failed to process PDF: {src}")
+                                    doc.Editor.WriteMessage(vbLf & $"  Exception: {ex.Message}")
+                                End If
+                            Catch
+                            End Try
+                            ' Continue with other files instead of failing entirely
+                            Continue For
+                        Catch ex As Exception
+                            ' Log other errors too
+                            Try
+                                Dim doc = Application.DocumentManager.MdiActiveDocument
+                                If doc IsNot Nothing Then
+                                    doc.Editor.WriteMessage(vbLf & $"ERROR: Unexpected error with PDF: {src}")
+                                    doc.Editor.WriteMessage(vbLf & $"  Exception: {ex.GetType().Name} - {ex.Message}")
+                                End If
+                            Catch
+                            End Try
+                            Continue For
                         Catch
+
                             ' skip single-source failures and continue
                         End Try
+                        Continue For
                     Next
 
                     Dim dir = Path.GetDirectoryName(outputPath)
@@ -4061,7 +4227,7 @@ Namespace Arcxis_Cad_Tools
                     outDoc.Save(outputPath)
 
                     ' Clear registered list after successful combine
-                    _publishedPdfs.Clear()
+                    ' _publishedPdfs.Clear()
 
                     Return outputPath
                 Catch
@@ -4361,6 +4527,50 @@ Namespace Arcxis_Cad_Tools
 
             Return outputs
         End Function
+
+        <CommandMethod("RefreshXrefLayers")>
+        Public Shared Sub RefreshXrefLayers()
+            Dim doc As Document = Application.DocumentManager.MdiActiveDocument
+            If doc Is Nothing Then Return
+            Dim db As Database = doc.Database
+            Dim ed As Editor = doc.Editor
+
+            Using acLck As DocumentLock = doc.LockDocument()
+                Using tr As Transaction = db.TransactionManager.StartTransaction()
+                    Try
+                        Dim bt As BlockTable = tr.GetObject(db.BlockTableId, OpenMode.ForWrite)
+                        Dim reloadedCount As Integer = 0
+                        ' Collect all xrefs that need reloading
+                        Dim xrefsToReload As New ObjectIdCollection()
+                        For Each id As ObjectId In bt
+                            Dim btr As BlockTableRecord = TryCast(tr.GetObject(id, OpenMode.ForRead), BlockTableRecord)
+                            If btr Is Nothing Then Continue For
+
+                            ' Check if it's an xref (not overlay)
+                            If btr.IsFromExternalReference Then
+                                xrefsToReload.Add(btr.ObjectId)
+                            End If
+                        Next
+                        ' Reload all xrefs
+                        If xrefsToReload.Count > 0 Then
+                            Try
+                                db.ReloadXrefs(xrefsToReload)
+                                reloadedCount = xrefsToReload.Count
+                            Catch ex As Exception
+                                'ed.WriteMessage(vbLf & $"Error reloading xrefs: {ex.Message}")
+                            End Try
+                        End If
+                        ' Force layer table refresh
+                        Dim lt As LayerTable = tr.GetObject(db.LayerTableId, OpenMode.ForRead)
+                        tr.Commit()
+                        ' Regen to update display
+                        ed.Regen()
+                    Catch ex As Exception
+                    End Try
+                End Using
+            End Using
+        End Sub
+
 
         ' === Added: Excel driven layer import & merge ===
         <CommandMethod("ImportLayersFromExcel")>

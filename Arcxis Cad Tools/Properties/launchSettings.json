@@ -1,9 +1,11 @@
 {
   "profiles": {
-    "BricsCad": {
+    "BricsCAD Debug": {
       "commandName": "Executable",
       "executablePath": "C:\\Program Files\\Bricsys\\BricsCAD V26 en_US\\bricscad.exe",
-      "commandLineArgs": "/L\r\n\"C:\\test\\TEST2.dwg\""
+      "commandLineArgs": "",
+      "workingDirectory": "$(ProjectDir)",
+      "nativeDebugging": false
     }
   }
 }

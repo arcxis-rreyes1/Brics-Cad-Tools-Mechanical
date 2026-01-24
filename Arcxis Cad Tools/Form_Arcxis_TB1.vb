@@ -1279,7 +1279,7 @@ Public Class Form_Arcxis_TB1
                             Next
 
                             'Dim outputDir As String = "c:\temp\"
-                            Dim outputDir As String = My.Computer.FileSystem.SpecialDirectories.MyDocuments & "\"
+                            Dim outputDir As String = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) & "\"
                             Dim DWGname As String = DirectCast(Application.GetSystemVariable("DWGNAME"), String)
                             DWGname = DWGname.Remove(DWGname.Length - 4)
                             Dim pdfFile As String = outputDir & DWGname & ".pdf"
@@ -1325,7 +1325,7 @@ Public Class Form_Arcxis_TB1
                             dsd.ReadDsd(dsdFile)
 
 
-                            Dim pc As PlotConfig = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF.pc3")
+                            Dim pc As PlotConfig = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF - Brics.pc3")
                             Application.Publisher.PublishExecute(dsd, pc)
 
                             File.Delete(dsdFile)
@@ -1641,7 +1641,7 @@ Public Class Form_Arcxis_TB1
                     Dim acPlSetVdr As PlotSettingsValidator = PlotSettingsValidator.Current
 
                     ' Set the Plotter and page size
-                    acPlSetVdr.SetPlotConfigurationName(acPlSet, "ARCXIS - DWG To PDF.pc3", "ANSI_full_bleed_B_(17.00_x_11.00_Inches)")
+                    acPlSetVdr.SetPlotConfigurationName(acPlSet, "ARCXIS - DWG To PDF - Brics.pc3", "ANSI_full_bleed_B_(17.00_x_11.00_Inches)")
 
                     ' Set to plot to the current display
                     'If accLayout.ModelType = False Then
@@ -1765,7 +1765,7 @@ Public Class Form_Arcxis_TB1
                         Dim acPlSetVdr As PlotSettingsValidator = PlotSettingsValidator.Current
 
                         ' Set the Plotter and page size
-                        acPlSetVdr.SetPlotConfigurationName(acPlSet, "ARCXIS - DWG To PDF.pc3", "ANSI_full_bleed_B_(17.00_x_11.00_Inches)")
+                        acPlSetVdr.SetPlotConfigurationName(acPlSet, "ARCXIS - DWG To PDF - Brics.pc3", "ANSI_full_bleed_B_(17.00_x_11.00_Inches)")
 
                         ' Set to plot to the current display
                         'If accLayout.ModelType = False Then
@@ -1899,10 +1899,10 @@ Public Class Form_Arcxis_TB1
                         Dim acPlSetVdr As PlotSettingsValidator = PlotSettingsValidator.Current
 
 
-                        'ARCXIS - DWG To PDF.pc3
+                        'ARCXIS - DWG To PDF - Brics.pc3
 
                         ' Set the Plotter and page size
-                        acPlSetVdr.SetPlotConfigurationName(acPlSet, "ARCXIS - DWG To PDF.pc3", "ARCH_full_bleed_D_(36.00_x_24.00_Inches)")
+                        acPlSetVdr.SetPlotConfigurationName(acPlSet, "ARCXIS - DWG To PDF - Brics.pc3", "ARCH_full_bleed_D_(36.00_x_24.00_Inches)")
 
                         ' Set to plot to the current display
                         'If accLayout.ModelType = False Then
@@ -4375,7 +4375,7 @@ Public Class Form_Arcxis_TB1
                     Dim DWGnm As String = Application.GetSystemVariable("dwgName")
 
                     'Dim outputDir As String = "c:\temp\"
-                    Dim outputDir As String = My.Computer.FileSystem.SpecialDirectories.MyDocuments & "\"
+                    Dim outputDir As String = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) & "\"
                     Dim DWGname As String = DirectCast(Application.GetSystemVariable("DWGNAME"), String)
                     DWGname = DWGname.Remove(DWGname.Length - 4)
                     Dim pdfFile As String = outputDir & DWGname & ".pdf"

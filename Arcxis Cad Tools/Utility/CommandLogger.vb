@@ -16,6 +16,11 @@ Namespace LoggingTrial
         Private Shared loggingEnabled As Boolean = True
 
         Public Sub Initialize() Implements IExtensionApplication.Initialize
+
+            UNCPath()
+
+            Module_Arcxis_TB.InitializeArcxisPaths()
+
             Dim ed = Application.DocumentManager.MdiActiveDocument.Editor
             'ed.WriteMessage(vbLf & "[Logger initialized]")
 

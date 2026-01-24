@@ -1077,7 +1077,7 @@ Public Class Form_MechanicalPrinting
                     ' 6) Pick PDF PC3 (or pass Nothing)
                     Dim pc As PlotConfig = Nothing
                     Try
-                        pc = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF.pc3")
+                        pc = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF - Brics.pc3")
                     Catch
                         ' ignore; Publisher can still use per-layout NPS
                     End Try

@@ -1,171 +1,70 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
     <OutputType>Library</OutputType>
     <RootNamespace>Arcxis_Cad_Tools</RootNamespace>
-    <MyType>Windows</MyType>
-    <PublishUrl>publish\</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Disk</InstallFrom>
-    <UpdateEnabled>false</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>Arcxis Cad Tools</AssemblyName>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    
+    <!-- Enable full debugging -->
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    
+    <!-- VB specific options -->
+    <OptionExplicit>On</OptionExplicit>
+    <OptionCompare>Binary</OptionCompare>
+    <OptionStrict>Off</OptionStrict>
+    <OptionInfer>On</OptionInfer>
+    
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    
+    <!-- Suppress Windows-specific warnings -->
+    <NoWarn>$(NoWarn);CA1416;42016,41999,42017,42018,42019,42032,42036,42020,42021,42022,42353,42354,42355</NoWarn>
+    
     <UseWPF>true</UseWPF>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
-    <AssemblyTitle>Arcxis Cad Tools</AssemblyTitle>
-    <Product>Arcxis Cad Tools</Product>
-    <Copyright>Copyright ©  2025</Copyright>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
-    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DocumentationFile>Arcxis Cad Tools.xml</DocumentationFile>
-    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022,42353,42354,42355</NoWarn>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <UseWinFormsOutOfProcDesigner>False</UseWinFormsOutOfProcDesigner>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <DocumentationFile>Arcxis Cad Tools.xml</DocumentationFile>
-    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022,42353,42354,42355</NoWarn>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <UseWinFormsOutOfProcDesigner>False</UseWinFormsOutOfProcDesigner>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>true</Optimize>
     <DefineDebug>false</DefineDebug>
-    <DocumentationFile>Arcxis Cad Tools.xml</DocumentationFile>
-    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022,42353,42354,42355</NoWarn>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <UseWinFormsOutOfProcDesigner>False</UseWinFormsOutOfProcDesigner>
+    <DefineTrace>true</DefineTrace>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <DefineDebug>false</DefineDebug>
-    <DocumentationFile>Arcxis Cad Tools.xml</DocumentationFile>
-    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022,42353,42354,42355</NoWarn>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <UseWinFormsOutOfProcDesigner>False</UseWinFormsOutOfProcDesigner>
-  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
     <PackageReference Include="Microsoft-Windows10-APICodePack-Shell" Version="1.1.8" />
     <PackageReference Include="PDFsharp" Version="6.2.3" />
   </ItemGroup>
+
   <ItemGroup>
-    <Service Include="{94E38DFF-614B-4CBD-B67C-F211BB35CE8B}" />
+    <Reference Include="BrxMgd">
+      <HintPath>..\..\..\..\..\..\Program Files\Bricsys\BricsCAD V26 en_US\BrxMgd.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TD_Mgd">
+      <HintPath>..\..\..\..\..\..\Program Files\Bricsys\BricsCAD V26 en_US\TD_Mgd.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <Import Include="Autodesk.AutoCAD.Interop" />
-    <Import Include="Autodesk.AutoCAD.Interop.Common" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Update="Form_AddLayouts.Designer.vb">
-      <DependentUpon>Form_AddLayouts.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_Arcxis_TB1.Designer.vb">
-      <DependentUpon>Form_Arcxis_TB1.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_Arcxis_TB2.Designer.vb">
-      <DependentUpon>Form_Arcxis_TB2.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_Arcxis_TB3.Designer.vb">
-      <DependentUpon>Form_Arcxis_TB3.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_Arcxis_TB4.Designer.vb">
-      <DependentUpon>Form_Arcxis_TB4.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_DrawMembers.Designer.vb">
-      <DependentUpon>Form_DrawMembers.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_MechanicalPrinting.Designer.vb">
-      <DependentUpon>Form_MechanicalPrinting.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_AtticVentPrinting.Designer.vb">
-      <DependentUpon>Form_AtticVentPrinting.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_Automated_Printing_Info.Designer.vb">
-      <DependentUpon>Form_Automated_Printing_Info.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_FramingProperties.Designer.vb">
-      <DependentUpon>Form_FramingProperties.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_FramingDefinitions.Designer.vb">
-      <DependentUpon>Form_FramingDefinitions.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_MEPSetup.Designer.vb">
-      <DependentUpon>Form_MEPSetup.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_PlanType.Designer.vb">
-      <DependentUpon>Form_PlanType.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Framing Vault Transfer.Designer.vb">
-      <DependentUpon>Framing Vault Transfer.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_AddBeam.Designer.vb">
-      <DependentUpon>Form_AddBeam.vb</DependentUpon>
-    </Compile>
-    <Compile Update="Form_TakeOffTag.Designer.vb">
-      <DependentUpon>Form_TakeOffTag.vb</DependentUpon>
-    </Compile>
-    <Compile Update="My Project\Resources.Designer.vb">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Update="My Project\Application.Designer.vb">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Application.myapp</DependentUpon>
-      <DesignTime>True</DesignTime>
-    </Compile>
-    <Compile Update="My Project\Settings.Designer.vb">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="My Project\Application.myapp">
-      <Generator>MyApplicationCodeGenerator</Generator>
-      <LastGenOutput>Application.Designer.vb</LastGenOutput>
-    </None>
-    <None Update="My Project\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.vb</LastGenOutput>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include=".NETFramework,Version=v4.0">
-      <Visible>False</Visible>
-      <ProductName>Microsoft .NET Framework 4 %28x86 and x64%29</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
-      <Visible>False</Visible>
-      <ProductName>Windows Installer 3.1</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-  </ItemGroup>
+
   <ItemGroup>
     <COMReference Include="Microsoft.Office.Core">
       <Guid>{2DF8D04C-5BFA-101B-BDE5-00AA0044DE52}</Guid>
@@ -186,17 +85,57 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
+
   <ItemGroup>
-    <Folder Include="Data Access\" />
+    <!-- Explicitly set SubType for all form files -->
+    <Compile Update="Form_AddLayouts.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_Arcxis_TB1.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_Arcxis_TB2.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_Arcxis_TB3.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_Arcxis_TB4.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_DrawMembers.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_MechanicalPrinting.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_AtticVentPrinting.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_Automated_Printing_Info.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_FramingProperties.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_FramingDefinitions.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_MEPSetup.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_PlanType.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Framing Vault Transfer.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_AddBeam.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Form_TakeOffTag.vb">
+      <SubType>Form</SubType>
+    </Compile>
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="BrxMgd">
-      <HintPath>..\..\..\..\..\..\Program Files\Bricsys\BricsCAD V26 en_US\BrxMgd.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TD_Mgd">
-      <HintPath>..\..\..\..\..\..\Program Files\Bricsys\BricsCAD V26 en_US\TD_Mgd.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-  </ItemGroup>
+
 </Project>
