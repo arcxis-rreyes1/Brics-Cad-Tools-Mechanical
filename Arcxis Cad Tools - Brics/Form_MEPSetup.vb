@@ -1,7 +1,8 @@
-﻿Imports System
+﻿
+Imports System
 Imports System.Linq
 Imports System.Windows.Forms
-Imports Arcxis_Cad_Tools.Arcxis_Cad_Tools
+Imports Arcxis_Cad_Tools_Brics.Arcxis_Cad_Tools
 Imports System.Drawing
 Imports Bricscad.ApplicationServices
 Imports Teigha.Runtime
@@ -13,75 +14,30 @@ Imports Bricscad.PlottingServices
 Imports Application = Bricscad.ApplicationServices.Application
 Imports Color = Teigha.Colors.Color
 
-Public Class Framing_Vault_Transfer
-
-    Public ReadOnly Property PackageFrWbValue As String
-        Get
-            If WSFW.Checked Then Return "WSFW"
-            If RFR.Checked Then Return "RFR" ' <-- change to your RB2 control name if needed
-            Return ""
-        End Get
-    End Property
+Public Class Form_MEPSetup
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
 
         Dim ElevNumber As Integer = ElevCount.Text
-        Dim FramingPages As Integer = FramingCount.Text
-        Dim BracingPages115 As Integer = BracingCount115.Text
-        Dim BracingPages130 As Integer = BracingCount130.Text
-        Dim BracingPages142 As Integer = BracingCount142.Text
+        Dim LayoutPages As Integer = PageCount.Text
         Dim Builder As String = TextBox1.Text
         Dim PlanName As String = TextBox2.Text
-        Dim TDIPages As Integer = TdiCount.Text
-        Dim SheetLabeling As String = SheetLabels.SelectedItem
-        'Dim SetupSwings As String = PlanSwing.SelectedItem
+        Dim VentType As String = ComboBox1.SelectedItem
+        Dim Encapsulated As Boolean = False
+        If ComboBox2.SelectedItem = "Yes" Then
+            Encapsulated = True
+        End If
         Dim PaperSpaceScale As String = ViewportScale.SelectedItem
         Dim frm1 As New Form_Arcxis_TB4
         Dim Elevations As New List(Of String)
+        Dim Options As New List(Of String)
         Dim SequenceCounter As Integer 'this is for labeleing left to right to keep the page block in order later on
         Dim Loops As New List(Of (First As String, Second As Integer))
         Dim SetupSwings As New List(Of String)
         Dim NumberOfNeededLayouts As Integer = 0
         Dim SealLoop As New List(Of String)
-        Dim FramingPagesList
+        Dim frm2 As New Form_Arcxis_TB4
 
-        ' Save the single custom property once, based on radio selection
-        SetCustomDwgPropReliable("PackageFRWB", PackageFrWbValue)
-
-        ' Hide the parent form before showing the child form
-        Me.Hide()
-
-
-        '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-        '''''''meta data collection form
-        '''
-
-
-        'Dim frm As New Form_FramingDefinitions(FramingPages)
-
-        'Dim frmresult = frm.ShowDialog()
-
-        'If frmresult = DialogResult.Cancel Then
-        '    ' Show the parent form again if canceled
-        '    Me.Show()
-        '    Me.BringToFront()
-        '    Exit Sub
-
-        'Else
-        '    FramingPagesList = frm.GroupedEntries
-        'End If
-        '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-        Loops.Add(("Framing", FramingPages))
-        Loops.Add(("142 Bracing", BracingPages142))
-        Loops.Add(("130 Bracing", BracingPages130))
-        Loops.Add(("115 Bracing", BracingPages115))
-        Loops.Add(("Windstorm", TDIPages))
-
-        For Each selecteditem In SealsList.CheckedItems
-
-            SealLoop.Add(selecteditem)
-
-        Next
+        Loops.Add(("Attic Vent", LayoutPages))
 
         'checking to see if we need more than 10 layouts with automation
         For Each PlanType In Loops
@@ -120,6 +76,29 @@ Public Class Framing_Vault_Transfer
 
             End If
 
+        Next
+
+        For y = 1 To LayoutPages
+            If y = 1 Then
+                Options.Add("BASE")
+            Else
+
+                frm2.Label1.Text = "Option Name"
+
+                frm2.TextBox1.Text = ""
+
+                frm2.ShowDialog()
+
+                If ATB_CustomLayoutLetter = "" Then
+
+                    Exit Sub
+
+                Else
+
+                    Options.Add(UCase(ATB_CustomLayoutLetter))
+
+                End If
+            End If
         Next
 
         Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
@@ -219,36 +198,7 @@ Public Class Framing_Vault_Transfer
 
                             InsertionPoint = New Point3d(StartingPoint.X + (PanOver * (SequenceCounter - 1)), StartingPoint.Y - (PanDown * x), 0)
 
-                            If item.First = "142 Bracing" Then
-
-                                PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), "Bracing", swing, PaperSpaceScale, "142 MPH")
-
-                            ElseIf item.First = "130 Bracing" Then
-
-                                PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), "Bracing", swing, PaperSpaceScale, "130 MPH")
-
-                            ElseIf item.First = "115 Bracing" Then
-
-                                PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), "Bracing", swing, PaperSpaceScale, "115 MPH")
-
-                            Else
-
-                                If item.First = "Framing" Then
-
-                                    'Dim entry = FramingPagesList(z - 1)
-                                    'Dim framingFloor As String = entry.Item1   ' GroupBox.Text
-                                    'Dim framingMaterial As String = entry.Item2 ' ListBox.SelectedItem
-
-                                    'PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), "Framing", swing, PaperSpaceScale, "", framingFloor, framingMaterial)
-
-                                    PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), "Framing", swing, PaperSpaceScale)
-
-                                Else
-
-                                    PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), item.First, swing, PaperSpaceScale)
-
-                                End If
-                            End If
+                            PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), "Attic Vent", swing, PaperSpaceScale, Options(SequenceCounter - 1), VentType, Encapsulated)
 
                             WorkSpaceBlockInsert(InsertionPoint)
                             SequenceCounter += 1
@@ -265,10 +215,10 @@ Public Class Framing_Vault_Transfer
             SwingCounter += 1
             StartingPoint = pt4
         Next
-        Dim CTBForPages As String = ComboBox1.SelectedItem
+
         If PaperSpaceSetup.SelectedItem = "Yes" Then
 
-            FileManipulation.CreateLayoutsWithTitleblock(NumberOfNeededLayouts, True, CTBForPages)
+            FileManipulation.CreateLayoutsWithTitleblock(NumberOfNeededLayouts, True)
 
         End If
 
@@ -277,20 +227,10 @@ Public Class Framing_Vault_Transfer
 
         SetCustomDwgPropReliable("PLAN", PlanName)
         SetCustomDwgPropReliable("BUILDER", Builder)
-        SetCustomDwgPropReliable("PLAN TYPE", "Framing")
-        SetCustomDwgPropReliable("SHEET LABELING", SheetLabeling)
+        SetCustomDwgPropReliable("PLAN TYPE", "Attic Vent")
+        SetCustomDwgPropReliable("VENT TYPE", VentType)
+        SetCustomDwgPropReliable("ENCAPSULATED ATTIC", ComboBox2.SelectedItem)
 
-        Dim parts As New List(Of String)()
-
-        For Each item As String In SealLoop
-            If Not String.IsNullOrWhiteSpace(item) Then
-                parts.Add(item.Trim())
-            End If
-        Next
-
-        Dim result As String = String.Join(", ", parts)
-
-        SetCustomDwgPropReliable("STAMPS", result)
 
         Using acDoc.LockDocument()
             Dim folder As String = CStr(Application.GetSystemVariable("DWGPREFIX"))
@@ -309,17 +249,6 @@ Public Class Framing_Vault_Transfer
 
     End Sub
 
-    Public Shared Sub SetCustomDwgPropReliable(propName As String, propValue As String)
-        Dim db = Application.DocumentManager.MdiActiveDocument.Database
-        Dim b As New DatabaseSummaryInfoBuilder(db.SummaryInfo)
-        Dim tbl = DirectCast(b.CustomPropertyTable, IDictionary)
-        If tbl.Contains(propName) Then
-            tbl(propName) = propValue
-        Else
-            tbl.Add(propName, propValue)
-        End If
-        db.SummaryInfo = b.ToDatabaseSummaryInfo()
-    End Sub
     Public Sub CreatePageBlock()
 
         Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
@@ -540,7 +469,7 @@ Public Class Framing_Vault_Transfer
 
 
 
-    Private Sub PageBlockInsert(insPt As Point3d, SequenceCounter As Integer, Elevation As String, LayoutType As String, Swing As String, PaperSpaceScale As String, Optional ByVal Options As String = "", Optional ByVal FramingFloor As String = "", Optional ByVal FramingMaterial As String = "")
+    Private Sub PageBlockInsert(insPt As Point3d, SequenceCounter As Integer, Elevation As String, LayoutType As String, Swing As String, PaperSpaceScale As String, Optional ByVal Options As String = "", Optional ByVal venttype As String = "", Optional ByVal encapsulated As Boolean = False)
 
         Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
@@ -575,7 +504,7 @@ Public Class Framing_Vault_Transfer
                     ' Create new layer
                     Dim newLayer As New LayerTableRecord()
                     newLayer.Name = "S-ANNO-AUTOMATION"
-                    newLayer.Color = Color.FromColorIndex(ColorMethod.ByAci, 255) ' Set color to 41
+                    newLayer.Color = Color.FromColorIndex(ColorMethod.ByAci, 7) ' Set color to 41
                     newLayer.IsPlottable = False ' Set layer to non-plot
 
                     ' Add to layer table and transaction
@@ -607,30 +536,17 @@ Public Class Framing_Vault_Transfer
 
                             If tagvalue = "LXS" Then
 
-                                If LayoutType = "Framing" Then
-
-                                    attRef.TextString = FramingFloor
-                                    attRef.Height = 24
-
-                                Else
-
-                                    attRef.TextString = ""
-
-                                End If
-
+                                attRef.TextString = venttype
+                                attRef.Height = 24
 
                             ElseIf tagvalue = "TND" Then
 
-
-                                If LayoutType = "Framing" Then
-
-                                    attRef.TextString = FramingMaterial
+                                If encapsulated Then
+                                    attRef.TextString = "ENCAPSULATED"
                                     attRef.Height = 24.0
-
                                 Else
-
-                                    attRef.TextString = ""
-
+                                    attRef.TextString = " NON ENCAPSULATED"
+                                    attRef.Height = 18
                                 End If
 
                             ElseIf tagvalue = "MOD" Then
@@ -1020,20 +936,6 @@ Public Class Framing_Vault_Transfer
 
                                 attRef.TextString = Plan
 
-                            ElseIf tagvalue = "STAMPS" Then
-
-                                Dim parts As New List(Of String)()
-
-                                For Each item As String In SealLoop
-                                    If Not String.IsNullOrWhiteSpace(item) Then
-                                        parts.Add(item.Trim())
-                                    End If
-                                Next
-
-                                Dim result As String = String.Join(", ", parts)
-
-                                attRef.TextString = result
-
                             End If
 
                             'Add the AttributeReference to the BlockReference
@@ -1168,10 +1070,10 @@ Public Class Framing_Vault_Transfer
     End Function
 
     Private Shared Sub CreateBlockAttributesFromDef(br As BlockReference,
-                                               defBtr As BlockTableRecord,
-                                               priorValues As Dictionary(Of String, String),
-                                               tr As Transaction,
-                                               db As Database)
+                                                   defBtr As BlockTableRecord,
+                                                   priorValues As Dictionary(Of String, String),
+                                                   tr As Transaction,
+                                                   db As Database)
         Dim acoll = br.AttributeCollection
         For Each id As ObjectId In defBtr
             Dim ent = TryCast(tr.GetObject(id, OpenMode.ForRead), Entity)
@@ -1195,35 +1097,68 @@ Public Class Framing_Vault_Transfer
         Next
     End Sub
 
-    Private Sub SheetLabels_SelectedValueChanged(sender As Object, e As EventArgs) Handles SheetLabels.SelectedValueChanged
-        SheetLabels.BackColor = SystemColors.Window
-        Button1.Visible = True
+    Private Sub Form_MEPSetup_Load(sender As Object, e As EventArgs) Handles Me.Load
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
+        Dim acDb As Database = acDoc.Database
+        Dim acEd As Editor = acDoc.Editor
+        Dim acCurDb As Database = acDoc.Database
+
+        Dim FormBuilder = GetCustomDwgPropReliable("BUILDER")
+        Dim Formplan = GetCustomDwgPropReliable("PLAN")
+        Dim FormProject = GetCustomDwgPropReliable("PROJECT NUMBER")
+        Dim FormVentType = GetCustomDwgPropReliable("VENT TYPE")
+        Dim FormEncapsulatedAttic = GetCustomDwgPropReliable("ENCAPSULATED ATTIC")
+
+        TextBox1.Text = FormBuilder
+        TextBox2.Text = Formplan
+        TextBox3.Text = FormProject
+        ComboBox1.SelectedItem = FormVentType
+        ComboBox2.SelectedItem = FormEncapsulatedAttic
+
     End Sub
+    Public Shared Function GetCustomDwgPropReliable(propName As String) As String
+        Dim db = Application.DocumentManager.MdiActiveDocument.Database
 
-    Private Sub RadioButton1_CheckedChanged(sender As Object, e As EventArgs)
+        ' Build from current summary info (brings along custom props)
+        Dim b As New DatabaseSummaryInfoBuilder(db.SummaryInfo)
 
-    End Sub
-    Private Sub PackageToggle_Click(sender As Object, e As EventArgs) Handles RFR.Click, WSFW.Click
-        Dim rb = DirectCast(sender, RadioButton)
-
-        ' If already checked, allow user to uncheck and re-enable the other
-        If rb.Checked Then
-            rb.Checked = False
-            RFR.Enabled = True
-            WSFW.Enabled = True
-        Else
-            ' Activate this one and lock the other
-            rb.Checked = True
-            If rb Is RFR Then
-                WSFW.Enabled = False
-            Else
-                RFR.Enabled = False
-            End If
+        ' Prefer the builder's editable table
+        Dim tbl = TryCast(b.CustomPropertyTable, IDictionary)
+        If tbl IsNot Nothing Then
+            For Each de As DictionaryEntry In tbl
+                If String.Equals(CStr(de.Key), propName, StringComparison.OrdinalIgnoreCase) Then
+                    Return If(de.Value, Nothing)?.ToString()
+                End If
+            Next
+            Return Nothing
         End If
-    End Sub
 
-    Private Sub Framing_Vault_Transfer_Load(sender As Object, e As EventArgs) Handles Me.Load
-        RFR.AutoCheck = False
-        WSFW.AutoCheck = False
+        ' Fallback: enumerate si.CustomProperties if available (handles odd versions)
+        Dim si = db.SummaryInfo
+        Dim propsObj As Object = si.CustomProperties
+        If propsObj IsNot Nothing Then
+            For Each kv As Object In DirectCast(propsObj, IEnumerable)
+                Dim t = kv.GetType()
+                Dim k As String = CStr(t.GetProperty("Key").GetValue(kv, Nothing))
+                If String.Equals(k, propName, StringComparison.OrdinalIgnoreCase) Then
+                    Dim v = t.GetProperty("Value").GetValue(kv, Nothing)
+                    Return If(v, Nothing)?.ToString()
+                End If
+            Next
+        End If
+
+        Return Nothing
+    End Function
+
+    Public Shared Sub SetCustomDwgPropReliable(propName As String, propValue As String)
+        Dim db = Application.DocumentManager.MdiActiveDocument.Database
+        Dim b As New DatabaseSummaryInfoBuilder(db.SummaryInfo)
+        Dim tbl = DirectCast(b.CustomPropertyTable, IDictionary)
+        If tbl.Contains(propName) Then
+            tbl(propName) = propValue
+        Else
+            tbl.Add(propName, propValue)
+        End If
+        db.SummaryInfo = b.ToDatabaseSummaryInfo()
     End Sub
 End Class

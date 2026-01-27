@@ -3,8 +3,8 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <OutputType>Library</OutputType>
-    <RootNamespace>Arcxis_Cad_Tools</RootNamespace>
-    <AssemblyName>Arcxis Cad Tools</AssemblyName>
+    <RootNamespace>Arcxis_Cad_Tools_Brics</RootNamespace>
+    <AssemblyName>Arcxis Cad Tools - Brics</AssemblyName>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
     

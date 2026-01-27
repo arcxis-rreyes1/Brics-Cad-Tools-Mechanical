@@ -3,8 +3,8 @@ Imports System.Drawing
 Imports System.Linq
 Imports System.Reflection
 Imports System.Windows.Forms
-Imports Arcxis_Cad_Tools
-Imports Arcxis_Cad_Tools.Arcxis_Cad_Tools
+Imports Arcxis_Cad_Tools_Brics
+Imports Arcxis_Cad_Tools_Brics.Arcxis_Cad_Tools
 Imports DocumentFormat.OpenXml.Drawing.Charts
 Imports Color = System.Drawing.Color
 Imports Bricscad.ApplicationServices

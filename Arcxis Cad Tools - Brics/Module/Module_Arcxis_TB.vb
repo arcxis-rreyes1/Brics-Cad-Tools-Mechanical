@@ -257,14 +257,13 @@ Module Module_Arcxis_TB
         ' Build dynamic paths based on discovered Egnyte configuration
         ' Add mapped drive path only if we actually found a mapped letter
         If Not String.IsNullOrEmpty(NetworkLetterForEgnyte) Then
-            Dim mappedEgnyte = Global.System.IO.Path.Combine(NetworkLetterForEgnyte, "shared\arcxis\engineering\drafting standards")
+            Dim mappedEgnyte = Global.System.IO.Path.Combine(NetworkLetterForEgnyte, "shared\arcxis\engineering\drafting standards\cad lisp routines\bricscad")
             TrustPathListAdd.Add(mappedEgnyte)
         End If
 
         ' Add UNC paths using the discovered base path
         If Not String.IsNullOrEmpty(NetworkUNCPathForEgnyte) Then
             TrustPathListAdd.Add(Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "arcxis\engineering\drafting standards\cad lisp routines\bricscad"))
-            TrustPathListAdd.Add(Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "arcxis\engineering\drafting standards\bricscad"))
             TrustPathListAdd.Add(Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "arcxis\engineering\drafting standards\cad lisp routines\bricscad\support files"))
 
             ' Only add seals path if it exists
