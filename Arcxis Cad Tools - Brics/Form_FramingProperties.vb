@@ -46,7 +46,7 @@ Public Class Form_FramingProperties
         Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
 
             Dim blockName As String = "Arcxis Title Block"
-            Dim sourceDwgPath As String = "\\egnytedrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards\CAD Blocks\Arcxis Title Block - Block.dwg"
+            Dim sourceDwgPath As String = Module_Arcxis_TB.NetworkUNCPathForEgnyte & "\Arcxis\Engineering\Drafting Standards\CAD Blocks\Arcxis Title Block - Block.dwg"
             FileManipulation.BlockImport(acCurDb, blockName, sourceDwgPath, acTrans)
 
             Dim lytab As LayerTable = acTrans.GetObject(acCurDb.LayerTableId, OpenMode.ForWrite)

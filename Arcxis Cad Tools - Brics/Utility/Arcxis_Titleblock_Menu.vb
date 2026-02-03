@@ -163,26 +163,33 @@ Namespace Arcxis_Cad_Tools
             CheckBlockTable()
             PurgeBlockMethod()
 
-            ' Determine if SupplementalPaths should run by checking required Egnyte paths
-            Dim curSearchPath As String = CStr(Application.GetSystemVariable("SRCHPATH"))
-            Dim existingPaths = curSearchPath.Split(";"c) _
-                                            .Where(Function(p) Not String.IsNullOrWhiteSpace(p)) _
-                                            .Select(Function(p) p.Trim()) _
-                                            .Distinct(StringComparer.OrdinalIgnoreCase) _
-                                            .ToList()
+            Dim CurTrustPath As String = Application.GetSystemVariable("SRCHPATH")
+            Dim CurPaths As String = LCase(CurTrustPath)
+            Dim RemCurTrustPathList As List(Of String) = New List(Of String)
+            RemCurTrustPathList = CurPaths.Split(";").ToList
+            Dim CleanedRemCurTrustPathList As List(Of String) = New List(Of String)
 
-            ' Align required list with what SupplementalPaths actually adds (without stray subfolder differences)
-            Dim requiredPaths As String() = {
-                "\\egnyteDrive\energyinspectors\shared\arcxis\engineering\drafting standards\cad lisp routines\BricsCad",
-                "\\egnyteDrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards",
-                "\\egnyteDrive\energyinspectors\shared\onyx file system\templates\engineering\sealsoriginal",
-                "\\egnyteDrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards\CAD Lisp Routines\BricsCad\Support Files"
-            }
+            For Each entry In RemCurTrustPathList
+                If entry <> "" Then
+                    If Not CleanedRemCurTrustPathList.Contains(entry) Then
+                        CleanedRemCurTrustPathList.Add(entry)
+                    End If
+                End If
+            Next
 
-            Dim needsUpdate As Boolean = requiredPaths.Any(Function(rp) Not IsPathPresent(existingPaths, rp))
+            ' Check if ANY path contains the Arcxis engineering path
+            Dim hasArcxisPath As Boolean = False
 
-            If needsUpdate Then
-                SupplementalPaths()
+            For Each curpath As String In CleanedRemCurTrustPathList
+                If LCase(curpath).Contains("\shared\arcxis\engineering\") Then
+                    hasArcxisPath = True
+                    Exit For ' Found it, no need to continue
+                End If
+            Next
+
+            ' Only call SupplementalPaths if no Arcxis path exists or list is empty
+            If Not hasArcxisPath OrElse CleanedRemCurTrustPathList.Count = 0 Then
+                SupplementalPaths(CleanedRemCurTrustPathList)
             End If
 
             ATB_FirstLayoutName = frm.ListBox1.Items(0)
@@ -190,35 +197,6 @@ Namespace Arcxis_Cad_Tools
             frm.ShowDialog()
 
         End Sub
-        Private Shared Function NormalizePath(p As String) As String
-            If String.IsNullOrWhiteSpace(p) Then Return String.Empty
-            Dim s = p.Trim()
-            s = s.Replace("/", "\")
-            ' Collapse duplicate backslashes for UNC
-            While s.Contains("\\\\")
-                s = s.Replace("\\\\", "\\")
-            End While
-            ' Remove trailing backslash except for root UNC (\\server\share)
-            If s.EndsWith("\") Then
-                ' Count segments for UNC root
-                Dim parts = s.Split("\"c).Where(Function(x) x.Length > 0).ToList()
-                If parts.Count > 2 Then ' more than \\server\share
-                    s = s.TrimEnd("\"c)
-                End If
-            End If
-            Return s.ToLowerInvariant()
-        End Function
-
-        Private Shared Function IsPathPresent(existing As List(Of String), required As String) As Boolean
-            Dim reqNorm = NormalizePath(required)
-            For Each e In existing
-                Dim en = NormalizePath(e)
-                If en = reqNorm Then Return True
-                ' Allow substring / prefix matches to reduce false negatives due to minor differences
-                If en.StartsWith(reqNorm) OrElse reqNorm.StartsWith(en) Then Return True
-            Next
-            Return False
-        End Function
 
         Private Sub CheckBlockTable()
 
@@ -286,7 +264,7 @@ Namespace Arcxis_Cad_Tools
 
                         ' Define the name and image to use
                         Dim strImgName As String = "ArcxisLogo"
-                        Dim strFileName As String = "\\egnytedrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards\CAD Blocks\FullColor_HorizontalArcxis_689x350.png"
+                        Dim strFileName As String = Module_Arcxis_TB.NetworkUNCPathForEgnyte & "\Arcxis\Engineering\Drafting Standards\CAD Blocks\FullColor_HorizontalArcxis_689x350.png"
                         'Dim strFileName As String = "C:\temp\FullColor_HorizontalArcxis_689x350.png"
 
                         Dim acRasterDef As RasterImageDef
@@ -313,19 +291,21 @@ Namespace Arcxis_Cad_Tools
 
                         Else
                             ' Create a raster image definition
+                            ' Create a raster image definition
                             Dim acRasterDefNew As New RasterImageDef
 
                             ' Set the source for the image file
                             acRasterDefNew.SourceFileName = strFileName
 
-                            ' Load the image into memory
-                            acRasterDefNew.Load()
-
-                            ' Add the image definition to the dictionary
+                            ' Add the image definition to the dictionary BEFORE loading
                             acImgDict.UpgradeOpen()
                             acImgDefId = acImgDict.SetAt(strImgName, acRasterDefNew)
 
+                            ' Add to transaction BEFORE loading
                             tr.AddNewlyCreatedDBObject(acRasterDefNew, True)
+
+                            ' NOW load the image into memory (after object is database-resident)
+                            acRasterDefNew.Load()
 
                             acRasterDef = acRasterDefNew
 
@@ -507,6 +487,7 @@ Namespace Arcxis_Cad_Tools
                             acRaster.Rotation = 1.570796
                             acRaster.Layer = "0"
                             acRaster.ColorIndex = 7
+                            acRaster.ImageTransparency = True
 
                             ' Add the new object to the block table record and the transaction
                             acBlkTblRec.AppendEntity(acRaster)
@@ -514,7 +495,7 @@ Namespace Arcxis_Cad_Tools
 
                             ' Connect the raster definition and image together so the definition
                             ' does not appear as "unreferenced" in the External References palette.
-                            RasterImage.EnableReactors(True)
+                            'RasterImage.EnableReactors(True)
                             acRaster.AssociateRasterDef(acRasterDef)
 
                             If bRasterDefCreated Then
@@ -662,9 +643,7 @@ Namespace Arcxis_Cad_Tools
             End Using
 
         End Sub
-
         Public Sub PurgeBlockMethod()
-
             Dim acdoc As Document = Application.DocumentManager.MdiActiveDocument
             Using db As Database = HostApplicationServices.WorkingDatabase
                 Using acLckDoc As DocumentLock = acdoc.LockDocument()
@@ -695,14 +674,12 @@ Namespace Arcxis_Cad_Tools
                             db.Purge(idcoll)
                             btr.Erase(True)
                             tr.Commit()
-                        Catch ex As teigha.Runtime.Exception
+                        Catch ex As Teigha.Runtime.Exception
                             'MessageBox.Show(ex.StackTrace)
                         End Try
                     End Using
                 End Using
             End Using
         End Sub
-
     End Class
-
 End Namespace

@@ -1161,7 +1161,7 @@ Public Class Form_MechanicalPrinting
     Public Shared Function FlushQueuedCsv(Optional builder As String = Nothing, Optional planName As String = Nothing) As String
         If _pendingRows Is Nothing OrElse _pendingRows.Count = 0 Then Return Nothing
 
-        Dim pendingDir As String = "\\egnytedrive\energyinspectors\shared\fs2\k\DPIS Drawings\PDF File Data\Pending"
+        Dim pendingDir As String = Module_Arcxis_TB.NetworkUNCPathForEgnyte & "\fs2\k\DPIS Drawings\PDF File Data\Pending"
         If Not Directory.Exists(pendingDir) Then Directory.CreateDirectory(pendingDir)
 
         ' Attempt to derive builder/plan from first PLAN row if parameters not supplied.

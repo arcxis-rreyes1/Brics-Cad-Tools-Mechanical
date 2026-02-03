@@ -6,6 +6,8 @@ Imports Teigha.DatabaseServices
 Imports Bricscad.EditorInput
 Imports Teigha.Geometry
 Imports Teigha.Colors
+Imports Teigha.PlotSettingsValidator
+Imports Bricscad.PlottingServices
 Imports Exception = Teigha.Runtime.Exception
 Imports System.Reflection.Metadata.Ecma335
 
@@ -793,5 +795,164 @@ Namespace Arcxis_Cad_Tools
                 End Try
             End Using
         End Sub
+
+
+        <CommandMethod("EAL")>
+        Public Sub ExportAllPaperspaceLayouts()
+            'Get the current document and database
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
+            Dim acCurDb As Database = acDoc.Database
+
+            Using acLckDoc As DocumentLock = acDoc.LockDocument()
+
+                'Get the layout dictionary of the current database
+                Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
+
+                    Dim bgPrev = Application.GetSystemVariable("BackGroundPlot")
+                    Dim cmdPrev = Application.GetSystemVariable("CMDDIA")
+                    Dim fileDiaPrev = Application.GetSystemVariable("FILEDIA")
+                    Dim plotTransPrev = Application.GetSystemVariable("PLOTTRANSPARENCYOVERRIDE")
+                    Application.SetSystemVariable("BackGroundPlot", 0)
+                    Application.SetSystemVariable("CMDDIA", 0)
+                    Application.SetSystemVariable("FILEDIA", 0)
+                    'acDoc.SendStringToExecute("-updatefields all 0 ", True, False, False)
+                    Try
+                        ' 1) Ensure output folder exists
+                        Dim outputDir As String = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) & "\"
+                        Dim DWGname As String = DirectCast(Application.GetSystemVariable("DWGNAME"), String)
+                        DWGname = DWGname.Remove(DWGname.Length - 4)
+                        Dim pdfFile As String = outputDir & DWGname & ".pdf"
+                        Dim dsdFile As String = outputDir & DWGname & ".dsd"
+
+                        Dim dwgprefix As String = Application.GetSystemVariable("dwgprefix")
+                        Dim DWGnm As String = Application.GetSystemVariable("dwgName")
+                        Dim dwgFile As String = dwgprefix & DWGnm
+
+                        If File.Exists(dsdFile) Then
+                            File.Delete(dsdFile)
+                        End If
+
+                        If File.Exists(pdfFile) Then
+                            File.Delete(pdfFile)
+                        End If
+
+                        ' 4) Build DSD entries
+                        Dim dsd As New DsdData()
+                        Dim dsdEntries As New DsdEntryCollection()
+
+                        Dim dictLayouts As DBDictionary = acTrans.GetObject(acCurDb.LayoutDictionaryId, OpenMode.ForRead)
+
+                        Dim alllayouts As New List(Of String)
+                        For Each entry As DBDictionaryEntry In dictLayouts
+                            Dim loId As ObjectId = entry.Value
+                            Dim lo As Layout = TryCast(acTrans.GetObject(loId, OpenMode.ForRead), Layout)
+                            If lo IsNot Nothing AndAlso Not lo.ModelType Then
+                                alllayouts.Add(lo.LayoutName)
+                            End If
+                        Next
+                        For Each lay As Object In alllayouts
+                            Dim title As String = DWGnm.Remove(DWGnm.Length - 4) & "-" & lay
+
+                            Dim de As New DsdEntry()
+                            de.DwgName = dwgFile
+                            de.Layout = lay           ' layout name
+                            de.Title = title
+                            'de.Nps = "Arcxis"            ' named page setup (ensure it exists)
+                            de.NpsSourceDwg = dwgFile
+                            dsdEntries.Add(de)
+                        Next
+
+                        dsd.SetDsdEntryCollection(dsdEntries)
+                        dsd.SheetType = SheetType.MultiPdf
+                        dsd.NoOfCopies = 1
+                        dsd.IsHomogeneous = True
+                        dsd.ProjectPath = outputDir
+                        dsd.DestinationName = pdfFile   ' belt+braces
+                        dsd.Dwf3dOptions.PublishWithMaterials = True
+                        dsd.Dwf3dOptions.GroupByXrefHierarchy = True
+
+                        ' Suppress prompts via API flags (some builds honor these)
+                        dsd.SetUnrecognizedData("PromptForDwfName", "FALSE")
+                        dsd.SetUnrecognizedData("PromptForName", "FALSE")
+
+                        ' 5) Write DSD to disk, then hard-edit the text (covers all variants)
+                        If File.Exists(dsdFile) Then File.Delete(dsdFile)
+                        dsd.WriteDsd(dsdFile)
+
+                        Dim text As String = File.ReadAllText(dsdFile)
+
+                        ' Force no prompt + correct output + PDF type
+                        Dim ensure As New List(Of String) From {
+                "PromptForDwfName=False",
+                "PromptForName=False",
+                "PwdProtectPublishedDWF=False",
+                "IncludeHyperlinks=TRUE",
+                "IncludeLayer=TRUE",
+                "Type=6",                             ' 6 = PDF in many DSDs
+                "OutDir=" & outputDir.Replace("\", "\\"),
+                "Dst=" & pdfFile.Replace("\", "\\")   ' some DSDs use Dst for final file
+            }
+
+                        ' Normalize common variants then inject ours
+                        text = text.Replace("PromptForDwfName=True", "PromptForDwfName=False")
+                        text = text.Replace("PromptForName=True", "PromptForName=False")
+                        text = text.Replace("Type=3", "Type=6") ' DWF->PDF if needed
+
+                        ' Guarantee we have OutDir and Dst lines (add if missing)
+                        If Not text.Contains(vbCrLf & "OutDir=") Then text &= vbCrLf & "OutDir=" & outputDir
+                        If Not text.Contains(vbCrLf & "Dst=") Then text &= vbCrLf & "Dst=" & pdfFile
+
+                        ' Re-apply our ensure list to be certain
+                        For Each line In ensure
+                            Dim key = line.Split("="c)(0)
+                            Dim idx = text.IndexOf(key & "=", StringComparison.OrdinalIgnoreCase)
+                            If idx >= 0 Then
+                                ' replace the whole row
+                                Dim rowEnd = text.IndexOfAny({ControlChars.Cr, ControlChars.Lf}, idx)
+                                If rowEnd < 0 Then rowEnd = text.Length
+                                text = text.Remove(idx, rowEnd - idx).Insert(idx, line)
+                            Else
+                                text &= vbCrLf & line
+                            End If
+                        Next
+
+                        File.WriteAllText(dsdFile, text)
+
+                        ' Re-read into DsdData so Publisher uses our edits
+                        dsd.ReadDsd(dsdFile)
+
+                        ' 6) Pick PDF PC3 (or pass Nothing)
+                        Dim pc As PlotConfig = Nothing
+                        Try
+                            pc = PlotConfigManager.SetCurrentConfig("AutoCAD PDF (High Quality Print).pc3")
+                        Catch
+                            ' ignore; Publisher can still use per-layout NPS
+                        End Try
+
+                        ' 7) Publish silently
+                        Application.Publisher.PublishExecute(dsd, pc)
+
+                        ' Cleanup
+                        If File.Exists(dsdFile) Then File.Delete(dsdFile)
+
+                        acTrans.Commit()
+
+                    Finally
+                        ' Restore system vars
+                        Application.SetSystemVariable("BackGroundPlot", bgPrev)
+                        Application.SetSystemVariable("CMDDIA", cmdPrev)
+                        Application.SetSystemVariable("FILEDIA", fileDiaPrev)
+                    End Try
+
+                    ' Save the changes made
+                    acTrans.Commit()
+
+                End Using
+
+            End Using
+
+        End Sub
+
+
     End Class
 End Namespace

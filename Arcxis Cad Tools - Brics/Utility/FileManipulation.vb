@@ -124,7 +124,7 @@ Namespace Arcxis_Cad_Tools
             Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
 
                 Dim blockName As String = "Arcxis Title Block"
-                Dim sourceDwgPath As String = "\\egnytedrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards\CAD Blocks\Arcxis Title Block - Block.dwg"
+                Dim sourceDwgPath As String = Module_Arcxis_TB.NetworkUNCPathForEgnyte & "\Arcxis\Engineering\Drafting Standards\CAD Blocks\Arcxis Title Block - Block.dwg"
                 BlockImport(acCurDb, blockName, sourceDwgPath, acTrans)
                 'ReloadNestedXrefs(acDb, acTrans)
 
@@ -1612,7 +1612,7 @@ Namespace Arcxis_Cad_Tools
         ' Column 3: Value
         ' Creates a small CSV per PDF (4 data rows + header).
         Private Sub WriteLayoutsToCsv(layoutList As List(Of List(Of String)), pdfName As String, builder As String, planName As String)
-            Dim pendingDir As String = "\\egnytedrive\energyinspectors\shared\fs2\k\DPIS Drawings\PDF File Data\Pending"
+            Dim pendingDir As String = Module_Arcxis_TB.NetworkUNCPathForEgnyte & "\fs2\k\DPIS Drawings\PDF File Data\Pending"
             If Not Directory.Exists(pendingDir) Then Directory.CreateDirectory(pendingDir)
 
             ' Derive values from first layout
@@ -1662,7 +1662,7 @@ Namespace Arcxis_Cad_Tools
         '   Col3 Value
         ' Uses System.Tuple explicitly to avoid ambiguity with OpenXml types.
         Private Sub AppendLayoutsToMainExcel(layoutList As List(Of List(Of String)), pdfName As String, builder As String, planName As String)
-            Dim mainExcelPath As String = "\\egnytedrive\energyinspectors\shared\fs2\k\DPIS Drawings\PDF File Data\PDF Info.xlsx"
+            Dim mainExcelPath As String = Module_Arcxis_TB.NetworkUNCPathForEgnyte & "\fs2\k\DPIS Drawings\PDF File Data\PDF Info.xlsx"
             Dim xlApp As Excel.Application = Nothing
             Dim xlWb As Excel.Workbook = Nothing
             Dim xlWs As Excel.Worksheet = Nothing
@@ -2335,7 +2335,7 @@ Namespace Arcxis_Cad_Tools
 
                     ' === BLOCK NAME AND PATH ===
                     Dim blockName As String = "Arcxis Title Block"
-                    Dim sourceDwgPath As String = "\\egnytedrive\energyinspectors\Shared\Arcxis\Engineering\Drafting Standards\CAD Blocks\Arcxis Title Block - Block.dwg"
+                    Dim sourceDwgPath As String = Module_Arcxis_TB.NetworkUNCPathForEgnyte & "\Arcxis\Engineering\Drafting Standards\CAD Blocks\Arcxis Title Block - Block.dwg"
 
 
                     ' === Check if block is already loaded ===
@@ -3535,7 +3535,7 @@ Namespace Arcxis_Cad_Tools
             Dim tag = If(String.IsNullOrEmpty(whereTag), "", $" [{whereTag}]")
             'acEd.WriteMessage(vbLf & $"[OverNightPrinting ERROR]{tag}: {ex.Message}" & vbLf)
             Try
-                Dim p = IO.Path.Combine(Environment.GetFolderPath("\\egnytedrive\energyinspectors\Shared\FS2\K\DPIS Drawings\ToPrint"), "OverNightPrinting.log")
+                Dim p = IO.Path.Combine(Environment.GetFolderPath(Module_Arcxis_TB.NetworkUNCPathForEgnyte & "\FS2\K\DPIS Drawings\ToPrint"), "OverNightPrinting.log")
                 IO.File.AppendAllText(p, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {tag} {ex.ToString()}{Environment.NewLine}")
             Catch
                 ' ignore
@@ -4053,7 +4053,7 @@ Namespace Arcxis_Cad_Tools
         Public Shared Function FlushQueuedCsv(Optional builder As String = Nothing, Optional planName As String = Nothing) As String
             If _pendingRows Is Nothing OrElse _pendingRows.Count = 0 Then Return Nothing
 
-            Dim pendingDir As String = "\\egnytedrive\energyinspectors\shared\fs2\k\DPIS Drawings\PDF File Data\Pending"
+            Dim pendingDir As String = Module_Arcxis_TB.NetworkUNCPathForEgnyte & "\fs2\k\DPIS Drawings\PDF File Data\Pending"
             If Not Directory.Exists(pendingDir) Then Directory.CreateDirectory(pendingDir)
 
             ' Attempt to derive builder/plan from first PLAN row if parameters not supplied.

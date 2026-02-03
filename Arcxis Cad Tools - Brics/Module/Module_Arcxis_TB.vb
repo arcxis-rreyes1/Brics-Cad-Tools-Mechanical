@@ -257,14 +257,14 @@ Module Module_Arcxis_TB
         ' Build dynamic paths based on discovered Egnyte configuration
         ' Add mapped drive path only if we actually found a mapped letter
         If Not String.IsNullOrEmpty(NetworkLetterForEgnyte) Then
-            Dim mappedEgnyte = Global.System.IO.Path.Combine(NetworkLetterForEgnyte, "shared\arcxis\engineering\drafting standards\cad lisp routines\bricscad")
+            Dim mappedEgnyte = Global.System.IO.Path.Combine(NetworkLetterForEgnyte, "shared\arcxis\engineering\drafting standards\CAD Lisp Routines\BricsCad")
             TrustPathListAdd.Add(mappedEgnyte)
         End If
 
         ' Add UNC paths using the discovered base path
         If Not String.IsNullOrEmpty(NetworkUNCPathForEgnyte) Then
-            TrustPathListAdd.Add(Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "arcxis\engineering\drafting standards\cad lisp routines\bricscad"))
-            TrustPathListAdd.Add(Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "arcxis\engineering\drafting standards\cad lisp routines\bricscad\support files"))
+            TrustPathListAdd.Add(Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "arcxis\engineering\drafting standards\cad lisp routines\BricsCad"))
+            TrustPathListAdd.Add(Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "arcxis\engineering\drafting standards\cad lisp routines\BricsCad\Support Files"))
 
             ' Only add seals path if it exists
             Dim sealsPath As String = Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "onyx file system\templates\engineering\sealsoriginal")
@@ -294,32 +294,15 @@ Module Module_Arcxis_TB
                 End If
             End If
         Next
-        Dim acadApp As Object = Application.AcadApplication
 
         If FinalTrustPathList.Count > 0 Then
             Dim NewTrustPath As String = String.Join(";", FinalTrustPathList)
             ' Use correct system variable name and avoid altering path casing
             Application.SetSystemVariable("SRCHPATH", NewTrustPath)
-
-            ' Get existing support paths and merge without duplicates
-            Dim existingSupportPath As String = acadApp.Preferences.Files.SupportPath
-            Dim existingPaths As List(Of String) = If(String.IsNullOrEmpty(existingSupportPath),
-                                                       New List(Of String),
-                                                       existingSupportPath.Split(";").ToList())
-
-            ' Add new paths from FinalTrustPathList that aren't already in the support path
-            ' Insert at the beginning to prioritize new paths
-            Dim insertIndex As Integer = 0
-            For Each newPath In FinalTrustPathList
-                If Not existingPaths.Any(Function(p) String.Equals(p, newPath, StringComparison.OrdinalIgnoreCase)) Then
-                    existingPaths.Insert(insertIndex, newPath)
-                    insertIndex += 1
-                End If
-            Next
-
-            ' Set the merged support path
-            acadApp.Preferences.Files.SupportPath = String.Join(";", existingPaths)
         End If
+
+
+        Dim acadApp As Object = Application.AcadApplication
 
         ' Build dynamic printer paths using discovered Egnyte configuration
         Dim NewPrinterStyleSheetDir As String = ""
@@ -333,8 +316,8 @@ Module Module_Arcxis_TB
         If Not String.IsNullOrEmpty(NewPrinterConfigDir) Then
             acadApp.Preferences.Files.PrinterConfigPath = NewPrinterConfigDir
             acadApp.Preferences.Files.PrinterStyleSheetPath = NewPrinterStyleSheetDir
-
         End If
+
     End Sub
 
 End Module
