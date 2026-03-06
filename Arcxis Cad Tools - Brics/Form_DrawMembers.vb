@@ -187,13 +187,13 @@ Public Class Form_DrawMembers
                 MemberLineType = If(member = "Header", "hidden2", "ByLayer")
             Case "I-JOIST"
                 Select Case materialType.ToUpperInvariant()
-                    Case "GROUP1"
+                    Case "GROUP 1"
                         MemberLayer = "S-FRM-FL-GROUP-1" : MemberLayerColor = 80 : MemberLineScale = 1 : MemberLineType = "ByLayer"
-                    Case "GROUP2"
+                    Case "GROUP 2"
                         MemberLayer = "S-FRM-FL-GROUP-2" : MemberLayerColor = 20 : MemberLineScale = 1 : MemberLineType = "ByLayer"
-                    Case "GROUP3"
+                    Case "GROUP 3"
                         MemberLayer = "S-FRM-FL-GROUP-3" : MemberLayerColor = 6 : MemberLineScale = 1 : MemberLineType = "ByLayer"
-                    Case "GROUP4"
+                    Case "GROUP 4"
                         MemberLayer = "S-FRM-FL-GROUP-4" : MemberLayerColor = 4 : MemberLineScale = 1 : MemberLineType = "ByLayer"
                     Case Else
                         MessageBox.Show("Select a valid material.") : Me.Show() : Exit Sub
@@ -212,24 +212,31 @@ Public Class Form_DrawMembers
                 MemberLayer = "S-FRM-BBO" : MemberLayerColor = 12 : MemberLineScale = 1 : MemberLineType = "ByLayer"
             Case "BLK"
                 MemberLayer = LocationPrefix & "BLK" : MemberLayerColor = 80 : MemberLineScale = 1 : MemberLineType = "ByLayer"
-            Case "GROUP1"
+            Case "GROUP 1"
                 MemberLayer = "S-FRM-FL-GROUP-1" : MemberLayerColor = 80 : MemberLineScale = 1 : MemberLineType = "ByLayer"
-            Case "GROUP2"
+            Case "GROUP 2"
                 MemberLayer = "S-FRM-FL-GROUP-2" : MemberLayerColor = 20 : MemberLineScale = 1 : MemberLineType = "ByLayer"
-            Case "GROUP3"
+            Case "GROUP 3"
                 MemberLayer = "S-FRM-FL-GROUP-3" : MemberLayerColor = 6 : MemberLineScale = 1 : MemberLineType = "ByLayer"
-            Case "GROUP4"
+            Case "GROUP 4"
                 MemberLayer = "S-FRM-FL-GROUP-4" : MemberLayerColor = 4 : MemberLineScale = 1 : MemberLineType = "ByLayer"
             Case "RIM"
                 MemberLayer = "S-FRM-FL-RIM" : MemberLayerColor = 240 : MemberLineScale = 1 : MemberLineType = "ByLayer"
             Case "LINTEL"
                 MemberLayer = "S-FRM-BM-STEEL-1" : MemberLayerColor = 256 : MemberLineScale = 1 : MemberLineType = "ByLayer"
+            Case "FLUSH BEAM", "DROP BEAM", "HEADER"
+                Select Case materialType.ToUpperInvariant()
+                    Case "LSL 1.55E"
+                        MemberLayer = "S-FRM-BM-1.75" : MemberLayerColor = 211 : MemberLineScale = 1.75 : MemberLineType = "PHANTOM2"
+                    Case Else
+                        MemberLayer = "S-FRM-BM-1.75" : MemberLayerColor = 213 : MemberLineScale = 1.75 : MemberLineType = "PHANTOM2"
+                End Select
             Case Else
-                MessageBox.Show("Select a valid material.") : Me.Show() : Exit Sub
-        End Select
+                        MessageBox.Show("Select a valid material.") : Me.Show() : Exit Sub
+                End Select
 
 
-        Dim ply As Integer
+                Dim ply As Integer
         If Not Integer.TryParse(ComboBox5.Text, ply) Then ply = 1
         Try
             DrawMemberLinesForPly(MemberLayer, MemberLayerColor, MemberLineType, MemberLineScale, ply, width, member, MemberThickness, materialType, stringprefix, stringsuffix)
@@ -336,6 +343,11 @@ Public Class Form_DrawMembers
                         pl.AddVertexAt(0, New Point2d(p1.X, p1.Y), 0, 0, 0)
                         pl.AddVertexAt(1, New Point2d(p2.X, p2.Y), 0, 0, 0)
                         pl.Layer = layerName
+                        If colorIndex > 0 Then
+                            pl.Color = Teigha.Colors.Color.FromColorIndex(ColorMethod.ByAci, CShort(colorIndex))
+                        Else
+                            pl.Color = Teigha.Colors.Color.FromColorIndex(ColorMethod.ByLayer, 256)
+                        End If
                         If memberThickness > 0 Then pl.Thickness = memberThickness
                         If Not String.Equals(lineTypeName, "BYLAYER", StringComparison.OrdinalIgnoreCase) AndAlso Not String.IsNullOrWhiteSpace(lineTypeName) Then
                             pl.Linetype = lineTypeName
@@ -430,6 +442,7 @@ Public Class Form_DrawMembers
                         mt.Layer = "S-ANNO-TEXT"
                         mt.TextStyleId = txtStyleId
                         mt.Rotation = readableAngle
+                        mt.TextHeight = 6
                         btr.AppendEntity(mt)
                         tr.AddNewlyCreatedDBObject(mt, True)
                     End If

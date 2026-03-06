@@ -729,7 +729,144 @@ Namespace Arcxis_Cad_Tools
             Return inner.MinPoint.X >= container.MinPoint.X AndAlso inner.MaxPoint.X <= container.MaxPoint.X AndAlso
                    inner.MinPoint.Y >= container.MinPoint.Y AndAlso inner.MaxPoint.Y <= container.MaxPoint.Y
         End Function
+        <CommandMethod("UPDATEATTRIBDEFS")>
+        Public Shared Sub UpdateAttributeDefinitions()
+            Dim doc = Application.DocumentManager.MdiActiveDocument
+            Dim ed = doc.Editor
+            Dim db = doc.Database
 
+            ' Define attribute mappings (old tag -> new tag)
+            Dim attributeMappings As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase) From {
+        {"LXS", "VENTTYPE"},
+        {"TND", "ATTICTYPE"},
+        {"MOD", "PLANTYPE"}
+    }
+
+            Using doc.LockDocument()
+                Using tr = db.TransactionManager.StartTransaction()
+                    Dim bt = CType(tr.GetObject(db.BlockTableId, OpenMode.ForRead), BlockTable)
+
+                    ' Check if the AtticVentPage block exists
+                    If Not bt.Has("AtticVentPage") Then
+                        ed.WriteMessage(vbLf & "Block 'AtticVentPage' not found in this drawing.")
+                        tr.Commit()
+                        Return
+                    End If
+
+                    ' Get the block definition for AtticVentPage
+                    Dim btrId As ObjectId = bt("AtticVentPage")
+                    Dim btr = CType(tr.GetObject(btrId, OpenMode.ForWrite), BlockTableRecord)
+
+                    ' Dictionary to store ALL attribute values: BlockRefId -> (Tag -> Value)
+                    Dim blockAttributeValues As New Dictionary(Of ObjectId, Dictionary(Of String, String))()
+
+                    ' Step 1: Collect ALL attribute values from existing block references
+                    ed.WriteMessage(vbLf & "Collecting attribute values...")
+                    For Each spaceId As ObjectId In {bt(BlockTableRecord.ModelSpace), bt(BlockTableRecord.PaperSpace)}
+                        Dim spaceBtr = CType(tr.GetObject(spaceId, OpenMode.ForRead), BlockTableRecord)
+                        For Each entId As ObjectId In spaceBtr
+                            Dim br = TryCast(tr.GetObject(entId, OpenMode.ForRead), BlockReference)
+                            If br Is Nothing OrElse br.BlockTableRecord <> btrId Then Continue For
+
+                            ' Store ALL attribute values for this block reference
+                            Dim attValues As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
+                            Dim attCol = br.AttributeCollection
+                            If attCol IsNot Nothing Then
+                                For Each attRefId As ObjectId In attCol
+                                    Dim attRef = CType(tr.GetObject(attRefId, OpenMode.ForRead), AttributeReference)
+                                    attValues(attRef.Tag.ToUpper()) = attRef.TextString
+                                Next
+                            End If
+
+                            blockAttributeValues(br.ObjectId) = attValues
+                        Next
+                    Next
+
+                    If blockAttributeValues.Count = 0 Then
+                        ed.WriteMessage(vbLf & "No 'AtticVentPage' block references found in this drawing.")
+                        tr.Commit()
+                        Return
+                    End If
+
+                    ' Step 2: Update attribute definitions in the block definition
+                    ed.WriteMessage(vbLf & "Updating attribute definitions...")
+                    For Each entId As ObjectId In btr
+                        Dim attDef = TryCast(tr.GetObject(entId, OpenMode.ForRead), AttributeDefinition)
+                        If attDef Is Nothing Then Continue For
+
+                        Dim tagUpper = attDef.Tag.ToUpper()
+                        If attributeMappings.ContainsKey(tagUpper) Then
+                            Dim attDefWrite = CType(tr.GetObject(attDef.ObjectId, OpenMode.ForWrite), AttributeDefinition)
+                            attDefWrite.Tag = attributeMappings(tagUpper)
+                        End If
+                    Next
+
+                    ' Step 3: Update all block references with new attribute structure
+                    ed.WriteMessage(vbLf & "Synchronizing block references...")
+                    For Each kvp In blockAttributeValues
+                        Dim brId = kvp.Key
+                        Dim oldValues = kvp.Value
+
+                        Dim br = CType(tr.GetObject(brId, OpenMode.ForWrite), BlockReference)
+
+                        ' Remove old attributes
+                        For Each attRefId As ObjectId In br.AttributeCollection
+                            Dim attRef = CType(tr.GetObject(attRefId, OpenMode.ForWrite), AttributeReference)
+                            attRef.Erase()
+                        Next
+
+                        ' Recreate ALL attributes with preserved values
+                        For Each defEntId As ObjectId In btr
+                            Dim attDef = TryCast(tr.GetObject(defEntId, OpenMode.ForRead), AttributeDefinition)
+                            If attDef Is Nothing OrElse attDef.Constant Then Continue For
+
+                            Using attRef As New AttributeReference()
+                                attRef.SetAttributeFromBlock(attDef, br.BlockTransform)
+
+                                ' Restore value - check both old tag and new tag
+                                Dim newTag = attDef.Tag.ToUpper()
+                                Dim valueRestored As Boolean = False
+
+                                ' First, check if this new tag came from a mapped old tag
+                                For Each mapping In attributeMappings
+                                    If newTag = mapping.Value.ToUpper() Then
+                                        ' This is a renamed attribute - look for old tag value
+                                        If oldValues.ContainsKey(mapping.Key.ToUpper()) Then
+                                            attRef.TextString = oldValues(mapping.Key.ToUpper())
+                                            valueRestored = True
+                                            Exit For
+                                        End If
+                                    End If
+                                Next
+
+                                ' If not restored yet, check if value exists under current tag name
+                                If Not valueRestored AndAlso oldValues.ContainsKey(newTag) Then
+                                    attRef.TextString = oldValues(newTag)
+                                End If
+
+                                br.AttributeCollection.AppendAttribute(attRef)
+                                tr.AddNewlyCreatedDBObject(attRef, True)
+                            End Using
+                        Next
+                    Next
+
+                    tr.Commit()
+                    ed.WriteMessage(vbLf & $"Successfully updated {blockAttributeValues.Count} 'AtticVentPage' block reference(s).")
+                    ed.WriteMessage(vbLf & "Attribute mappings: LXS→VENTTYPE, TND→ATTICTYPE, MOD→PLANTYPE")
+                End Using
+            End Using
+
+            Using doc.LockDocument()
+
+                Dim folder As String = CStr(Application.GetSystemVariable("DWGPREFIX"))
+                Dim name As String = CStr(Application.GetSystemVariable("DWGNAME"))
+                Dim path = System.IO.Path.Combine(folder, name)
+
+                db.SaveAs(path, True, DwgVersion.Current, db.SecurityParameters)
+
+            End Using
+
+        End Sub
     End Class
 
 End Namespace

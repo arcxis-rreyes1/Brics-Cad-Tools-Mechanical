@@ -26,6 +26,10 @@
     
     <UseWPF>true</UseWPF>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+    
+    <!-- Fix VB runtime ambiguity by removing auto-imports -->
+    <DisableImplicitNamespaceImports>false</DisableImplicitNamespaceImports>
+    <NoVBRuntimeReference>false</NoVBRuntimeReference>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
@@ -43,10 +47,6 @@
     <DefineDebug>false</DefineDebug>
     <DefineTrace>true</DefineTrace>
   </PropertyGroup>
-
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.WindowsDesktop.App" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />

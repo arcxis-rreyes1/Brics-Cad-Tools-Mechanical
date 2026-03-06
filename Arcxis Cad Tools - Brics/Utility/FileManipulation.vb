@@ -39,7 +39,6 @@ Imports Color = Teigha.Colors.Color
 Imports System.Collections.Specialized
 
 
-
 ' This line is not mandatory, but improves loading performances
 <Assembly: CommandClass(GetType(Arcxis_Cad_Tools.FileManipulation))>
 Namespace Arcxis_Cad_Tools
@@ -343,7 +342,7 @@ Namespace Arcxis_Cad_Tools
                 ' Optionally log or ignore
             End Try
         End Sub
-        Public Function GetCustomDwgPropReliable(propName As String) As String
+        Public Shared Function GetCustomDwgPropReliable(propName As String) As String
             Dim db = Application.DocumentManager.MdiActiveDocument.Database
 
             ' Build from current summary info (brings along custom props)
@@ -2884,6 +2883,7 @@ Namespace Arcxis_Cad_Tools
             Dim PropertiesStamps As String
             Dim PropertiesProject As String
             Dim PropertiesSheetLabeling As String
+            Dim PropertiesPlanType As String
             Dim Builder As String
             Dim Planname As String
             Dim Stamps As String
@@ -2898,6 +2898,7 @@ Namespace Arcxis_Cad_Tools
             Dim CurrentLayerID As ObjectId = accurdb.Clayer
             Dim frm As New Form_Automated_Printing_Info
             Dim CustomPrinting As Boolean = False
+            Dim content As New System.Text.StringBuilder()
 
             Dim FRSheets As Boolean = False
 
@@ -2914,8 +2915,52 @@ Namespace Arcxis_Cad_Tools
                     PropertiesStamps = GetCustomDwgPropForDoc(accurdb, "STAMPS")
                     PropertiesProject = GetCustomDwgPropReliable("PROJECT NUMBER")
                     PropertiesSheetLabeling = GetCustomDwgPropReliable("SHEET LABELING")
+                    PropertiesPlanType = If(GetCustomDwgPropReliable("PLAN TYPE"), "").Trim()
+                    ' Validate required properties
+                    Dim missingProps As New List(Of String)()
 
-                    If PropertiesSheetLabeling = "FR" Then FRSheets = True
+                    If String.IsNullOrWhiteSpace(PropertiesBuilder) Then missingProps.Add("BUILDER")
+                    If String.IsNullOrWhiteSpace(PropertiesPlan) Then missingProps.Add("PLAN")
+                    If String.IsNullOrWhiteSpace(PropertiesPlanType) Then
+                        missingProps.Add("PLAN TYPE")
+                    ElseIf String.Equals(PropertiesPlanType, "FRAMING", StringComparison.OrdinalIgnoreCase) Then
+                        If String.IsNullOrWhiteSpace(PropertiesSheetLabeling) Then missingProps.Add("SHEET LABELING")
+                        If String.IsNullOrWhiteSpace(PropertiesStamps) Then missingProps.Add("STAMPS")
+                    End If
+
+
+                    If missingProps.Count > 0 Then
+                        ' Build the content string for the text file
+                        Content.AppendLine("=== MISSING DRAWING PROPERTIES ===")
+                        Content.AppendLine($"Date: {DateTime.Now:yyyy-MM-dd HH:mm:ss}")
+                        Content.AppendLine($"DWG File: {Path.GetFileName(accurdb.Filename)}")
+                        Content.AppendLine()
+                        Content.AppendLine("The following required drawing properties are missing or empty:")
+                        Content.AppendLine()
+                        For Each prop In missingProps
+                            Content.AppendLine($"  - {prop}")
+                        Next
+                        Content.AppendLine()
+                        Content.AppendLine("Please set these properties before submitting the drawing.")
+
+                        ' Create the text file with the missing properties (no MessageBox for accore)
+                        Dim txtPath As String = CreateTextFileInDwgLocation("ReasonForFailure.log", Content.ToString())
+
+                        Exit Sub
+                    End If
+
+                    If String.Equals(PropertiesSheetLabeling, "FR", StringComparison.OrdinalIgnoreCase) Then FRSheets = True
+
+                    If String.Equals(PropertiesPlanType, "ATTIC VENT", StringComparison.OrdinalIgnoreCase) Then
+
+                        AtticVentHeadlessPrinting.PrintAtticVent()
+
+                        Exit Sub
+                    ElseIf String.Equals(PropertiesPlanType, "MECHANICAL", StringComparison.OrdinalIgnoreCase) Then
+
+                        MechanicalHeadlessPrinting.PrintMechanicalPlans()
+
+                    End If
 
                     For Each objId As ObjectId In ms
 
@@ -3272,10 +3317,15 @@ Namespace Arcxis_Cad_Tools
 
                                     If FinalRightList.Count <> 0 Then
 
-                                        If Not Directory.Exists(NewFolderLocation) Then
 
-                                            Directory.CreateDirectory(NewFolderLocation)
+                                        If String.IsNullOrEmpty(SelectedFolder) Then Return
 
+                                        If Not NetworkHelpers.IsNetworkPathAccessible(SelectedFolder) Then
+                                            Return
+                                        End If
+
+                                        If Not NetworkHelpers.CreateDirectoryWithRetry(NewFolderLocation) Then
+                                            Continue For ' Skip this iteration instead of crashing
                                         End If
 
                                         If UCase(type) = "FRAMING" Then
@@ -3327,10 +3377,15 @@ Namespace Arcxis_Cad_Tools
 
                                     If FinalLeftList.Count <> 0 Then
 
-                                        If Not Directory.Exists(NewFolderLocation) Then
 
-                                            Directory.CreateDirectory(NewFolderLocation)
+                                        If String.IsNullOrEmpty(SelectedFolder) Then Return
 
+                                        If Not NetworkHelpers.IsNetworkPathAccessible(SelectedFolder) Then
+                                            Return
+                                        End If
+
+                                        If Not NetworkHelpers.CreateDirectoryWithRetry(NewFolderLocation) Then
+                                            Continue For ' Skip this iteration instead of crashing
                                         End If
 
                                         If UCase(type) = "FRAMING" Then
@@ -4011,7 +4066,8 @@ Namespace Arcxis_Cad_Tools
         '
         ' This replaces the previous wide layout-row accumulation. Multiple calls for the
         ' same PDF will be ignored (first wins) to prevent duplicates.
-        Public Shared Sub QueueLayoutsForCsv(layoutList As List(Of List(Of String)), pdfName As String, builder As String, planName As String, projectnumber As String)
+        Public Shared Sub QueueLayoutsForCsv(layoutList As List(Of List(Of String)), pdfName As String, builder As String, planName As String, projectnumber As String, Optional ByVal IRC As String = "", Optional ByVal IECC As String = "", Optional ByVal MechCounty As String = "",
+                                             Optional ByVal MechMan As String = "", Optional ByVal MechFuel As String = "", Optional ByVal MechPlan As Boolean = False)
             If String.IsNullOrWhiteSpace(pdfName) Then Exit Sub
             If layoutList Is Nothing OrElse layoutList.Count = 0 Then Exit Sub
 
@@ -4027,6 +4083,8 @@ Namespace Arcxis_Cad_Tools
             Dim modName As String = ""
             Dim swingRaw As String = ""
             Dim elevation As String = ""
+            Dim venttype As String = ""
+            Dim attictype As String = ""
 
             If first.Count > 2 Then modName = If(first(2), "").Trim()
             If first.Count > 3 Then swingRaw = If(first(3), "").Trim()
@@ -4036,13 +4094,32 @@ Namespace Arcxis_Cad_Tools
                 elevation = If(first(7), "").Trim()
             End If
 
+            If modName = "ATTIC VENT" Then
+                venttype = If(first(9), "").Trim()
+                attictype = If(first(10), "").Trim()
+            End If
+
+
             swingRaw = NormalizeSwing(swingRaw)
 
             ' Store four logical rows: PLAN / ELEV / SW / MOD
             _pendingRows.Add(New List(Of String) From {identifier, "PLAN", planName})
             _pendingRows.Add(New List(Of String) From {identifier, "ELEV", elevation})
             _pendingRows.Add(New List(Of String) From {identifier, "SW", swingRaw})
-            _pendingRows.Add(New List(Of String) From {identifier, "PLAN TYPE", modName})
+            If MechPlan Then
+                _pendingRows.Add(New List(Of String) From {identifier, "PLAN TYPE", "MECHANICAL"})
+                _pendingRows.Add(New List(Of String) From {identifier, "COUNTY", MechCounty})
+                _pendingRows.Add(New List(Of String) From {identifier, "MANUFACTURER", MechMan})
+                _pendingRows.Add(New List(Of String) From {identifier, "FUEL TYPE", MechFuel})
+            Else
+                _pendingRows.Add(New List(Of String) From {identifier, "PLAN TYPE", modName})
+            End If
+            If modName.Equals("ATTIC VENT", StringComparison.OrdinalIgnoreCase) Then
+                _pendingRows.Add(New List(Of String) From {identifier, "VENT TYPE", venttype})
+                _pendingRows.Add(New List(Of String) From {identifier, "ATTIC TYPE", attictype})
+                _pendingRows.Add(New List(Of String) From {identifier, "IRC", IRC})
+                _pendingRows.Add(New List(Of String) From {identifier, "IECC", IECC})
+            End If
         End Sub
 
         ' ================== FLUSH UPDATED FORMAT ==================
@@ -4861,6 +4938,105 @@ Namespace Arcxis_Cad_Tools
                 ' Ignore
             End Try
             Return Nothing
+        End Function
+
+        Public Shared Sub EnsureLayoutCount(requiredCount As Integer, Optional customCTB As String = "")
+            If requiredCount <= 0 Then Return
+
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
+            If acDoc Is Nothing Then Return
+
+            Dim db As Database = acDoc.Database
+            Dim ed As Editor = acDoc.Editor
+
+            Try
+                Using tr As Transaction = db.TransactionManager.StartTransaction()
+                    ' Count existing paperspace layouts (excluding Model)
+                    Dim layoutDict As DBDictionary = TryCast(tr.GetObject(db.LayoutDictionaryId, OpenMode.ForRead), DBDictionary)
+                    If layoutDict Is Nothing Then
+                        tr.Commit()
+                        Return
+                    End If
+
+                    Dim existingLayoutCount As Integer = 0
+                    For Each entry As DBDictionaryEntry In layoutDict
+                        Dim layout As Layout = TryCast(tr.GetObject(entry.Value, OpenMode.ForRead), Layout)
+                        If layout IsNot Nothing AndAlso Not layout.ModelType Then
+                            existingLayoutCount += 1
+                        End If
+                    Next
+
+                    tr.Commit()
+
+                    ' If counts don't match, create layouts
+                    If requiredCount > existingLayoutCount Then
+
+                        ' Determine CTB file if not provided
+                        If String.IsNullOrEmpty(customCTB) Then
+                            Dim planType As String = GetCustomDwgPropReliable("PLAN TYPE")
+                            If String.Equals(planType, "Mechanical", StringComparison.OrdinalIgnoreCase) Then
+                                customCTB = "ARCXIS - Mechanical"
+                            ElseIf String.Equals(planType, "Attic Vent", StringComparison.OrdinalIgnoreCase) Then
+                                customCTB = "ARCXIS"
+                            Else
+                                customCTB = "ARCXIS"
+                            End If
+                        End If
+
+                        ' Create the required number of layouts
+                        CreateLayoutsWithTitleblock(requiredCount, True, customCTB)
+
+                    End If
+                End Using
+
+            Catch ex As Exception
+                ed.WriteMessage(vbLf & $"Error ensuring layout count: {ex.Message}")
+            End Try
+        End Sub
+
+        Public Shared Function CreateTextFileInDwgLocation(Optional fileName As String = "", Optional content As String = "", Optional append As Boolean = False) As String
+            Dim doc As Document = Application.DocumentManager.MdiActiveDocument
+            If doc Is Nothing Then Return Nothing
+
+            Dim db As Database = doc.Database
+
+            ' Check if the DWG is saved
+            If String.IsNullOrWhiteSpace(db.Filename) Then
+                MessageBox.Show("The current drawing has not been saved yet. Please save the drawing first.",
+                               "Unsaved Drawing", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return Nothing
+            End If
+
+            Try
+                ' Get the directory where the DWG is located
+                Dim dwgFolder As String = Path.GetDirectoryName(db.Filename)
+
+                ' If no filename provided, use DWG name with .txt extension
+                If String.IsNullOrWhiteSpace(fileName) Then
+                    Dim dwgName As String = Path.GetFileNameWithoutExtension(db.Filename)
+                    fileName = dwgName & ".log"
+                ElseIf Not fileName.EndsWith(".log", StringComparison.OrdinalIgnoreCase) Then
+                    ' Ensure .log extension
+                    fileName &= ".log"
+                End If
+
+                ' Combine to get full path
+                Dim txtFilePath As String = Path.Combine(dwgFolder, fileName)
+
+                ' Write the content to the file
+                If append Then
+                    File.AppendAllText(txtFilePath, content & Environment.NewLine, System.Text.Encoding.UTF8)
+                Else
+                    File.WriteAllText(txtFilePath, content, System.Text.Encoding.UTF8)
+                End If
+
+                Return txtFilePath
+
+            Catch ex As Exception
+                MessageBox.Show($"Error creating text file: {ex.Message}",
+                               "File Creation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                Return Nothing
+            End Try
         End Function
 
         ' Map mm (or string) to closest LineWeight enum

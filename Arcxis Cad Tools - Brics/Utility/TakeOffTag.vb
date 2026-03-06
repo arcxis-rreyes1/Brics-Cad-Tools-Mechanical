@@ -339,7 +339,7 @@ Namespace Arcxis_Cad_Tools_Brics
                         'acLine.Linetype = "Hidden"
                         Dim FLineAng As Double = acLine.Angle
                         Dim FLineAngD As Integer = FLineAng * 180.0 / Math.PI
-                        Dim acTypValAr As TypedValue() = New TypedValue() {New TypedValue(0, "LINE"), New TypedValue(DxfCode.LayerName, "S-FRM-RAFTER")}
+                        Dim acTypValAr As TypedValue() = New TypedValue() {New TypedValue(0, "LINE"), New TypedValue(DxfCode.LayerName, "S-FRM-RAFTER,DPIS-RAFTERS")}
                         Dim acSelFtr As SelectionFilter = New SelectionFilter(acTypValAr)
                         prSelRes = acDoc.Editor.SelectFence(pts, acSelFtr)
 
@@ -347,7 +347,7 @@ Namespace Arcxis_Cad_Tools_Brics
 
                         Dim opts As New PromptSelectionOptions()
                         opts.MessageForAdding = vbLf & "Select Rafter(s) to tag: ..."
-                        Dim acTypValAr() As TypedValue = {New TypedValue(DxfCode.Start, "LINE"), New TypedValue(DxfCode.LayerName, "S-FRM-RAFTER")}
+                        Dim acTypValAr() As TypedValue = {New TypedValue(DxfCode.Start, "LINE"), New TypedValue(DxfCode.LayerName, "S-FRM-RAFTER,DPIS-RAFTERS")}
                         Dim acSelFtr As SelectionFilter = New SelectionFilter(acTypValAr)
                         prSelRes = acDoc.Editor.GetSelection(opts, acSelFtr)
 
@@ -375,10 +375,7 @@ Namespace Arcxis_Cad_Tools_Brics
                                 Dim lay As String = acEnt.Layer
                                 Dim col As String = acEnt.ColorIndex
                                 Dim ID As String = acEnt.ObjectId.ToString
-                                Dim IDpart As String() = ID.Split("(")
-                                Dim IDpart1 As String = IDpart(1)
-                                Dim IDpart2 As String() = IDpart1.Split(")")
-                                Dim LineID As String = IDpart2(0)
+                                Dim LineID As String = ID
                                 Dim GrpDesc As String = "Group_" & LineID
                                 Dim GroupDict As DBDictionary = CType(acTrans.GetObject(acCurDb.GroupDictionaryId, OpenMode.ForRead), DBDictionary)
                                 Dim TakeoffGroup As Group = New Group(GrpDesc, True)
@@ -765,10 +762,7 @@ Namespace Arcxis_Cad_Tools_Brics
                                 Dim lay As String = acEnt.Layer
                                 Dim col As String = acEnt.ColorIndex
                                 Dim ID As String = acEnt.ObjectId.ToString
-                                Dim IDpart As String() = ID.Split("(")
-                                Dim IDpart1 As String = IDpart(1)
-                                Dim IDpart2 As String() = IDpart1.Split(")")
-                                Dim LineID As String = IDpart2(0)
+                                Dim LineID As String = ID
                                 Dim GrpDesc As String = "Group_" & LineID
                                 Dim GroupDict As DBDictionary = CType(acTrans.GetObject(acCurDb.GroupDictionaryId, OpenMode.ForRead), DBDictionary)
                                 Dim TakeoffGroup As Group = New Group(GrpDesc, True)
@@ -1094,10 +1088,7 @@ Namespace Arcxis_Cad_Tools_Brics
                                 Dim lay As String = acEnt.Layer
                                 Dim col As String = acEnt.ColorIndex
                                 Dim ID As String = acEnt.ObjectId.ToString
-                                Dim IDpart As String() = ID.Split("(")
-                                Dim IDpart1 As String = IDpart(1)
-                                Dim IDpart2 As String() = IDpart1.Split(")")
-                                Dim LineID As String = IDpart2(0)
+                                Dim LineID As String = ID
                                 'Dim GrpDesc As String = "Group_" & LineID
                                 'Dim GroupDict As DBDictionary = CType(acTrans.GetObject(acCurDb.GroupDictionaryId, OpenMode.ForRead), DBDictionary)
                                 'Dim TakeoffGroup As Group = New Group(GrpDesc, True)
@@ -1346,10 +1337,7 @@ Namespace Arcxis_Cad_Tools_Brics
                                 Dim lay As String = acEnt.Layer
                                 Dim col As String = acEnt.ColorIndex
                                 Dim ID As String = acEnt.ObjectId.ToString
-                                Dim IDpart As String() = ID.Split("(")
-                                Dim IDpart1 As String = IDpart(1)
-                                Dim IDpart2 As String() = IDpart1.Split(")")
-                                Dim LineID As String = IDpart2(0)
+                                Dim LineID As String = ID
                                 'Dim GrpDesc As String = "Group_" & LineID
                                 'Dim GroupDict As DBDictionary = CType(acTrans.GetObject(acCurDb.GroupDictionaryId, OpenMode.ForRead), DBDictionary)
                                 'Dim TakeoffGroup As Group = New Group(GrpDesc, True)
@@ -1605,10 +1593,7 @@ Namespace Arcxis_Cad_Tools_Brics
                                 Dim lay As String = acEnt.Layer
                                 Dim col As String = acEnt.ColorIndex
                                 Dim ID As String = acEnt.ObjectId.ToString
-                                Dim IDpart As String() = ID.Split("(")
-                                Dim IDpart1 As String = IDpart(1)
-                                Dim IDpart2 As String() = IDpart1.Split(")")
-                                Dim LineID As String = IDpart2(0)
+                                Dim LineID As String = ID
                                 'Dim GrpDesc As String = "Group_" & LineID
                                 'Dim GroupDict As DBDictionary = CType(acTrans.GetObject(acCurDb.GroupDictionaryId, OpenMode.ForRead), DBDictionary)
                                 'Dim TakeoffGroup As Group = New Group(GrpDesc, True)
@@ -1868,10 +1853,7 @@ Namespace Arcxis_Cad_Tools_Brics
                                 Dim lay As String = acEnt.Layer
                                 Dim col As String = acEnt.ColorIndex
                                 Dim ID As String = acEnt.ObjectId.ToString
-                                Dim IDpart As String() = ID.Split("(")
-                                Dim IDpart1 As String = IDpart(1)
-                                Dim IDpart2 As String() = IDpart1.Split(")")
-                                Dim LineID As String = IDpart2(0)
+                                Dim LineID As String = ID
                                 Dim GrpDesc As String = "Group_" & LineID
                                 Dim GroupDict As DBDictionary = CType(acTrans.GetObject(acCurDb.GroupDictionaryId, OpenMode.ForRead), DBDictionary)
                                 Dim TakeoffGroup As Group = New Group(GrpDesc, True)
