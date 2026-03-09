@@ -1147,13 +1147,161 @@ Public Class Form_Arcxis_TB1
     Private Sub TextBox25_TextChanged(sender As Object, e As EventArgs) Handles TextBox25.TextChanged
 
     End Sub
-
-    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click, PDF24x36.Click
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
 
         Module_Arcxis_TB.ATB_UserSelect = ""
         Module_Arcxis_TB.ATB_UserSelect2 = ""
         DeleteWaterMark()
         Me.Close()
+
+    End Sub
+
+    Private Sub PDF24x36_Click(sender As Object, e As EventArgs) Handles PDF24x36.Click
+
+
+        PageSetUp24x36()
+
+        'Get the current document and database
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
+        Dim acCurDb As Database = acDoc.Database
+
+        Using acLckDoc As DocumentLock = acDoc.LockDocument()
+
+            'Get the layout dictionary of the current database
+            Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
+
+                Dim bgPrev = Application.GetSystemVariable("BackGroundPlot")
+                Dim cmdPrev = Application.GetSystemVariable("CMDDIA")
+                Dim fileDiaPrev = Application.GetSystemVariable("FILEDIA")
+                Dim plotTransPrev = Application.GetSystemVariable("PLOTTRANSPARENCYOVERRIDE")
+                Application.SetSystemVariable("BackGroundPlot", 0)
+                Application.SetSystemVariable("CMDDIA", 0)
+                Application.SetSystemVariable("FILEDIA", 0)
+                'acDoc.SendStringToExecute("-updatefields all 0 ", True, False, False)
+                Try
+                    ' 1) Ensure output folder exists
+                    Dim outputDir As String = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) & "\"
+                    Dim DWGname As String = DirectCast(Application.GetSystemVariable("DWGNAME"), String)
+                    DWGname = DWGname.Remove(DWGname.Length - 4)
+                    Dim pdfFile As String = outputDir & DWGname & ".pdf"
+                    Dim dsdFile As String = outputDir & DWGname & ".dsd"
+
+                    Dim dwgprefix As String = Application.GetSystemVariable("dwgprefix")
+                    Dim DWGnm As String = Application.GetSystemVariable("dwgName")
+                    Dim dwgFile As String = dwgprefix & DWGnm
+
+                    If File.Exists(dsdFile) Then
+                        File.Delete(dsdFile)
+                    End If
+
+                    If File.Exists(pdfFile) Then
+                        File.Delete(pdfFile)
+                    End If
+
+                    ' 4) Build DSD entries
+                    Dim dsd As New DsdData()
+                    Dim dsdEntries As New DsdEntryCollection()
+
+                    For Each lay As Object In ListBox1.SelectedItems
+                        Dim title As String = DWGnm.Remove(DWGnm.Length - 4) & "-" & lay
+
+                        Dim de As New DsdEntry()
+                        de.DwgName = dwgFile
+                        de.Layout = lay           ' layout name
+                        de.Title = title
+                        de.Nps = "Arcxis24x36"            ' named page setup (ensure it exists)
+                        de.NpsSourceDwg = dwgFile
+                        dsdEntries.Add(de)
+                    Next
+
+                    dsd.SetDsdEntryCollection(dsdEntries)
+                    dsd.SheetType = SheetType.MultiPdf
+                    dsd.NoOfCopies = 1
+                    dsd.IsHomogeneous = True
+                    dsd.ProjectPath = outputDir
+                    dsd.DestinationName = pdfFile   ' belt+braces
+                    dsd.Dwf3dOptions.PublishWithMaterials = True
+                    dsd.Dwf3dOptions.GroupByXrefHierarchy = True
+
+                    ' Suppress prompts via API flags (some builds honor these)
+                    dsd.SetUnrecognizedData("PromptForDwfName", "FALSE")
+                    dsd.SetUnrecognizedData("PromptForName", "FALSE")
+
+                    ' 5) Write DSD to disk, then hard-edit the text (covers all variants)
+                    If File.Exists(dsdFile) Then File.Delete(dsdFile)
+                    dsd.WriteDsd(dsdFile)
+
+                    Dim text As String = File.ReadAllText(dsdFile)
+
+                    ' Force no prompt + correct output + PDF type
+                    Dim ensure As New List(Of String) From {
+                "PromptForDwfName=False",
+                "PromptForName=False",
+                "PwdProtectPublishedDWF=False",
+                "IncludeHyperlinks=TRUE",
+                "IncludeLayer=TRUE",
+                "Type=6",                             ' 6 = PDF in many DSDs
+                "OutDir=" & outputDir.Replace("\", "\\"),
+                "Dst=" & pdfFile.Replace("\", "\\")   ' some DSDs use Dst for final file
+            }
+
+                    ' Normalize common variants then inject ours
+                    text = text.Replace("PromptForDwfName=True", "PromptForDwfName=False")
+                    text = text.Replace("PromptForName=True", "PromptForName=False")
+                    text = text.Replace("Type=3", "Type=6") ' DWF->PDF if needed
+
+                    ' Guarantee we have OutDir and Dst lines (add if missing)
+                    If Not text.Contains(vbCrLf & "OutDir=") Then text &= vbCrLf & "OutDir=" & outputDir
+                    If Not text.Contains(vbCrLf & "Dst=") Then text &= vbCrLf & "Dst=" & pdfFile
+
+                    ' Re-apply our ensure list to be certain
+                    For Each line In ensure
+                        Dim key = line.Split("="c)(0)
+                        Dim idx = text.IndexOf(key & "=", StringComparison.OrdinalIgnoreCase)
+                        If idx >= 0 Then
+                            ' replace the whole row
+                            Dim rowEnd = text.IndexOfAny({ControlChars.Cr, ControlChars.Lf}, idx)
+                            If rowEnd < 0 Then rowEnd = text.Length
+                            text = text.Remove(idx, rowEnd - idx).Insert(idx, line)
+                        Else
+                            text &= vbCrLf & line
+                        End If
+                    Next
+
+                    File.WriteAllText(dsdFile, text)
+
+                    ' Re-read into DsdData so Publisher uses our edits
+                    dsd.ReadDsd(dsdFile)
+
+                    ' 6) Pick PDF PC3 (or pass Nothing)
+                    Dim pc As PlotConfig = Nothing
+                    Try
+                        pc = PlotConfigManager.SetCurrentConfig("AutoCAD PDF (General Documentation) - Brics.pc3")
+                    Catch
+                        ' ignore; Publisher can still use per-layout NPS
+                    End Try
+
+                    ' 7) Publish silently
+                    Application.Publisher.PublishExecute(dsd, pc)
+
+                    ' Cleanup
+                    If File.Exists(dsdFile) Then File.Delete(dsdFile)
+
+                    acTrans.Commit()
+
+                Finally
+                    ' Restore system vars
+                    Application.SetSystemVariable("BackGroundPlot", bgPrev)
+                    Application.SetSystemVariable("CMDDIA", cmdPrev)
+                    Application.SetSystemVariable("FILEDIA", fileDiaPrev)
+                End Try
+
+                ' Save the changes made
+                acTrans.Commit()
+
+            End Using
+
+        End Using
 
     End Sub
 
@@ -1218,19 +1366,7 @@ Public Class Form_Arcxis_TB1
     End Sub
     Private Sub PlotPDF11x17_Click(sender As Object, e As EventArgs) Handles PlotPDF11x17.Click
 
-        If RadioButton7.Checked <> True Then
-
-            Dim psize As String = "11x17"
-
-            WaterMark(psize)
-
-            PageSetUp11x17()
-
-        End If
-
-        If RadioButton11.Checked = True Or RadioButton12.Checked = True Then
-            PageSetUp11x17()
-        End If
+        PageSetUp11x17()
 
         'Get the current document and database
         Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
@@ -1241,102 +1377,130 @@ Public Class Form_Arcxis_TB1
             'Get the layout dictionary of the current database
             Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
 
-                Dim CurVar As Object
-                'Get the BACKGROUNDPLOT SYSTEM VARIABLE
-                CurVar = Application.GetSystemVariable("BackGroundPlot")
-                'SET BACKGROUNDPLOT SYSTEM VARIABLE TO ZERO
+                Dim bgPrev = Application.GetSystemVariable("BackGroundPlot")
+                Dim cmdPrev = Application.GetSystemVariable("CMDDIA")
+                Dim fileDiaPrev = Application.GetSystemVariable("FILEDIA")
+                Dim plotTransPrev = Application.GetSystemVariable("PLOTTRANSPARENCYOVERRIDE")
                 Application.SetSystemVariable("BackGroundPlot", 0)
+                Application.SetSystemVariable("CMDDIA", 0)
+                Application.SetSystemVariable("FILEDIA", 0)
                 'acDoc.SendStringToExecute("-updatefields all 0 ", True, False, False)
                 Try
-                    If Not Directory.Exists("c:\temp\") Then
-                        Directory.CreateDirectory("c:\temp\")
+                    ' 1) Ensure output folder exists
+                    Dim outputDir As String = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) & "\"
+                    Dim DWGname As String = DirectCast(Application.GetSystemVariable("DWGNAME"), String)
+                    DWGname = DWGname.Remove(DWGname.Length - 4)
+                    Dim pdfFile As String = outputDir & DWGname & ".pdf"
+                    Dim dsdFile As String = outputDir & DWGname & ".dsd"
+
+                    Dim dwgprefix As String = Application.GetSystemVariable("dwgprefix")
+                    Dim DWGnm As String = Application.GetSystemVariable("dwgName")
+                    Dim dwgFile As String = dwgprefix & DWGnm
+
+                    If File.Exists(dsdFile) Then
+                        File.Delete(dsdFile)
                     End If
 
-                    Using dsd As New DsdData()
+                    If File.Exists(pdfFile) Then
+                        File.Delete(pdfFile)
+                    End If
 
-                        Using dsdEntries As New DsdEntryCollection()
+                    ' 4) Build DSD entries
+                    Dim dsd As New DsdData()
+                    Dim dsdEntries As New DsdEntryCollection()
 
-                            ' add the layout to the entry collection
-                            Dim dsdEntry As New DsdEntry()
+                    For Each lay As Object In ListBox1.SelectedItems
+                        Dim title As String = DWGnm.Remove(DWGnm.Length - 4) & "-" & lay
 
-                            Dim lays As DBDictionary = acTrans.GetObject(acCurDb.LayoutDictionaryId, OpenMode.ForRead)
-                            Dim dwgprefix As String = Application.GetSystemVariable("dwgprefix")
-                            Dim DWGnm As String = Application.GetSystemVariable("dwgName")
-                            Dim dwgFile As String = dwgprefix & DWGnm
+                        Dim de As New DsdEntry()
+                        de.DwgName = dwgFile
+                        de.Layout = lay           ' layout name
+                        de.Title = title
+                        de.Nps = "Arcxis"            ' named page setup (ensure it exists)
+                        de.NpsSourceDwg = dwgFile
+                        dsdEntries.Add(de)
+                    Next
 
-                            'Step through layout list
+                    dsd.SetDsdEntryCollection(dsdEntries)
+                    dsd.SheetType = SheetType.MultiPdf
+                    dsd.NoOfCopies = 1
+                    dsd.IsHomogeneous = True
+                    dsd.ProjectPath = outputDir
+                    dsd.DestinationName = pdfFile   ' belt+braces
+                    dsd.Dwf3dOptions.PublishWithMaterials = True
+                    dsd.Dwf3dOptions.GroupByXrefHierarchy = True
 
-                            For Each layname As Object In ListBox1.SelectedItems
+                    ' Suppress prompts via API flags (some builds honor these)
+                    dsd.SetUnrecognizedData("PromptForDwfName", "FALSE")
+                    dsd.SetUnrecognizedData("PromptForName", "FALSE")
 
-                                Dim title As String = DWGnm.Remove(DWGnm.Length - 4) & "-" & layname
+                    ' 5) Write DSD to disk, then hard-edit the text (covers all variants)
+                    If File.Exists(dsdFile) Then File.Delete(dsdFile)
+                    dsd.WriteDsd(dsdFile)
 
-                                dsdEntry.DwgName = dwgFile
-                                dsdEntry.Layout = layname
-                                dsdEntry.Title = title
-                                dsdEntry.Nps = "0"
-                                dsdEntries.Add(dsdEntry)
-                                dsd.SetDsdEntryCollection(dsdEntries)
-                            Next
+                    Dim text As String = File.ReadAllText(dsdFile)
 
-                            'Dim outputDir As String = "c:\temp\"
-                            Dim outputDir As String = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) & "\"
-                            Dim DWGname As String = DirectCast(Application.GetSystemVariable("DWGNAME"), String)
-                            DWGname = DWGname.Remove(DWGname.Length - 4)
-                            Dim pdfFile As String = outputDir & DWGname & ".pdf"
-                            Dim dsdFile As String = outputDir & DWGname & ".dsd"
+                    ' Force no prompt + correct output + PDF type
+                    Dim ensure As New List(Of String) From {
+                "PromptForDwfName=False",
+                "PromptForName=False",
+                "PwdProtectPublishedDWF=False",
+                "IncludeHyperlinks=TRUE",
+                "IncludeLayer=TRUE",
+                "Type=6",                             ' 6 = PDF in many DSDs
+                "OutDir=" & outputDir.Replace("\", "\\"),
+                "Dst=" & pdfFile.Replace("\", "\\")   ' some DSDs use Dst for final file
+            }
 
-                            ' set DsdData data
-                            dsd.Dwf3dOptions.PublishWithMaterials = True
-                            dsd.Dwf3dOptions.GroupByXrefHierarchy = True
-                            dsd.SetUnrecognizedData("PwdProtectPublishedDWF", "FALSE")
-                            dsd.SetUnrecognizedData("PromptForPwd", "FALSE")
-                            dsd.SheetType = SheetType.MultiPdf
-                            dsd.NoOfCopies = 1
-                            dsd.ProjectPath = outputDir
-                            dsd.DestinationName = pdfFile
-                            dsd.IsHomogeneous = True
+                    ' Normalize common variants then inject ours
+                    text = text.Replace("PromptForDwfName=True", "PromptForDwfName=False")
+                    text = text.Replace("PromptForName=True", "PromptForName=False")
+                    text = text.Replace("Type=3", "Type=6") ' DWF->PDF if needed
 
-                            If File.Exists(dsdFile) Then
-                                File.Delete(dsdFile)
-                            End If
+                    ' Guarantee we have OutDir and Dst lines (add if missing)
+                    If Not text.Contains(vbCrLf & "OutDir=") Then text &= vbCrLf & "OutDir=" & outputDir
+                    If Not text.Contains(vbCrLf & "Dst=") Then text &= vbCrLf & "Dst=" & pdfFile
 
-                            ' write the DsdData file
-                            dsd.WriteDsd(dsdFile)
+                    ' Re-apply our ensure list to be certain
+                    For Each line In ensure
+                        Dim key = line.Split("="c)(0)
+                        Dim idx = text.IndexOf(key & "=", StringComparison.OrdinalIgnoreCase)
+                        If idx >= 0 Then
+                            ' replace the whole row
+                            Dim rowEnd = text.IndexOfAny({ControlChars.Cr, ControlChars.Lf}, idx)
+                            If rowEnd < 0 Then rowEnd = text.Length
+                            text = text.Remove(idx, rowEnd - idx).Insert(idx, line)
+                        Else
+                            text &= vbCrLf & line
+                        End If
+                    Next
 
-                            ' get the Dsd File contents
-                            Dim sr As New StreamReader(dsdFile)
+                    File.WriteAllText(dsdFile, text)
 
-                            Dim str As String = sr.ReadToEnd()
+                    ' Re-read into DsdData so Publisher uses our edits
+                    dsd.ReadDsd(dsdFile)
 
-                            sr.Close()
+                    ' 6) Pick PDF PC3 (or pass Nothing)
+                    Dim pc As PlotConfig = Nothing
+                    Try
+                        pc = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF - Brics.pc3")
+                    Catch
+                        ' ignore; Publisher can still use per-layout NPS
+                    End Try
 
-                            Dim Stp As String = "Setup=" & ATB_PlotSetUpName
+                    ' 7) Publish silently
+                    Application.Publisher.PublishExecute(dsd, pc)
 
-                            str = str.Replace("PromptForDwfName=TRUE", "PromptForDwfName=FALSE")
-                            str = str.Replace("Setup=", Stp)
+                    ' Cleanup
+                    If File.Exists(dsdFile) Then File.Delete(dsdFile)
 
-                            Dim sw As New StreamWriter(dsdFile)
+                    acTrans.Commit()
 
-                            sw.Write(str)
-
-                            sw.Close()
-
-                            ' import the Dsd file new contents in the DsdData
-                            dsd.ReadDsd(dsdFile)
-
-
-                            Dim pc As PlotConfig = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF - Brics.pc3")
-                            Application.Publisher.PublishExecute(dsd, pc)
-
-                            File.Delete(dsdFile)
-
-                        End Using
-                    End Using
                 Finally
-
-                    'REVERT BACK TO THE ORIGINAL BACKGROUNDPLOT SYSTEM VARIABLE
-                    Application.SetSystemVariable("BackGroundPlot", CurVar)
-
+                    ' Restore system vars
+                    Application.SetSystemVariable("BackGroundPlot", bgPrev)
+                    Application.SetSystemVariable("CMDDIA", cmdPrev)
+                    Application.SetSystemVariable("FILEDIA", fileDiaPrev)
                 End Try
 
                 ' Save the changes made
@@ -1712,7 +1876,7 @@ Public Class Form_Arcxis_TB1
 
     Private Sub PageSetUp11x17()
 
-        If RadioButton11.Checked = True Then
+        If RadioButton11.Checked = True Or RadioButton12.Checked = True Then
             Module_Arcxis_TB.ATB_PlotStyleName = "DPIS-11x17.ctb"
         Else
             Module_Arcxis_TB.ATB_PlotStyleName = "ARCXIS.ctb"
@@ -1811,7 +1975,7 @@ Public Class Form_Arcxis_TB1
 
                         ' Set the plot style
                         'If acCurDb.PlotStyleMode = True Then
-                        acPlSetVdr.SetCurrentStyleSheet(acPlSet, PlotStyleName)
+                        acPlSetVdr.SetCurrentStyleSheet(acPlSet, ATB_PlotStyleName)
                         'Else
                         'acPlSetVdr.SetCurrentStyleSheet(acPlSet, "acad.stb")
                         'End If
@@ -1837,21 +2001,15 @@ Public Class Form_Arcxis_TB1
 
     End Sub
 
-
-
     Private Sub PageSetUp24x36()
 
-        If RadioButton9.Checked = True Then
-
+        If RadioButton11.Checked = True Or RadioButton12.Checked = True Then
+            Module_Arcxis_TB.ATB_PlotStyleName = "DPIS-11x17.ctb"
+        Else
             Module_Arcxis_TB.ATB_PlotStyleName = "ARCXIS.ctb"
-            Module_Arcxis_TB.ATB_PlotSetUpName = "Foundation DWG To PDF(24x36)"
-
-        ElseIf RadioButton10.Checked = True Then
-
-            Module_Arcxis_TB.ATB_PlotStyleName = "ARCXIS.ctb"
-            Module_Arcxis_TB.ATB_PlotSetUpName = "Framing DWG To PDF(24x36)"
-
         End If
+
+        Module_Arcxis_TB.ATB_PlotSetUpName = "Arcxis24x36"
 
         For Each layoutname As Object In ListBox1.SelectedItems
             ' Get the current document and database, and start a transaction
@@ -1902,7 +2060,7 @@ Public Class Form_Arcxis_TB1
                         'ARCXIS - DWG To PDF - Brics.pc3
 
                         ' Set the Plotter and page size
-                        acPlSetVdr.SetPlotConfigurationName(acPlSet, "ARCXIS - DWG To PDF - Brics.pc3", "ARCH_full_bleed_D_(36.00_x_24.00_Inches)")
+                        acPlSetVdr.SetPlotConfigurationName(acPlSet, "AutoCAD PDF (General Documentation) - Brics.pc3", "ANSI_full_bleed_D_(34.00_x_22.00_Inches)")
 
                         ' Set to plot to the current display
                         'If accLayout.ModelType = False Then
@@ -1948,7 +2106,7 @@ Public Class Form_Arcxis_TB1
 
                         ' Set the plot style
                         'If acCurDb.PlotStyleMode = True Then
-                        acPlSetVdr.SetCurrentStyleSheet(acPlSet, PlotStyleName)
+                        acPlSetVdr.SetCurrentStyleSheet(acPlSet, ATB_PlotStyleName)
                         'Else
                         'acPlSetVdr.SetCurrentStyleSheet(acPlSet, "acad.stb")
                         'End If
@@ -4404,8 +4562,4 @@ Public Class Form_Arcxis_TB1
     End Sub
 
 
-
-    'Private Sub Button9_Click(sender As Object, e As EventArgs) 
-    '    PageSetUpStandAloneRun()
-    'End Sub
 End Class

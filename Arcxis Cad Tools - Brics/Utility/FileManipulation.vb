@@ -70,7 +70,7 @@ Namespace Arcxis_Cad_Tools
                 End If
             End SyncLock
         End Sub
-        <CommandMethod("ASA")>
+        <CommandMethod("AS")>
         Sub DrawMember()
             Dim frm As New Form_DrawMembers
             frm.Show()
