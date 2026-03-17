@@ -10,6 +10,8 @@ Imports Application = Bricscad.ApplicationServices.Application
 Imports color = Teigha.Colors.Color
 
 Public Class Form_DrawMembers
+    Private _suppressComboBox6Events As Boolean = False
+
     Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
         Me.Close()
     End Sub
@@ -37,6 +39,8 @@ Public Class Form_DrawMembers
 
 
     Private Sub ComboBox6_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ComboBox6.TextChanged
+        If _suppressComboBox6Events Then Exit Sub
+
         Dim sel As String = TryCast(ComboBox6.SelectedItem, String)
         If sel Is Nothing Then sel = String.Empty
         Dim isSteel As Boolean = String.Equals(sel, "STEEL", StringComparison.OrdinalIgnoreCase)
@@ -52,6 +56,11 @@ Public Class Form_DrawMembers
             Case "PSL 2.0E", "LVL 2.0E", "LSL 1.55E", "VERSA-LAM 1.7E", "VERSA-LAM 2.0E"
                 ComboBox3.Items.Add("1.75")
                 ComboBox3.SelectedIndex = 0
+                setplyto1(False)
+            Case "#2 SYP"
+                ComboBox3.Enabled = False
+                ComboBox3.Items.Clear()
+                For Each s In New String() {"6", "8", "10", "12"} : ComboBox4.Items.Add(s) : Next
                 setplyto1(False)
             Case "GROUP 1", "GROUP 2", "GROUP 3", "GROUP 4"
                 ComboBox3.Enabled = False
@@ -93,69 +102,78 @@ Public Class Form_DrawMembers
     End Sub
 
     Private Sub ComboBox2_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ComboBox2.TextChanged
-        Dim sel As String = TryCast(ComboBox2.SelectedItem, String)
-        If sel Is Nothing Then sel = String.Empty
-        Dim isSteel As Boolean = String.Equals(sel, "STEEL", StringComparison.OrdinalIgnoreCase)
-        GroupBox12.Visible = isSteel
-        ComboBox9.Visible = isSteel
-        ComboBox3.Enabled = True
-        ComboBox3.Items.Clear()
-        ComboBox3.Text = ""
-        ComboBox4.Items.Clear()
-        ComboBox4.Text = ""
-        ComboBox6.Enabled = False
-        ComboBox6.Text = ""
-        Select Case sel.ToUpperInvariant()
-            Case "I-JOIST"
-                ComboBox6.Items.Clear()
-                For Each s In New String() {"GROUP 1", "GROUP 2", "GROUP 3", "GROUP 4"} : ComboBox6.Items.Add(s) : Next
-                ComboBox6.Enabled = True
-                ComboBox3.Enabled = False
-                ComboBox3.Text = ""
-                setplyto1(False)
-            Case "COMMODITY"
-                setplyto1(False)
-                For Each s In New String() {"#2 SYP"} : ComboBox6.Items.Add(s) : Next
-                ComboBox6.Enabled = True
-                ComboBox3.Items.Clear()
-                ComboBox3.Enabled = False
-            Case "FLUSH BEAM", "DROP BEAM", "HEADER"
-                ComboBox6.Enabled = True
-                setplyto1(False)
-            Case "LINTEL"
-                ComboBox6.Items.Clear()
-                For Each s In New String() {"3 1/2", "4", "5", "6", "7", "8"} : ComboBox6.Items.Add(s) : Next
-                ComboBox6.Enabled = True
-                GroupBox8.Text = "Height"
-                setplyto1(False)
-            Case "BLK"
-                ComboBox3.Items.Clear()
-                ComboBox3.Enabled = False
-                ComboBox6.Items.Add("Blk")
-                ComboBox6.SelectedIndex = 0
-                ComboBox6.Enabled = False
-                setplyto1(True)
-            Case "RIM"
-                ComboBox3.Items.Clear()
-                ComboBox3.Enabled = False
-                ComboBox6.Items.Add("Rim")
-                ComboBox6.SelectedIndex = 0
-                ComboBox6.Enabled = False
-                setplyto1(True)
-            Case Else
-                setplyto1(False)
-        End Select
+        '_suppressComboBox6Events = True
+        Try
+            Dim sel As String = TryCast(ComboBox2.SelectedItem, String)
+            If sel Is Nothing Then sel = String.Empty
+            Dim isSteel As Boolean = String.Equals(sel, "STEEL", StringComparison.OrdinalIgnoreCase)
+            GroupBox12.Visible = isSteel
+            ComboBox9.Visible = isSteel
+            ComboBox3.Enabled = True
+            ComboBox3.Items.Clear()
+            ComboBox3.Text = ""
+            ComboBox4.Items.Clear()
+            ComboBox4.Text = ""
+            ComboBox6.Enabled = False
+            ComboBox6.Text = ""
+            Select Case sel.ToUpperInvariant()
+                Case "I-JOIST"
+                    ComboBox6.Items.Clear()
+                    For Each s In New String() {"GROUP 1", "GROUP 2", "GROUP 3", "GROUP 4"} : ComboBox6.Items.Add(s) : Next
+                    ComboBox6.Enabled = True
+                    ComboBox3.Enabled = False
+                    ComboBox3.Text = ""
+                    setplyto1(False)
+                Case "COMMODITY"
+                    setplyto1(False)
+                    ComboBox6.Items.Clear()
+                    For Each s In New String() {"#2 SYP"} : ComboBox6.Items.Add(s) : Next
+                    ComboBox6.SelectedIndex = 0
+                    ComboBox6.Enabled = False
+                Case "FLUSH BEAM", "DROP BEAM", "HEADER"
+                    ComboBox6.Enabled = True
+                    setplyto1(False)
+                Case "DROP BEAM"
+                    ComboBox6.Enabled = True
+                    setplyto1(False)
+                    ComboBox8.SelectedItem = 5
+                Case "LINTEL"
+                    ComboBox6.Items.Clear()
+                    For Each s In New String() {"3 1/2", "4", "5", "6", "7", "8"} : ComboBox6.Items.Add(s) : Next
+                    ComboBox6.Enabled = True
+                    GroupBox8.Text = "Height"
+                    setplyto1(False)
+                Case "BLK"
+                    ComboBox3.Items.Clear()
+                    ComboBox3.Enabled = False
+                    ComboBox6.Items.Add("Blk")
+                    ComboBox6.SelectedIndex = 0
+                    ComboBox6.Enabled = False
+                    setplyto1(True)
+                Case "RIM"
+                    ComboBox3.Items.Clear()
+                    ComboBox3.Enabled = False
+                    ComboBox6.Items.Add("Rim")
+                    ComboBox6.SelectedIndex = 0
+                    ComboBox6.Enabled = False
+                    setplyto1(True)
+                Case Else
+                    setplyto1(False)
+            End Select
 
-        If sel.ToUpperInvariant() <> "LINTEL" Then
-            GroupBox8.Text = "Product Type"
-        End If
+            If sel.ToUpperInvariant() <> "LINTEL" Then
+                GroupBox8.Text = "Product Type"
+            End If
 
-        Select Case sel.ToUpperInvariant()
-            Case "BLK", "RIM"
-                ComboBox7.Enabled = False : ComboBox8.Enabled = False
-            Case Else
-                ComboBox7.Enabled = True : ComboBox8.Enabled = True
-        End Select
+            Select Case sel.ToUpperInvariant()
+                Case "BLK", "RIM"
+                    ComboBox7.Enabled = False : ComboBox8.Enabled = False
+                Case Else
+                    ComboBox7.Enabled = True : ComboBox8.Enabled = True
+            End Select
+        Finally
+            _suppressComboBox6Events = False
+        End Try
     End Sub
 
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
@@ -182,7 +200,7 @@ Public Class Form_DrawMembers
         End If
         Dim LocationPrefix As String = If(ComboBox1.SelectedItem = "Ceiling", "S-FRM-CLG-", "S-FRM-FL-")
         Select Case member.ToUpperInvariant()
-            Case "2X"
+            Case "COMMODITY"
                 MemberLayer = "S-FRM-2X" : MemberLayerColor = 12 : MemberLineScale = 1
                 MemberLineType = If(member = "Header", "hidden2", "ByLayer")
             Case "I-JOIST"
@@ -224,19 +242,26 @@ Public Class Form_DrawMembers
                 MemberLayer = "S-FRM-FL-RIM" : MemberLayerColor = 240 : MemberLineScale = 1 : MemberLineType = "ByLayer"
             Case "LINTEL"
                 MemberLayer = "S-FRM-BM-STEEL-1" : MemberLayerColor = 256 : MemberLineScale = 1 : MemberLineType = "ByLayer"
-            Case "FLUSH BEAM", "DROP BEAM", "HEADER"
+            Case "FLUSH BEAM", "BEAM"
                 Select Case materialType.ToUpperInvariant()
                     Case "LSL 1.55E"
                         MemberLayer = "S-FRM-BM-1.75" : MemberLayerColor = 211 : MemberLineScale = 1.75 : MemberLineType = "PHANTOM2"
                     Case Else
                         MemberLayer = "S-FRM-BM-1.75" : MemberLayerColor = 213 : MemberLineScale = 1.75 : MemberLineType = "PHANTOM2"
                 End Select
-            Case Else
-                        MessageBox.Show("Select a valid material.") : Me.Show() : Exit Sub
+            Case "DROP BEAM", "HEADER"
+                Select Case materialType.ToUpperInvariant()
+                    Case "LSL 1.55E"
+                        MemberLayer = "S-FRM-BM-1.75" : MemberLayerColor = 211 : MemberLineScale = 1.75 : MemberLineType = "Hidden"
+                    Case Else
+                        MemberLayer = "S-FRM-BM-1.75" : MemberLayerColor = 213 : MemberLineScale = 1.75 : MemberLineType = "Hidden"
                 End Select
+            Case Else
+                MessageBox.Show("Select a valid material.") : Me.Show() : Exit Sub
+        End Select
 
 
-                Dim ply As Integer
+        Dim ply As Integer
         If Not Integer.TryParse(ComboBox5.Text, ply) Then ply = 1
         Try
             DrawMemberLinesForPly(MemberLayer, MemberLayerColor, MemberLineType, MemberLineScale, ply, width, member, MemberThickness, materialType, stringprefix, stringsuffix)
@@ -471,10 +496,11 @@ Public Class Form_DrawMembers
         Dim feet As Integer
         If upperMember = "I-JOIST" Then
 
-            plyTag = If(ply = 2, "DLB ", If(ply = 3, "TRPL ", If(ply = 4, "QUAD ", "")))
+            plyTag = If(ply = 2, "DBL ", If(ply = 3, "TRPL ", If(ply = 4, "QUAD ", "")))
             ' length in inches -> round up to nearest foot
             feet = CInt(Math.Ceiling(fullLength / 12.0))
-            Return $"{plyTag}{widthKey}-{feet}'"
+            Dim mat As String = If(String.IsNullOrWhiteSpace(materialType), "", materialType)
+            Return $"{plyTag}{mat} - {feet}'"
         Else
             Dim thicknessText As String = If(memberThickness > 0, memberThickness.ToString("0.###", Globalization.CultureInfo.InvariantCulture), "?")
             Dim mat As String = If(String.IsNullOrWhiteSpace(materialType), "", materialType)
@@ -527,7 +553,7 @@ Public Class Form_DrawMembers
         lt.UpgradeOpen()
         Dim newLayer As New LayerTableRecord() With {
             .Name = layerName,
-            .Color = Color.FromColorIndex(ColorMethod.ByAci, CShort(Math.Max(1, Math.Min(255, colorIndex))))
+            .Color = color.FromColorIndex(ColorMethod.ByAci, CShort(Math.Max(1, Math.Min(255, colorIndex))))
         }
         If Not String.Equals(lineTypeName, "BYLAYER", StringComparison.OrdinalIgnoreCase) AndAlso Not String.IsNullOrWhiteSpace(lineTypeName) Then
             Dim ltt = CType(tr.GetObject(db.LinetypeTableId, OpenMode.ForRead), LinetypeTable)

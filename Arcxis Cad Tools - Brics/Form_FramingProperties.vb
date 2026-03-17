@@ -269,9 +269,9 @@ Public Class Form_FramingProperties
         End Using
 
         ' Inside your form's method
-        Framing_Vault_Transfer.EnsurePlanInfoAtOrigin(New Point3d(0, 0, 0), TextBox1.Text, TextBox2.Text, sealloop)
+        'Framing_Vault_Transfer.EnsurePlanInfoAtOrigin(New Point3d(0, 0, 0), TextBox1.Text, TextBox2.Text, sealloop)
 
-        MessageBox.Show("Drawing properties and block attributes updated.", "Arcxis Cad Tools", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        MessageBox.Show("Drawing properties updated.", "Arcxis Cad Tools", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
     End Sub
 

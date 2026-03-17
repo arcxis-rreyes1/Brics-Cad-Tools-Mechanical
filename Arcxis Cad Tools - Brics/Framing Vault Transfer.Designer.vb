@@ -22,436 +22,537 @@ Partial Class Framing_Vault_Transfer
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
-        Me.GroupBox1 = New System.Windows.Forms.GroupBox()
-        Me.ComboBox1 = New System.Windows.Forms.ComboBox()
-        Me.Label11 = New System.Windows.Forms.Label()
-        Me.SheetLabels = New System.Windows.Forms.ComboBox()
-        Me.Label10 = New System.Windows.Forms.Label()
-        Me.GroupBox5 = New System.Windows.Forms.GroupBox()
-        Me.TextBox3 = New System.Windows.Forms.TextBox()
-        Me.GroupBox4 = New System.Windows.Forms.GroupBox()
-        Me.SealsList = New System.Windows.Forms.CheckedListBox()
-        Me.GroupBox3 = New System.Windows.Forms.GroupBox()
-        Me.TextBox2 = New System.Windows.Forms.TextBox()
-        Me.GroupBox2 = New System.Windows.Forms.GroupBox()
-        Me.TextBox1 = New System.Windows.Forms.TextBox()
-        Me.BracingCount115 = New System.Windows.Forms.TextBox()
-        Me.Label9 = New System.Windows.Forms.Label()
-        Me.BracingCount130 = New System.Windows.Forms.TextBox()
-        Me.Label8 = New System.Windows.Forms.Label()
-        Me.PaperSpaceSetup = New System.Windows.Forms.ComboBox()
-        Me.Label7 = New System.Windows.Forms.Label()
-        Me.ViewportScale = New System.Windows.Forms.ComboBox()
-        Me.PlanSwing = New System.Windows.Forms.ComboBox()
-        Me.TdiCount = New System.Windows.Forms.TextBox()
-        Me.Label4 = New System.Windows.Forms.Label()
-        Me.BracingCount142 = New System.Windows.Forms.TextBox()
-        Me.Label3 = New System.Windows.Forms.Label()
-        Me.Label6 = New System.Windows.Forms.Label()
-        Me.Label5 = New System.Windows.Forms.Label()
-        Me.FramingCount = New System.Windows.Forms.TextBox()
-        Me.ElevCount = New System.Windows.Forms.TextBox()
-        Me.Label2 = New System.Windows.Forms.Label()
-        Me.Label1 = New System.Windows.Forms.Label()
-        Me.Button1 = New System.Windows.Forms.Button()
-        Me.Button2 = New System.Windows.Forms.Button()
-        Me.GroupBox6 = New System.Windows.Forms.GroupBox()
-        Me.RFR = New System.Windows.Forms.RadioButton()
-        Me.WSFW = New System.Windows.Forms.RadioButton()
-        Me.GroupBox1.SuspendLayout()
-        Me.GroupBox5.SuspendLayout()
-        Me.GroupBox4.SuspendLayout()
-        Me.GroupBox3.SuspendLayout()
-        Me.GroupBox2.SuspendLayout()
-        Me.GroupBox6.SuspendLayout()
-        Me.SuspendLayout()
-        '
-        'GroupBox1
-        '
-        Me.GroupBox1.Controls.Add(Me.ComboBox1)
-        Me.GroupBox1.Controls.Add(Me.Label11)
-        Me.GroupBox1.Controls.Add(Me.SheetLabels)
-        Me.GroupBox1.Controls.Add(Me.Label10)
-        Me.GroupBox1.Controls.Add(Me.GroupBox5)
-        Me.GroupBox1.Controls.Add(Me.GroupBox4)
-        Me.GroupBox1.Controls.Add(Me.GroupBox3)
-        Me.GroupBox1.Controls.Add(Me.GroupBox2)
-        Me.GroupBox1.Controls.Add(Me.BracingCount115)
-        Me.GroupBox1.Controls.Add(Me.Label9)
-        Me.GroupBox1.Controls.Add(Me.BracingCount130)
-        Me.GroupBox1.Controls.Add(Me.Label8)
-        Me.GroupBox1.Controls.Add(Me.PaperSpaceSetup)
-        Me.GroupBox1.Controls.Add(Me.Label7)
-        Me.GroupBox1.Controls.Add(Me.ViewportScale)
-        Me.GroupBox1.Controls.Add(Me.PlanSwing)
-        Me.GroupBox1.Controls.Add(Me.TdiCount)
-        Me.GroupBox1.Controls.Add(Me.Label4)
-        Me.GroupBox1.Controls.Add(Me.BracingCount142)
-        Me.GroupBox1.Controls.Add(Me.Label3)
-        Me.GroupBox1.Controls.Add(Me.Label6)
-        Me.GroupBox1.Controls.Add(Me.Label5)
-        Me.GroupBox1.Controls.Add(Me.FramingCount)
-        Me.GroupBox1.Controls.Add(Me.ElevCount)
-        Me.GroupBox1.Controls.Add(Me.Label2)
-        Me.GroupBox1.Controls.Add(Me.Label1)
-        Me.GroupBox1.Location = New System.Drawing.Point(17, 8)
-        Me.GroupBox1.Name = "GroupBox1"
-        Me.GroupBox1.Size = New System.Drawing.Size(310, 457)
-        Me.GroupBox1.TabIndex = 4
-        Me.GroupBox1.TabStop = False
-        Me.GroupBox1.Text = "Framing Layouts"
-        '
-        'ComboBox1
-        '
-        Me.ComboBox1.FormattingEnabled = True
-        Me.ComboBox1.Items.AddRange(New Object() {"ARCXIS", "DPIS", "PTS"})
-        Me.ComboBox1.Location = New System.Drawing.Point(233, 428)
-        Me.ComboBox1.Name = "ComboBox1"
-        Me.ComboBox1.Size = New System.Drawing.Size(71, 21)
-        Me.ComboBox1.TabIndex = 28
-        Me.ComboBox1.Text = "ARCXIS"
-        '
-        'Label11
-        '
-        Me.Label11.AutoSize = True
-        Me.Label11.Location = New System.Drawing.Point(6, 431)
-        Me.Label11.Name = "Label11"
-        Me.Label11.Size = New System.Drawing.Size(66, 13)
-        Me.Label11.TabIndex = 29
-        Me.Label11.Text = "CTB To Use"
-        '
-        'SheetLabels
-        '
-        Me.SheetLabels.BackColor = System.Drawing.Color.Red
-        Me.SheetLabels.FormattingEnabled = True
-        Me.SheetLabels.Items.AddRange(New Object() {"S", "FR"})
-        Me.SheetLabels.Location = New System.Drawing.Point(233, 216)
-        Me.SheetLabels.Name = "SheetLabels"
-        Me.SheetLabels.Size = New System.Drawing.Size(71, 21)
-        Me.SheetLabels.TabIndex = 27
-        '
-        'Label10
-        '
-        Me.Label10.AutoSize = True
-        Me.Label10.Location = New System.Drawing.Point(6, 219)
-        Me.Label10.Name = "Label10"
-        Me.Label10.Size = New System.Drawing.Size(78, 13)
-        Me.Label10.TabIndex = 26
-        Me.Label10.Text = "Sheet Labeling"
-        '
-        'GroupBox5
-        '
-        Me.GroupBox5.Controls.Add(Me.TextBox3)
-        Me.GroupBox5.Location = New System.Drawing.Point(9, 117)
-        Me.GroupBox5.Name = "GroupBox5"
-        Me.GroupBox5.Size = New System.Drawing.Size(168, 43)
-        Me.GroupBox5.TabIndex = 25
-        Me.GroupBox5.TabStop = False
-        Me.GroupBox5.Text = "Project Number"
-        '
-        'TextBox3
-        '
-        Me.TextBox3.Location = New System.Drawing.Point(6, 17)
-        Me.TextBox3.Name = "TextBox3"
-        Me.TextBox3.Size = New System.Drawing.Size(156, 20)
-        Me.TextBox3.TabIndex = 2
-        '
-        'GroupBox4
-        '
-        Me.GroupBox4.Controls.Add(Me.SealsList)
-        Me.GroupBox4.Location = New System.Drawing.Point(186, 19)
-        Me.GroupBox4.Name = "GroupBox4"
-        Me.GroupBox4.Size = New System.Drawing.Size(118, 140)
-        Me.GroupBox4.TabIndex = 25
-        Me.GroupBox4.TabStop = False
-        Me.GroupBox4.Text = "Seals To Print"
-        '
-        'SealsList
-        '
-        Me.SealsList.CheckOnClick = True
-        Me.SealsList.FormattingEnabled = True
-        Me.SealsList.IntegralHeight = False
-        Me.SealsList.Items.AddRange(New Object() {"TML-TX"})
-        Me.SealsList.Location = New System.Drawing.Point(6, 19)
-        Me.SealsList.Name = "SealsList"
-        Me.SealsList.Size = New System.Drawing.Size(106, 115)
-        Me.SealsList.TabIndex = 3
-        Me.SealsList.Tag = "TML-TX"
-        '
-        'GroupBox3
-        '
-        Me.GroupBox3.Controls.Add(Me.TextBox2)
-        Me.GroupBox3.Location = New System.Drawing.Point(9, 68)
-        Me.GroupBox3.Name = "GroupBox3"
-        Me.GroupBox3.Size = New System.Drawing.Size(168, 43)
-        Me.GroupBox3.TabIndex = 24
-        Me.GroupBox3.TabStop = False
-        Me.GroupBox3.Text = "Plan Name/Number"
-        '
-        'TextBox2
-        '
-        Me.TextBox2.Location = New System.Drawing.Point(6, 17)
-        Me.TextBox2.Name = "TextBox2"
-        Me.TextBox2.Size = New System.Drawing.Size(156, 20)
-        Me.TextBox2.TabIndex = 2
-        '
-        'GroupBox2
-        '
-        Me.GroupBox2.Controls.Add(Me.TextBox1)
-        Me.GroupBox2.Location = New System.Drawing.Point(9, 19)
-        Me.GroupBox2.Name = "GroupBox2"
-        Me.GroupBox2.Size = New System.Drawing.Size(168, 49)
-        Me.GroupBox2.TabIndex = 23
-        Me.GroupBox2.TabStop = False
-        Me.GroupBox2.Text = "Builder Name"
-        '
-        'TextBox1
-        '
-        Me.TextBox1.Location = New System.Drawing.Point(6, 17)
-        Me.TextBox1.Name = "TextBox1"
-        Me.TextBox1.Size = New System.Drawing.Size(156, 20)
-        Me.TextBox1.TabIndex = 1
-        '
-        'BracingCount115
-        '
-        Me.BracingCount115.Location = New System.Drawing.Point(233, 295)
-        Me.BracingCount115.Name = "BracingCount115"
-        Me.BracingCount115.Size = New System.Drawing.Size(71, 20)
-        Me.BracingCount115.TabIndex = 7
-        Me.BracingCount115.Text = "0"
-        '
-        'Label9
-        '
-        Me.Label9.AutoSize = True
-        Me.Label9.Location = New System.Drawing.Point(6, 298)
-        Me.Label9.Name = "Label9"
-        Me.Label9.Size = New System.Drawing.Size(197, 13)
-        Me.Label9.TabIndex = 22
-        Me.Label9.Text = "Number of 115 MPH (90) Bracing Pages"
-        '
-        'BracingCount130
-        '
-        Me.BracingCount130.Location = New System.Drawing.Point(233, 269)
-        Me.BracingCount130.Name = "BracingCount130"
-        Me.BracingCount130.Size = New System.Drawing.Size(71, 20)
-        Me.BracingCount130.TabIndex = 6
-        Me.BracingCount130.Text = "0"
-        '
-        'Label8
-        '
-        Me.Label8.AutoSize = True
-        Me.Label8.Location = New System.Drawing.Point(6, 272)
-        Me.Label8.Name = "Label8"
-        Me.Label8.Size = New System.Drawing.Size(203, 13)
-        Me.Label8.TabIndex = 20
-        Me.Label8.Text = "Number of 130 MPH (100) Bracing Pages"
-        '
-        'PaperSpaceSetup
-        '
-        Me.PaperSpaceSetup.FormattingEnabled = True
-        Me.PaperSpaceSetup.Items.AddRange(New Object() {"Yes", "No"})
-        Me.PaperSpaceSetup.Location = New System.Drawing.Point(233, 401)
-        Me.PaperSpaceSetup.Name = "PaperSpaceSetup"
-        Me.PaperSpaceSetup.Size = New System.Drawing.Size(71, 21)
-        Me.PaperSpaceSetup.TabIndex = 11
-        Me.PaperSpaceSetup.Text = "Yes"
-        '
-        'Label7
-        '
-        Me.Label7.AutoSize = True
-        Me.Label7.Location = New System.Drawing.Point(6, 404)
-        Me.Label7.Name = "Label7"
-        Me.Label7.Size = New System.Drawing.Size(111, 13)
-        Me.Label7.TabIndex = 17
-        Me.Label7.Text = "Set Up Paper Space?"
-        '
-        'ViewportScale
-        '
-        Me.ViewportScale.FormattingEnabled = True
-        Me.ViewportScale.Items.AddRange(New Object() {"1/8", "3/32"})
-        Me.ViewportScale.Location = New System.Drawing.Point(233, 374)
-        Me.ViewportScale.Name = "ViewportScale"
-        Me.ViewportScale.Size = New System.Drawing.Size(71, 21)
-        Me.ViewportScale.TabIndex = 10
-        Me.ViewportScale.Text = "1/8"
-        '
-        'PlanSwing
-        '
-        Me.PlanSwing.FormattingEnabled = True
-        Me.PlanSwing.Items.AddRange(New Object() {"Both", "Right", "Left"})
-        Me.PlanSwing.Location = New System.Drawing.Point(233, 347)
-        Me.PlanSwing.Name = "PlanSwing"
-        Me.PlanSwing.Size = New System.Drawing.Size(71, 21)
-        Me.PlanSwing.TabIndex = 9
-        Me.PlanSwing.Text = "Both"
-        '
-        'TdiCount
-        '
-        Me.TdiCount.Location = New System.Drawing.Point(233, 321)
-        Me.TdiCount.Name = "TdiCount"
-        Me.TdiCount.Size = New System.Drawing.Size(71, 20)
-        Me.TdiCount.TabIndex = 8
-        Me.TdiCount.Text = "0"
-        '
-        'Label4
-        '
-        Me.Label4.AutoSize = True
-        Me.Label4.Location = New System.Drawing.Point(6, 324)
-        Me.Label4.Name = "Label4"
-        Me.Label4.Size = New System.Drawing.Size(165, 13)
-        Me.Label4.TabIndex = 14
-        Me.Label4.Text = "Number of TDI/Windstorm Pages"
-        '
-        'BracingCount142
-        '
-        Me.BracingCount142.Location = New System.Drawing.Point(233, 243)
-        Me.BracingCount142.Name = "BracingCount142"
-        Me.BracingCount142.Size = New System.Drawing.Size(71, 20)
-        Me.BracingCount142.TabIndex = 5
-        Me.BracingCount142.Text = "0"
-        '
-        'Label3
-        '
-        Me.Label3.AutoSize = True
-        Me.Label3.Location = New System.Drawing.Point(6, 246)
-        Me.Label3.Name = "Label3"
-        Me.Label3.Size = New System.Drawing.Size(203, 13)
-        Me.Label3.TabIndex = 13
-        Me.Label3.Text = "Number of 142 MPH (110) Bracing Pages"
-        '
-        'Label6
-        '
-        Me.Label6.AutoSize = True
-        Me.Label6.Location = New System.Drawing.Point(6, 377)
-        Me.Label6.Name = "Label6"
-        Me.Label6.Size = New System.Drawing.Size(78, 13)
-        Me.Label6.TabIndex = 16
-        Me.Label6.Text = "Viewport Scale"
-        '
-        'Label5
-        '
-        Me.Label5.AutoSize = True
-        Me.Label5.Location = New System.Drawing.Point(6, 350)
-        Me.Label5.Name = "Label5"
-        Me.Label5.Size = New System.Drawing.Size(82, 13)
-        Me.Label5.TabIndex = 15
-        Me.Label5.Text = "What Swing(s)?"
-        '
-        'FramingCount
-        '
-        Me.FramingCount.Location = New System.Drawing.Point(233, 191)
-        Me.FramingCount.Name = "FramingCount"
-        Me.FramingCount.Size = New System.Drawing.Size(71, 20)
-        Me.FramingCount.TabIndex = 4
-        Me.FramingCount.Text = "0"
-        '
-        'ElevCount
-        '
-        Me.ElevCount.Location = New System.Drawing.Point(233, 165)
-        Me.ElevCount.Name = "ElevCount"
-        Me.ElevCount.Size = New System.Drawing.Size(71, 20)
-        Me.ElevCount.TabIndex = 3
-        Me.ElevCount.Text = "0"
-        '
-        'Label2
-        '
-        Me.Label2.AutoSize = True
-        Me.Label2.Location = New System.Drawing.Point(6, 194)
-        Me.Label2.Name = "Label2"
-        Me.Label2.Size = New System.Drawing.Size(129, 13)
-        Me.Label2.TabIndex = 12
-        Me.Label2.Text = "Number of Framing Pages"
-        '
-        'Label1
-        '
-        Me.Label1.AutoSize = True
-        Me.Label1.Location = New System.Drawing.Point(6, 168)
-        Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(108, 13)
-        Me.Label1.TabIndex = 11
-        Me.Label1.Text = "Number of Elevations"
-        '
-        'Button1
-        '
-        Me.Button1.Location = New System.Drawing.Point(165, 534)
-        Me.Button1.Name = "Button1"
-        Me.Button1.Size = New System.Drawing.Size(75, 23)
-        Me.Button1.TabIndex = 7
-        Me.Button1.Text = "Continue"
-        Me.Button1.UseVisualStyleBackColor = True
-        Me.Button1.Visible = False
-        '
-        'Button2
-        '
-        Me.Button2.DialogResult = System.Windows.Forms.DialogResult.Cancel
-        Me.Button2.Location = New System.Drawing.Point(246, 534)
-        Me.Button2.Name = "Button2"
-        Me.Button2.Size = New System.Drawing.Size(75, 23)
-        Me.Button2.TabIndex = 8
-        Me.Button2.Text = "Cancel"
-        Me.Button2.UseVisualStyleBackColor = True
-        '
-        'GroupBox6
-        '
-        Me.GroupBox6.Controls.Add(Me.RFR)
-        Me.GroupBox6.Controls.Add(Me.WSFW)
-        Me.GroupBox6.Location = New System.Drawing.Point(17, 471)
-        Me.GroupBox6.Name = "GroupBox6"
-        Me.GroupBox6.Size = New System.Drawing.Size(310, 57)
-        Me.GroupBox6.TabIndex = 9
-        Me.GroupBox6.TabStop = False
-        Me.GroupBox6.Text = "Builder Specific Options"
-        '
-        'RFR
-        '
-        Me.RFR.AutoSize = True
-        Me.RFR.Location = New System.Drawing.Point(117, 25)
-        Me.RFR.Name = "RFR"
-        Me.RFR.Size = New System.Drawing.Size(47, 17)
-        Me.RFR.TabIndex = 1
-        Me.RFR.TabStop = True
-        Me.RFR.Text = "RFR"
-        Me.RFR.UseVisualStyleBackColor = True
-        '
-        'WSFW
-        '
-        Me.WSFW.AutoSize = True
-        Me.WSFW.Location = New System.Drawing.Point(6, 25)
-        Me.WSFW.Name = "WSFW"
-        Me.WSFW.Size = New System.Drawing.Size(60, 17)
-        Me.WSFW.TabIndex = 0
-        Me.WSFW.TabStop = True
-        Me.WSFW.Text = "WSFW"
-        Me.WSFW.UseVisualStyleBackColor = True
-        '
-        'Framing_Vault_Transfer
-        '
-        Me.AcceptButton = Me.Button1
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
-        Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.CancelButton = Me.Button2
-        Me.ClientSize = New System.Drawing.Size(344, 569)
-        Me.Controls.Add(Me.GroupBox6)
-        Me.Controls.Add(Me.Button2)
-        Me.Controls.Add(Me.Button1)
-        Me.Controls.Add(Me.GroupBox1)
-        Me.KeyPreview = True
-        Me.Name = "Framing_Vault_Transfer"
-        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Drawing Setup"
-        Me.TopMost = True
-        Me.GroupBox1.ResumeLayout(False)
-        Me.GroupBox1.PerformLayout()
-        Me.GroupBox5.ResumeLayout(False)
-        Me.GroupBox5.PerformLayout()
-        Me.GroupBox4.ResumeLayout(False)
-        Me.GroupBox3.ResumeLayout(False)
-        Me.GroupBox3.PerformLayout()
-        Me.GroupBox2.ResumeLayout(False)
-        Me.GroupBox2.PerformLayout()
-        Me.GroupBox6.ResumeLayout(False)
-        Me.GroupBox6.PerformLayout()
-        Me.ResumeLayout(False)
+        GroupBox1 = New System.Windows.Forms.GroupBox()
+        ComboBox1 = New System.Windows.Forms.ComboBox()
+        Label11 = New System.Windows.Forms.Label()
+        SheetLabels = New System.Windows.Forms.ComboBox()
+        Label10 = New System.Windows.Forms.Label()
+        GroupBox5 = New System.Windows.Forms.GroupBox()
+        TextBox3 = New System.Windows.Forms.TextBox()
+        GroupBox4 = New System.Windows.Forms.GroupBox()
+        SealsList = New System.Windows.Forms.CheckedListBox()
+        GroupBox3 = New System.Windows.Forms.GroupBox()
+        TextBox2 = New System.Windows.Forms.TextBox()
+        GroupBox2 = New System.Windows.Forms.GroupBox()
+        TextBox1 = New System.Windows.Forms.TextBox()
+        BracingCount115 = New System.Windows.Forms.TextBox()
+        Label9 = New System.Windows.Forms.Label()
+        BracingCount130 = New System.Windows.Forms.TextBox()
+        Label8 = New System.Windows.Forms.Label()
+        PaperSpaceSetup = New System.Windows.Forms.ComboBox()
+        Label7 = New System.Windows.Forms.Label()
+        ViewportScale = New System.Windows.Forms.ComboBox()
+        PlanSwing = New System.Windows.Forms.ComboBox()
+        TdiCount = New System.Windows.Forms.TextBox()
+        Label4 = New System.Windows.Forms.Label()
+        BracingCount142 = New System.Windows.Forms.TextBox()
+        Label3 = New System.Windows.Forms.Label()
+        Label6 = New System.Windows.Forms.Label()
+        Label5 = New System.Windows.Forms.Label()
+        FramingCount = New System.Windows.Forms.TextBox()
+        ElevCount = New System.Windows.Forms.TextBox()
+        Label2 = New System.Windows.Forms.Label()
+        Label1 = New System.Windows.Forms.Label()
+        Button1 = New System.Windows.Forms.Button()
+        Button2 = New System.Windows.Forms.Button()
+        GroupBox6 = New System.Windows.Forms.GroupBox()
+        RFR = New System.Windows.Forms.RadioButton()
+        WSFW = New System.Windows.Forms.RadioButton()
+        GroupBox9 = New System.Windows.Forms.GroupBox()
+        CheckedListBox2 = New System.Windows.Forms.CheckedListBox()
+        GroupBox10 = New System.Windows.Forms.GroupBox()
+        TextBoxNewItem = New System.Windows.Forms.TextBox()
+        ButtonAdd = New System.Windows.Forms.Button()
+        GroupBox1.SuspendLayout()
+        GroupBox5.SuspendLayout()
+        GroupBox4.SuspendLayout()
+        GroupBox3.SuspendLayout()
+        GroupBox2.SuspendLayout()
+        GroupBox6.SuspendLayout()
+        GroupBox9.SuspendLayout()
+        GroupBox10.SuspendLayout()
+        SuspendLayout()
+        ' 
+        ' GroupBox1
+        ' 
+        GroupBox1.Controls.Add(ComboBox1)
+        GroupBox1.Controls.Add(Label11)
+        GroupBox1.Controls.Add(SheetLabels)
+        GroupBox1.Controls.Add(Label10)
+        GroupBox1.Controls.Add(GroupBox5)
+        GroupBox1.Controls.Add(GroupBox4)
+        GroupBox1.Controls.Add(GroupBox3)
+        GroupBox1.Controls.Add(GroupBox2)
+        GroupBox1.Controls.Add(BracingCount115)
+        GroupBox1.Controls.Add(Label9)
+        GroupBox1.Controls.Add(BracingCount130)
+        GroupBox1.Controls.Add(Label8)
+        GroupBox1.Controls.Add(PaperSpaceSetup)
+        GroupBox1.Controls.Add(Label7)
+        GroupBox1.Controls.Add(ViewportScale)
+        GroupBox1.Controls.Add(PlanSwing)
+        GroupBox1.Controls.Add(TdiCount)
+        GroupBox1.Controls.Add(Label4)
+        GroupBox1.Controls.Add(BracingCount142)
+        GroupBox1.Controls.Add(Label3)
+        GroupBox1.Controls.Add(Label6)
+        GroupBox1.Controls.Add(Label5)
+        GroupBox1.Controls.Add(FramingCount)
+        GroupBox1.Controls.Add(ElevCount)
+        GroupBox1.Controls.Add(Label2)
+        GroupBox1.Controls.Add(Label1)
+        GroupBox1.Location = New System.Drawing.Point(20, 9)
+        GroupBox1.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        GroupBox1.Name = "GroupBox1"
+        GroupBox1.Padding = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        GroupBox1.Size = New System.Drawing.Size(362, 527)
+        GroupBox1.TabIndex = 4
+        GroupBox1.TabStop = False
+        GroupBox1.Text = "Framing Layouts"
+        ' 
+        ' ComboBox1
+        ' 
+        ComboBox1.FormattingEnabled = True
+        ComboBox1.Items.AddRange(New Object() {"ARCXIS", "DPIS", "PTS"})
+        ComboBox1.Location = New System.Drawing.Point(272, 494)
+        ComboBox1.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        ComboBox1.Name = "ComboBox1"
+        ComboBox1.Size = New System.Drawing.Size(82, 23)
+        ComboBox1.TabIndex = 28
+        ComboBox1.Text = "ARCXIS"
+        ' 
+        ' Label11
+        ' 
+        Label11.AutoSize = True
+        Label11.Location = New System.Drawing.Point(7, 497)
+        Label11.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Label11.Name = "Label11"
+        Label11.Size = New System.Drawing.Size(67, 15)
+        Label11.TabIndex = 29
+        Label11.Text = "CTB To Use"
+        ' 
+        ' SheetLabels
+        ' 
+        SheetLabels.BackColor = Drawing.Color.Red
+        SheetLabels.FormattingEnabled = True
+        SheetLabels.Items.AddRange(New Object() {"S", "FR"})
+        SheetLabels.Location = New System.Drawing.Point(272, 249)
+        SheetLabels.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        SheetLabels.Name = "SheetLabels"
+        SheetLabels.Size = New System.Drawing.Size(82, 23)
+        SheetLabels.TabIndex = 27
+        ' 
+        ' Label10
+        ' 
+        Label10.AutoSize = True
+        Label10.Location = New System.Drawing.Point(7, 253)
+        Label10.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Label10.Name = "Label10"
+        Label10.Size = New System.Drawing.Size(84, 15)
+        Label10.TabIndex = 26
+        Label10.Text = "Sheet Labeling"
+        ' 
+        ' GroupBox5
+        ' 
+        GroupBox5.Controls.Add(TextBox3)
+        GroupBox5.Location = New System.Drawing.Point(10, 135)
+        GroupBox5.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        GroupBox5.Name = "GroupBox5"
+        GroupBox5.Padding = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        GroupBox5.Size = New System.Drawing.Size(196, 50)
+        GroupBox5.TabIndex = 25
+        GroupBox5.TabStop = False
+        GroupBox5.Text = "Project Number"
+        ' 
+        ' TextBox3
+        ' 
+        TextBox3.Location = New System.Drawing.Point(7, 20)
+        TextBox3.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        TextBox3.Name = "TextBox3"
+        TextBox3.Size = New System.Drawing.Size(181, 23)
+        TextBox3.TabIndex = 2
+        ' 
+        ' GroupBox4
+        ' 
+        GroupBox4.Controls.Add(SealsList)
+        GroupBox4.Location = New System.Drawing.Point(217, 22)
+        GroupBox4.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        GroupBox4.Name = "GroupBox4"
+        GroupBox4.Padding = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        GroupBox4.Size = New System.Drawing.Size(138, 162)
+        GroupBox4.TabIndex = 25
+        GroupBox4.TabStop = False
+        GroupBox4.Text = "Seals To Print"
+        ' 
+        ' SealsList
+        ' 
+        SealsList.CheckOnClick = True
+        SealsList.FormattingEnabled = True
+        SealsList.IntegralHeight = False
+        SealsList.Items.AddRange(New Object() {"TML-TX"})
+        SealsList.Location = New System.Drawing.Point(7, 22)
+        SealsList.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        SealsList.Name = "SealsList"
+        SealsList.Size = New System.Drawing.Size(123, 132)
+        SealsList.TabIndex = 3
+        SealsList.Tag = "TML-TX"
+        ' 
+        ' GroupBox3
+        ' 
+        GroupBox3.Controls.Add(TextBox2)
+        GroupBox3.Location = New System.Drawing.Point(10, 78)
+        GroupBox3.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        GroupBox3.Name = "GroupBox3"
+        GroupBox3.Padding = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        GroupBox3.Size = New System.Drawing.Size(196, 50)
+        GroupBox3.TabIndex = 24
+        GroupBox3.TabStop = False
+        GroupBox3.Text = "Plan Name/Number"
+        ' 
+        ' TextBox2
+        ' 
+        TextBox2.Location = New System.Drawing.Point(7, 20)
+        TextBox2.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        TextBox2.Name = "TextBox2"
+        TextBox2.Size = New System.Drawing.Size(181, 23)
+        TextBox2.TabIndex = 2
+        ' 
+        ' GroupBox2
+        ' 
+        GroupBox2.Controls.Add(TextBox1)
+        GroupBox2.Location = New System.Drawing.Point(10, 22)
+        GroupBox2.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        GroupBox2.Name = "GroupBox2"
+        GroupBox2.Padding = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        GroupBox2.Size = New System.Drawing.Size(196, 57)
+        GroupBox2.TabIndex = 23
+        GroupBox2.TabStop = False
+        GroupBox2.Text = "Builder Name"
+        ' 
+        ' TextBox1
+        ' 
+        TextBox1.Location = New System.Drawing.Point(7, 20)
+        TextBox1.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        TextBox1.Name = "TextBox1"
+        TextBox1.Size = New System.Drawing.Size(181, 23)
+        TextBox1.TabIndex = 1
+        ' 
+        ' BracingCount115
+        ' 
+        BracingCount115.Location = New System.Drawing.Point(272, 340)
+        BracingCount115.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        BracingCount115.Name = "BracingCount115"
+        BracingCount115.Size = New System.Drawing.Size(82, 23)
+        BracingCount115.TabIndex = 7
+        BracingCount115.Text = "0"
+        ' 
+        ' Label9
+        ' 
+        Label9.AutoSize = True
+        Label9.Location = New System.Drawing.Point(7, 344)
+        Label9.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Label9.Name = "Label9"
+        Label9.Size = New System.Drawing.Size(216, 15)
+        Label9.TabIndex = 22
+        Label9.Text = "Number of 115 MPH (90) Bracing Pages"
+        ' 
+        ' BracingCount130
+        ' 
+        BracingCount130.Location = New System.Drawing.Point(272, 310)
+        BracingCount130.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        BracingCount130.Name = "BracingCount130"
+        BracingCount130.Size = New System.Drawing.Size(82, 23)
+        BracingCount130.TabIndex = 6
+        BracingCount130.Text = "0"
+        ' 
+        ' Label8
+        ' 
+        Label8.AutoSize = True
+        Label8.Location = New System.Drawing.Point(7, 314)
+        Label8.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Label8.Name = "Label8"
+        Label8.Size = New System.Drawing.Size(222, 15)
+        Label8.TabIndex = 20
+        Label8.Text = "Number of 130 MPH (100) Bracing Pages"
+        ' 
+        ' PaperSpaceSetup
+        ' 
+        PaperSpaceSetup.FormattingEnabled = True
+        PaperSpaceSetup.Items.AddRange(New Object() {"Yes", "No"})
+        PaperSpaceSetup.Location = New System.Drawing.Point(272, 463)
+        PaperSpaceSetup.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        PaperSpaceSetup.Name = "PaperSpaceSetup"
+        PaperSpaceSetup.Size = New System.Drawing.Size(82, 23)
+        PaperSpaceSetup.TabIndex = 11
+        PaperSpaceSetup.Text = "Yes"
+        ' 
+        ' Label7
+        ' 
+        Label7.AutoSize = True
+        Label7.Location = New System.Drawing.Point(7, 466)
+        Label7.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Label7.Name = "Label7"
+        Label7.Size = New System.Drawing.Size(113, 15)
+        Label7.TabIndex = 17
+        Label7.Text = "Set Up Paper Space?"
+        ' 
+        ' ViewportScale
+        ' 
+        ViewportScale.FormattingEnabled = True
+        ViewportScale.Items.AddRange(New Object() {"1/8", "3/32"})
+        ViewportScale.Location = New System.Drawing.Point(272, 432)
+        ViewportScale.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        ViewportScale.Name = "ViewportScale"
+        ViewportScale.Size = New System.Drawing.Size(82, 23)
+        ViewportScale.TabIndex = 10
+        ViewportScale.Text = "1/8"
+        ' 
+        ' PlanSwing
+        ' 
+        PlanSwing.FormattingEnabled = True
+        PlanSwing.Items.AddRange(New Object() {"Both", "Right", "Left"})
+        PlanSwing.Location = New System.Drawing.Point(272, 400)
+        PlanSwing.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        PlanSwing.Name = "PlanSwing"
+        PlanSwing.Size = New System.Drawing.Size(82, 23)
+        PlanSwing.TabIndex = 9
+        PlanSwing.Text = "Both"
+        ' 
+        ' TdiCount
+        ' 
+        TdiCount.Location = New System.Drawing.Point(272, 370)
+        TdiCount.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        TdiCount.Name = "TdiCount"
+        TdiCount.Size = New System.Drawing.Size(82, 23)
+        TdiCount.TabIndex = 8
+        TdiCount.Text = "0"
+        ' 
+        ' Label4
+        ' 
+        Label4.AutoSize = True
+        Label4.Location = New System.Drawing.Point(7, 374)
+        Label4.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Label4.Name = "Label4"
+        Label4.Size = New System.Drawing.Size(184, 15)
+        Label4.TabIndex = 14
+        Label4.Text = "Number of TDI/Windstorm Pages"
+        ' 
+        ' BracingCount142
+        ' 
+        BracingCount142.Location = New System.Drawing.Point(272, 280)
+        BracingCount142.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        BracingCount142.Name = "BracingCount142"
+        BracingCount142.Size = New System.Drawing.Size(82, 23)
+        BracingCount142.TabIndex = 5
+        BracingCount142.Text = "0"
+        ' 
+        ' Label3
+        ' 
+        Label3.AutoSize = True
+        Label3.Location = New System.Drawing.Point(7, 284)
+        Label3.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Label3.Name = "Label3"
+        Label3.Size = New System.Drawing.Size(222, 15)
+        Label3.TabIndex = 13
+        Label3.Text = "Number of 142 MPH (110) Bracing Pages"
+        ' 
+        ' Label6
+        ' 
+        Label6.AutoSize = True
+        Label6.Location = New System.Drawing.Point(7, 435)
+        Label6.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Label6.Name = "Label6"
+        Label6.Size = New System.Drawing.Size(84, 15)
+        Label6.TabIndex = 16
+        Label6.Text = "Viewport Scale"
+        ' 
+        ' Label5
+        ' 
+        Label5.AutoSize = True
+        Label5.Location = New System.Drawing.Point(7, 404)
+        Label5.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Label5.Name = "Label5"
+        Label5.Size = New System.Drawing.Size(88, 15)
+        Label5.TabIndex = 15
+        Label5.Text = "What Swing(s)?"
+        ' 
+        ' FramingCount
+        ' 
+        FramingCount.Location = New System.Drawing.Point(272, 220)
+        FramingCount.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        FramingCount.Name = "FramingCount"
+        FramingCount.Size = New System.Drawing.Size(82, 23)
+        FramingCount.TabIndex = 4
+        FramingCount.Text = "0"
+        ' 
+        ' ElevCount
+        ' 
+        ElevCount.Location = New System.Drawing.Point(272, 190)
+        ElevCount.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        ElevCount.Name = "ElevCount"
+        ElevCount.Size = New System.Drawing.Size(82, 23)
+        ElevCount.TabIndex = 3
+        ElevCount.Text = "0"
+        ' 
+        ' Label2
+        ' 
+        Label2.AutoSize = True
+        Label2.Location = New System.Drawing.Point(7, 224)
+        Label2.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Label2.Name = "Label2"
+        Label2.Size = New System.Drawing.Size(146, 15)
+        Label2.TabIndex = 12
+        Label2.Text = "Number of Framing Pages"
+        ' 
+        ' Label1
+        ' 
+        Label1.AutoSize = True
+        Label1.Location = New System.Drawing.Point(7, 194)
+        Label1.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Label1.Name = "Label1"
+        Label1.Size = New System.Drawing.Size(121, 15)
+        Label1.TabIndex = 11
+        Label1.Text = "Number of Elevations"
+        ' 
+        ' Button1
+        ' 
+        Button1.Location = New System.Drawing.Point(192, 616)
+        Button1.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        Button1.Name = "Button1"
+        Button1.Size = New System.Drawing.Size(88, 27)
+        Button1.TabIndex = 7
+        Button1.Text = "Continue"
+        Button1.UseVisualStyleBackColor = True
+        Button1.Visible = False
+        ' 
+        ' Button2
+        ' 
+        Button2.DialogResult = System.Windows.Forms.DialogResult.Cancel
+        Button2.Location = New System.Drawing.Point(287, 616)
+        Button2.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        Button2.Name = "Button2"
+        Button2.Size = New System.Drawing.Size(88, 27)
+        Button2.TabIndex = 8
+        Button2.Text = "Cancel"
+        Button2.UseVisualStyleBackColor = True
+        ' 
+        ' GroupBox6
+        ' 
+        GroupBox6.Controls.Add(RFR)
+        GroupBox6.Controls.Add(WSFW)
+        GroupBox6.Location = New System.Drawing.Point(20, 612)
+        GroupBox6.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        GroupBox6.Name = "GroupBox6"
+        GroupBox6.Padding = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        GroupBox6.Size = New System.Drawing.Size(153, 66)
+        GroupBox6.TabIndex = 9
+        GroupBox6.TabStop = False
+        GroupBox6.Text = "Builder Specific Options"
+        ' 
+        ' RFR
+        ' 
+        RFR.AutoSize = True
+        RFR.Location = New System.Drawing.Point(83, 29)
+        RFR.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        RFR.Name = "RFR"
+        RFR.Size = New System.Drawing.Size(45, 19)
+        RFR.TabIndex = 1
+        RFR.TabStop = True
+        RFR.Text = "RFR"
+        RFR.UseVisualStyleBackColor = True
+        ' 
+        ' WSFW
+        ' 
+        WSFW.AutoSize = True
+        WSFW.Location = New System.Drawing.Point(7, 29)
+        WSFW.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        WSFW.Name = "WSFW"
+        WSFW.Size = New System.Drawing.Size(59, 19)
+        WSFW.TabIndex = 0
+        WSFW.TabStop = True
+        WSFW.Text = "WSFW"
+        WSFW.UseVisualStyleBackColor = True
+        ' 
+        ' GroupBox9
+        ' 
+        GroupBox9.Controls.Add(CheckedListBox2)
+        GroupBox9.Location = New System.Drawing.Point(216, 542)
+        GroupBox9.Name = "GroupBox9"
+        GroupBox9.Size = New System.Drawing.Size(166, 57)
+        GroupBox9.TabIndex = 11
+        GroupBox9.TabStop = False
+        GroupBox9.Text = "Multi Market Option"
+        ' 
+        ' CheckedListBox2
+        ' 
+        CheckedListBox2.FormattingEnabled = True
+        CheckedListBox2.Location = New System.Drawing.Point(6, 22)
+        CheckedListBox2.Name = "CheckedListBox2"
+        CheckedListBox2.Size = New System.Drawing.Size(140, 22)
+        CheckedListBox2.TabIndex = 0
+        ' 
+        ' GroupBox10
+        ' 
+        GroupBox10.Controls.Add(ButtonAdd)
+        GroupBox10.Controls.Add(TextBoxNewItem)
+        GroupBox10.Location = New System.Drawing.Point(20, 542)
+        GroupBox10.Name = "GroupBox10"
+        GroupBox10.Size = New System.Drawing.Size(190, 57)
+        GroupBox10.TabIndex = 12
+        GroupBox10.TabStop = False
+        GroupBox10.Text = "Add Market"
+        ' 
+        ' TextBoxNewItem
+        ' 
+        TextBoxNewItem.Location = New System.Drawing.Point(11, 22)
+        TextBoxNewItem.Name = "TextBoxNewItem"
+        TextBoxNewItem.Size = New System.Drawing.Size(109, 23)
+        TextBoxNewItem.TabIndex = 0
+        ' 
+        ' ButtonAdd
+        ' 
+        ButtonAdd.Location = New System.Drawing.Point(126, 22)
+        ButtonAdd.Name = "ButtonAdd"
+        ButtonAdd.Size = New System.Drawing.Size(58, 24)
+        ButtonAdd.TabIndex = 1
+        ButtonAdd.Text = "Add"
+        ButtonAdd.UseVisualStyleBackColor = True
+        ' 
+        ' Framing_Vault_Transfer
+        ' 
+        AcceptButton = Button1
+        AutoScaleDimensions = New System.Drawing.SizeF(7F, 15F)
+        AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
+        AutoSize = True
+        CancelButton = Button2
+        ClientSize = New System.Drawing.Size(401, 690)
+        Controls.Add(GroupBox10)
+        Controls.Add(GroupBox9)
+        Controls.Add(GroupBox6)
+        Controls.Add(Button2)
+        Controls.Add(Button1)
+        Controls.Add(GroupBox1)
+        KeyPreview = True
+        Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        Name = "Framing_Vault_Transfer"
+        StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
+        Text = "Drawing Setup"
+        TopMost = True
+        GroupBox1.ResumeLayout(False)
+        GroupBox1.PerformLayout()
+        GroupBox5.ResumeLayout(False)
+        GroupBox5.PerformLayout()
+        GroupBox4.ResumeLayout(False)
+        GroupBox3.ResumeLayout(False)
+        GroupBox3.PerformLayout()
+        GroupBox2.ResumeLayout(False)
+        GroupBox2.PerformLayout()
+        GroupBox6.ResumeLayout(False)
+        GroupBox6.PerformLayout()
+        GroupBox9.ResumeLayout(False)
+        GroupBox10.ResumeLayout(False)
+        GroupBox10.PerformLayout()
+        ResumeLayout(False)
 
     End Sub
 
@@ -491,4 +592,9 @@ Partial Class Framing_Vault_Transfer
     Friend WithEvents GroupBox6 As System.Windows.Forms.GroupBox
     Friend WithEvents WSFW As System.Windows.Forms.RadioButton
     Friend WithEvents RFR As System.Windows.Forms.RadioButton
+    Friend WithEvents GroupBox9 As System.Windows.Forms.GroupBox
+    Friend WithEvents CheckedListBox2 As System.Windows.Forms.CheckedListBox
+    Friend WithEvents GroupBox10 As System.Windows.Forms.GroupBox
+    Friend WithEvents TextBoxNewItem As System.Windows.Forms.TextBox
+    Friend WithEvents ButtonAdd As System.Windows.Forms.Button
 End Class

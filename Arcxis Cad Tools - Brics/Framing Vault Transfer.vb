@@ -1,15 +1,16 @@
 ﻿Imports System
+Imports System.Drawing
 Imports System.Linq
+Imports System.Windows.Documents
 Imports System.Windows.Forms
 Imports Arcxis_Cad_Tools_Brics.Arcxis_Cad_Tools
-Imports System.Drawing
 Imports Bricscad.ApplicationServices
-Imports Teigha.Runtime
-Imports Teigha.DatabaseServices
 Imports Bricscad.EditorInput
-Imports Teigha.Geometry
-Imports Teigha.Colors
 Imports Bricscad.PlottingServices
+Imports Teigha.Colors
+Imports Teigha.DatabaseServices
+Imports Teigha.Geometry
+Imports Teigha.Runtime
 Imports Application = Bricscad.ApplicationServices.Application
 Imports Color = Teigha.Colors.Color
 
@@ -43,9 +44,6 @@ Public Class Framing_Vault_Transfer
         Dim NumberOfNeededLayouts As Integer = 0
         Dim SealLoop As New List(Of String)
         Dim FramingPagesList
-
-        ' Save the single custom property once, based on radio selection
-        SetCustomDwgPropReliable("PackageFRWB", PackageFrWbValue)
 
         ' Hide the parent form before showing the child form
         Me.Hide()
@@ -102,6 +100,21 @@ Public Class Framing_Vault_Transfer
         Me.Close()
         Me.Dispose()
 
+        frm1.CheckedListBox2.Items.Clear()
+        If Me.CheckedListBox2.CheckedItems.Count = 0 Then
+            frm1.GroupBox9.Enabled = False
+        Else
+            For i As Integer = 0 To Me.CheckedListBox2.Items.Count - 1
+                Dim text As String = Me.CheckedListBox2.Items(i).ToString()
+                Dim newIdx As Integer = frm1.CheckedListBox2.Items.Add(text)
+                frm1.CheckedListBox2.SetItemChecked(newIdx, Me.CheckedListBox2.GetItemChecked(i))
+            Next
+
+
+        End If
+
+        Dim elevationDivisionPairs As New List(Of Tuple(Of String, List(Of String)))()
+
         For x = 1 To ElevNumber
 
             frm1.Label1.Text = "Elevation #" & x
@@ -116,7 +129,15 @@ Public Class Framing_Vault_Transfer
 
             Else
 
-                Elevations.Add(UCase(ATB_CustomLayoutLetter))
+                Dim elev As String = UCase(ATB_CustomLayoutLetter)
+
+                Dim selectedDivs As New List(Of String)
+                For Each selectedItem In frm1.CheckedListBox2.CheckedItems
+                    selectedDivs.Add(selectedItem.ToString().Trim().ToUpperInvariant())
+                Next
+
+                elevationDivisionPairs.Add(Tuple.Create(elev, selectedDivs))
+                Elevations.Add(elev)
 
             End If
 
@@ -201,8 +222,6 @@ Public Class Framing_Vault_Transfer
         Dim SwingCounter As Integer = 1
         Dim ItemCount As Integer
 
-        EnsurePlanInfoAtOrigin(StartingPoint, Builder, PlanName, SealLoop)
-
         For Each swing In SetupSwings
 
             For x = 0 To Elevations.Count - 1
@@ -216,20 +235,21 @@ Public Class Framing_Vault_Transfer
                     If item.Second > 0 Then
 
                         For z = 1 To item.Second 'THIS IS TO LOOP THROUGH EACH DICIPLINE
+                            Dim DivisionElevation = elevationDivisionPairs(x).Item2
 
                             InsertionPoint = New Point3d(StartingPoint.X + (PanOver * (SequenceCounter - 1)), StartingPoint.Y - (PanDown * x), 0)
 
                             If item.First = "142 Bracing" Then
 
-                                PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), "Bracing", swing, PaperSpaceScale, "142 MPH")
+                                PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), DivisionElevation, "Bracing", swing, PaperSpaceScale, "142 MPH")
 
                             ElseIf item.First = "130 Bracing" Then
 
-                                PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), "Bracing", swing, PaperSpaceScale, "130 MPH")
+                                PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), DivisionElevation, "Bracing", swing, PaperSpaceScale, "130 MPH")
 
                             ElseIf item.First = "115 Bracing" Then
 
-                                PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), "Bracing", swing, PaperSpaceScale, "115 MPH")
+                                PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), DivisionElevation, "Bracing", swing, PaperSpaceScale, "115 MPH")
 
                             Else
 
@@ -241,11 +261,11 @@ Public Class Framing_Vault_Transfer
 
                                     'PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), "Framing", swing, PaperSpaceScale, "", framingFloor, framingMaterial)
 
-                                    PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), "Framing", swing, PaperSpaceScale)
+                                    PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), DivisionElevation, "Framing", swing, PaperSpaceScale)
 
                                 Else
 
-                                    PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), item.First, swing, PaperSpaceScale)
+                                    PageBlockInsert(InsertionPoint, ItemCount, Elevations.Item(x), DivisionElevation, item.First, swing, PaperSpaceScale)
 
                                 End If
                             End If
@@ -279,6 +299,28 @@ Public Class Framing_Vault_Transfer
         SetCustomDwgPropReliable("BUILDER", Builder)
         SetCustomDwgPropReliable("PLAN TYPE", "Framing")
         SetCustomDwgPropReliable("SHEET LABELING", SheetLabeling)
+        ' Save the single custom property once, based on radio selection
+        SetCustomDwgPropReliable("PackageFRWB", PackageFrWbValue)
+
+        Dim BuilderDivisionsList As New List(Of String)
+
+        For Each selecteditem In CheckedListBox2.CheckedItems
+
+            BuilderDivisionsList.Add(selecteditem)
+
+        Next
+
+        Dim Divs As New List(Of String)()
+
+        For Each item As String In BuilderDivisionsList
+            If Not String.IsNullOrWhiteSpace(item) Then
+                Divs.Add(UCase(item.Trim()))
+            End If
+        Next
+
+        Dim Bdivs As String = String.Join(", ", Divs)
+
+        SetCustomDwgPropReliable("DIVISIONS", Bdivs)
 
         Dim parts As New List(Of String)()
 
@@ -509,6 +551,24 @@ Public Class Framing_Vault_Transfer
                 attdef7.Layer = "0"
                 attdef7.Color = Color.FromColorIndex(ColorMethod.ByAci, 3)
 
+                Dim divisionsDef = New AttributeDefinition()
+                divisionsDef.Position = New Point3d(11.253, -1020, 0)
+                divisionsDef.Height = 48.0092
+                divisionsDef.TextStyleId = acCurDb.Textstyle
+                divisionsDef.Justify = AttachmentPoint.BaseLeft
+                divisionsDef.Tag = "DIVISIONS"
+                divisionsDef.Prompt = "DIVISIONS"
+                divisionsDef.TextString = ""
+                divisionsDef.Rotation = 0
+                divisionsDef.WidthFactor = 0.8
+                divisionsDef.Constant = False
+                divisionsDef.Verifiable = False
+                divisionsDef.Invisible = True
+                divisionsDef.LockPositionInBlock = True
+                divisionsDef.Layer = "0"
+                divisionsDef.Color = Color.FromColorIndex(ColorMethod.ByAci, 3)
+                divisionsDef.HorizontalMode = Teigha.DatabaseServices.TextHorizontalMode.TextLeft
+                divisionsDef.VerticalMode = Teigha.DatabaseServices.TextVerticalMode.TextBase
 
 
                 btr.AppendEntity(attDef)
@@ -527,6 +587,8 @@ Public Class Framing_Vault_Transfer
                 acTrans.AddNewlyCreatedDBObject(attdef6, True)
                 btr.AppendEntity(attdef7)
                 acTrans.AddNewlyCreatedDBObject(attdef7, True)
+                btr.AppendEntity(divisionsDef)
+                acTrans.AddNewlyCreatedDBObject(divisionsDef, True)
 
                 acTrans.Commit()
 
@@ -540,7 +602,7 @@ Public Class Framing_Vault_Transfer
 
 
 
-    Private Sub PageBlockInsert(insPt As Point3d, SequenceCounter As Integer, Elevation As String, LayoutType As String, Swing As String, PaperSpaceScale As String, Optional ByVal Options As String = "", Optional ByVal FramingFloor As String = "", Optional ByVal FramingMaterial As String = "")
+    Private Sub PageBlockInsert(insPt As Point3d, SequenceCounter As Integer, Elevation As String, DivisionElevation As List(Of String), LayoutType As String, Swing As String, PaperSpaceScale As String, Optional ByVal Options As String = "", Optional ByVal FramingFloor As String = "", Optional ByVal FramingMaterial As String = "")
 
         Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
         Dim acCurDb As Database = acDoc.Database
@@ -556,6 +618,13 @@ Public Class Framing_Vault_Transfer
                 If Not blkTbl.Has("PAGE") Then
 
                     CreatePageBlock()
+
+                    'Refresh block table after external creation transaction
+                    blkTbl = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead)
+
+                Else
+
+                    EnsurePageBlockHasDivisionsAttribute(acTrans, acCurDb)
 
                 End If
 
@@ -665,6 +734,18 @@ Public Class Framing_Vault_Transfer
 
                                 attRef.TextString = PaperSpaceScale
 
+                            ElseIf tagvalue = "DIVISIONS" Then
+
+                                Dim divisionText As String = ""
+                                If DivisionElevation IsNot Nothing AndAlso DivisionElevation.Count > 0 Then
+                                    divisionText = String.Join(", ",
+                                        DivisionElevation.
+                                            Where(Function(s) Not String.IsNullOrWhiteSpace(s)).
+                                            Select(Function(s) s.Trim().ToUpperInvariant()).
+                                            Distinct(StringComparer.OrdinalIgnoreCase))
+                                End If
+                                attRef.TextString = divisionText
+
                             End If
 
                             'Add the AttributeReference to the BlockReference
@@ -686,6 +767,11 @@ Public Class Framing_Vault_Transfer
 
         End Using
     End Sub
+
+    Private Sub EnsurePageBlockHasDivisionsAttribute(tr As Transaction, db As Database)
+        PageBlockDivisionHelper.EnsurePageDivisionsAttribute(tr, db)
+    End Sub
+
 
     Public Sub CreateWorkSpaceBlock()
 
@@ -1225,5 +1311,61 @@ Public Class Framing_Vault_Transfer
     Private Sub Framing_Vault_Transfer_Load(sender As Object, e As EventArgs) Handles Me.Load
         RFR.AutoCheck = False
         WSFW.AutoCheck = False
+        AdjustBuilderDivisionsListHeight()
     End Sub
+
+    Private Sub AdjustBuilderDivisionsListHeight()
+        Const maxVisibleItems As Integer = 5
+        Dim visibleCount As Integer = Math.Min(Math.Max(CheckedListBox2.Items.Count + 1, 1), maxVisibleItems)
+
+        CheckedListBox2.IntegralHeight = False
+        CheckedListBox2.Height = (visibleCount * CheckedListBox2.ItemHeight) + 4
+
+        Dim paddingBelow As Integer = 6
+        Dim titleBarHeight As Integer = GroupBox9.Height - GroupBox9.ClientSize.Height
+        GroupBox9.Height = CheckedListBox2.Top + CheckedListBox2.Height + paddingBelow + titleBarHeight
+
+        ReflowBottomSection()
+    End Sub
+
+    Private Sub ReflowBottomSection()
+        Me.SuspendLayout()
+
+        Dim buttonsTop As Integer = Math.Max(GroupBox6.Bottom, Math.Max(GroupBox10.Bottom, GroupBox9.Bottom)) + 8
+        Button1.Top = buttonsTop
+        Button2.Top = buttonsTop
+
+        Dim neededClientHeight As Integer = Math.Max(Button1.Bottom, Button2.Bottom) + 20
+        Dim newClientSize As New System.Drawing.Size(Me.ClientSize.Width, neededClientHeight)
+
+        Dim screenMaxHeight As Integer = Screen.FromControl(Me).WorkingArea.Height
+        If newClientSize.Height > screenMaxHeight Then
+            newClientSize.Height = screenMaxHeight
+            Me.AutoScroll = True
+        Else
+            Me.AutoScroll = False
+        End If
+
+        Me.ClientSize = newClientSize
+        Me.MinimumSize = New System.Drawing.Size(Me.MinimumSize.Width, Me.Height)
+
+        Me.ResumeLayout()
+    End Sub
+
+    Private Sub ButtonAdd_Click(sender As Object, e As EventArgs) Handles ButtonAdd.Click
+        Dim newItem As String = TextBoxNewItem.Text.Trim()
+        If String.IsNullOrWhiteSpace(newItem) Then Exit Sub
+
+        ' prevent duplicates (optional)
+        For Each item In CheckedListBox2.Items
+            If String.Equals(item.ToString(), newItem, StringComparison.OrdinalIgnoreCase) Then
+                Exit Sub
+            End If
+        Next
+
+        CheckedListBox2.Items.Add(newItem, True) ' True = checked by default
+        AdjustBuilderDivisionsListHeight()
+        TextBoxNewItem.Clear()
+    End Sub
+
 End Class

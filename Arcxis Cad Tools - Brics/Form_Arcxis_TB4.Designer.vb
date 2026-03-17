@@ -22,67 +22,98 @@ Partial Class Form_Arcxis_TB4
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
-        Me.TextBox1 = New System.Windows.Forms.TextBox()
-        Me.Label1 = New System.Windows.Forms.Label()
-        Me.Button2 = New System.Windows.Forms.Button()
-        Me.Button1 = New System.Windows.Forms.Button()
-        Me.SuspendLayout()
-        '
-        'TextBox1
-        '
-        Me.TextBox1.Location = New System.Drawing.Point(242, 30)
-        Me.TextBox1.Name = "TextBox1"
-        Me.TextBox1.Size = New System.Drawing.Size(100, 20)
-        Me.TextBox1.TabIndex = 1
-        '
-        'Label1
-        '
-        Me.Label1.AutoSize = True
-        Me.Label1.Location = New System.Drawing.Point(12, 33)
-        Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(213, 13)
-        Me.Label1.TabIndex = 3
-        Me.Label1.Text = "Enter Custom Layout Letter for Elevation #?"
-        '
-        'Button2
-        '
-        Me.Button2.DialogResult = System.Windows.Forms.DialogResult.Cancel
-        Me.Button2.Location = New System.Drawing.Point(267, 86)
-        Me.Button2.Name = "Button2"
-        Me.Button2.Size = New System.Drawing.Size(75, 23)
-        Me.Button2.TabIndex = 3
-        Me.Button2.Text = "Cancel"
-        Me.Button2.UseVisualStyleBackColor = True
-        '
-        'Button1
-        '
-        Me.Button1.Location = New System.Drawing.Point(186, 86)
-        Me.Button1.Name = "Button1"
-        Me.Button1.Size = New System.Drawing.Size(75, 23)
-        Me.Button1.TabIndex = 2
-        Me.Button1.Text = "OK"
-        Me.Button1.UseVisualStyleBackColor = True
-        '
-        'Form_Arcxis_TB4
-        '
-        Me.AcceptButton = Me.Button1
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
-        Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.CancelButton = Me.Button2
-        Me.ClientSize = New System.Drawing.Size(369, 121)
-        Me.Controls.Add(Me.Button2)
-        Me.Controls.Add(Me.Button1)
-        Me.Controls.Add(Me.TextBox1)
-        Me.Controls.Add(Me.Label1)
-        Me.Name = "Form_Arcxis_TB4"
-        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Custom Layout"
-        Me.ResumeLayout(False)
-        Me.PerformLayout()
+        TextBox1 = New System.Windows.Forms.TextBox()
+        Label1 = New System.Windows.Forms.Label()
+        Button2 = New System.Windows.Forms.Button()
+        Button1 = New System.Windows.Forms.Button()
+        GroupBox9 = New System.Windows.Forms.GroupBox()
+        CheckedListBox2 = New System.Windows.Forms.CheckedListBox()
+        GroupBox9.SuspendLayout()
+        SuspendLayout()
+        ' 
+        ' TextBox1
+        ' 
+        TextBox1.Location = New System.Drawing.Point(282, 22)
+        TextBox1.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        TextBox1.Name = "TextBox1"
+        TextBox1.Size = New System.Drawing.Size(116, 23)
+        TextBox1.TabIndex = 1
+        ' 
+        ' Label1
+        ' 
+        Label1.AutoSize = True
+        Label1.Location = New System.Drawing.Point(14, 25)
+        Label1.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
+        Label1.Name = "Label1"
+        Label1.Size = New System.Drawing.Size(235, 15)
+        Label1.TabIndex = 3
+        Label1.Text = "Enter Custom Layout Letter for Elevation #?"
+        ' 
+        ' Button2
+        ' 
+        Button2.DialogResult = System.Windows.Forms.DialogResult.Cancel
+        Button2.Location = New System.Drawing.Point(310, 73)
+        Button2.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        Button2.Name = "Button2"
+        Button2.Size = New System.Drawing.Size(88, 27)
+        Button2.TabIndex = 3
+        Button2.Text = "Cancel"
+        Button2.UseVisualStyleBackColor = True
+        ' 
+        ' Button1
+        ' 
+        Button1.Location = New System.Drawing.Point(215, 73)
+        Button1.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        Button1.Name = "Button1"
+        Button1.Size = New System.Drawing.Size(88, 27)
+        Button1.TabIndex = 2
+        Button1.Text = "OK"
+        Button1.UseVisualStyleBackColor = True
+        ' 
+        ' GroupBox9
+        ' 
+        GroupBox9.Controls.Add(CheckedListBox2)
+        GroupBox9.Location = New System.Drawing.Point(14, 56)
+        GroupBox9.Name = "GroupBox9"
+        GroupBox9.Size = New System.Drawing.Size(194, 57)
+        GroupBox9.TabIndex = 11
+        GroupBox9.TabStop = False
+        GroupBox9.Text = "Multi Market Option"
+        ' 
+        ' CheckedListBox2
+        ' 
+        CheckedListBox2.FormattingEnabled = True
+        CheckedListBox2.Location = New System.Drawing.Point(6, 22)
+        CheckedListBox2.Name = "CheckedListBox2"
+        CheckedListBox2.Size = New System.Drawing.Size(182, 22)
+        CheckedListBox2.TabIndex = 0
+        ' 
+        ' Form_Arcxis_TB4
+        ' 
+        AcceptButton = Button1
+        AutoScaleDimensions = New System.Drawing.SizeF(7F, 15F)
+        AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
+        AutoSize = True
+        CancelButton = Button2
+        ClientSize = New System.Drawing.Size(430, 140)
+        Controls.Add(GroupBox9)
+        Controls.Add(Button2)
+        Controls.Add(Button1)
+        Controls.Add(TextBox1)
+        Controls.Add(Label1)
+        Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        Name = "Form_Arcxis_TB4"
+        StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
+        Text = "Custom Layout"
+        GroupBox9.ResumeLayout(False)
+        ResumeLayout(False)
+        PerformLayout()
 
     End Sub
     Friend WithEvents TextBox1 As System.Windows.Forms.TextBox
     Friend WithEvents Label1 As System.Windows.Forms.Label
     Friend WithEvents Button2 As System.Windows.Forms.Button
     Friend WithEvents Button1 As System.Windows.Forms.Button
+    Friend WithEvents GroupBox9 As System.Windows.Forms.GroupBox
+    Friend WithEvents CheckedListBox2 As System.Windows.Forms.CheckedListBox
 End Class

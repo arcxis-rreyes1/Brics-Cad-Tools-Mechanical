@@ -11,6 +11,7 @@ Imports Bricscad.EditorInput
 Imports Teigha.Geometry
 Imports Teigha.Colors
 Imports Bricscad.PlottingServices
+Imports Arcxis_Cad_Tools_Brics.Arcxis_Cad_Tools_Brics
 Imports Application = Bricscad.ApplicationServices.Application
 
 Public Class Form_Automated_Printing_Info
@@ -18,6 +19,18 @@ Public Class Form_Automated_Printing_Info
     Private lockOthers As Boolean = False
     Private lockOthers1 As Boolean = False
     Private lockOthers2 As Boolean = False
+    Private Sub AdjustBuilderDivisionsListHeight()
+        Const maxVisibleItems As Integer = 5
+        Dim visibleCount As Integer = Math.Min(Math.Max(CheckedListBox2.Items.Count, 1), maxVisibleItems)
+
+        CheckedListBox2.IntegralHeight = False
+        CheckedListBox2.Height = (visibleCount * CheckedListBox2.ItemHeight) + 4
+
+        Dim paddingBelow As Integer = 6
+        Dim titleBarHeight As Integer = GroupBox9.Height - GroupBox9.ClientSize.Height
+        GroupBox9.Height = CheckedListBox2.Top + CheckedListBox2.Height + paddingBelow + titleBarHeight
+    End Sub
+
     Private Sub Form_Automated_Printing_Info_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
         Dim PlanType As New List(Of String)
@@ -150,10 +163,32 @@ Public Class Form_Automated_Printing_Info
             End If
         End If
 
+        Dim Division = fm.GetCustomDwgPropReliable("DIVISIONS")
+        If Division <> "" Then
+            Dim DivisionsList As New List(Of String)
+
+            If Not String.IsNullOrWhiteSpace(Division) Then
+                Dim DivisionTokens = Division.Split(","c).
+                        Select(Function(s) s.Trim()).
+                        Where(Function(s) s <> "").
+                        Distinct(StringComparer.OrdinalIgnoreCase).
+                        ToList()
+
+                For Each t In DivisionTokens
+                    For Each item In CheckedListBox2.Items
+                        If item.ToString().Equals(t, StringComparison.OrdinalIgnoreCase) Then
+                            CheckedListBox2.SetItemChecked(CheckedListBox2.Items.IndexOf(item), True)
+                        End If
+                    Next
+                Next
+
+            End If
+        End If
         lockOthers = True
         lockOthers1 = True
         lockOthers2 = True
 
+        AdjustBuilderDivisionsListHeight()
         ResizeCheckListBoxAndGroupBox()
 
     End Sub
@@ -344,6 +379,11 @@ Public Class Form_Automated_Printing_Info
         Dim visibleCount As Integer = Math.Min(RealListCount, maxVisibleItems)
         CheckedListBox5.Height = (visibleCount * CheckedListBox5.ItemHeight) - 10
 
+        ' Keep GroupBox9 in sync with CheckedListBox2
+        Dim gb9Padding As Integer = 6
+        Dim gb9TitleBar As Integer = GroupBox9.Height - GroupBox9.ClientSize.Height
+        GroupBox9.Height = CheckedListBox2.Top + CheckedListBox2.Height + gb9Padding + gb9TitleBar
+
         ' 2) GroupBox5 wraps the checklist
         Dim paddingBelow As Integer = 6
         Dim titleBarHeight5 As Integer = GroupBox5.Height - GroupBox5.ClientSize.Height
@@ -362,6 +402,10 @@ Public Class Form_Automated_Printing_Info
         Dim paddingBelow1 As Integer = 6
         Dim titleBarHeightsEALS As Integer = GroupBox7.Height - GroupBox7.ClientSize.Height
         GroupBox7.Height = SealsList.Top + SealsList.Height + paddingBelow + titleBarHeightsEALS
+
+        ' Reflow lower controls based on dynamic upper section heights
+        Dim upperBottom As Integer = Math.Max(GroupBox4.Bottom, GroupBox9.Bottom)
+        GroupBox5.Top = upperBottom + 6
         GroupBox7.Top = GroupBox5.Bottom + 6
 
         ' 3) Move buttons just below GroupBox5
@@ -409,4 +453,5 @@ Public Class Form_Automated_Printing_Info
         SheetLabels.BackColor = System.Drawing.Color.White
         Button1.Visible = True
     End Sub
+
 End Class

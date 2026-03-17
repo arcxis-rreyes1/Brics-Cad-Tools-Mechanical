@@ -213,7 +213,6 @@ Module Module_Arcxis_TB
         End Try
     End Sub
 
-    <CommandMethod("SupplementalPaths", CommandFlags.Modal)>
     Public Sub SupplementalPaths(Optional ByVal CurTrustPathList As List(Of String) = Nothing)
 
 

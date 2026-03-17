@@ -621,7 +621,6 @@ Namespace Arcxis_Cad_Tools
 
                 ' Step through each object in the block table record
 
-
                 acBlkTblRec.Name = DpisNewName
 
                 Dim btrr = DirectCast(acTrans.GetObject(acBlkTbl(DpisNewName), OpenMode.ForWrite), BlockTableRecord)

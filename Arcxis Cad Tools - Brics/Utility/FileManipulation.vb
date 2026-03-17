@@ -37,6 +37,7 @@ Imports Exception = Teigha.Runtime.Exception
 Imports Layout = Teigha.DatabaseServices.Layout
 Imports Color = Teigha.Colors.Color
 Imports System.Collections.Specialized
+Imports Arcxis_Cad_Tools.Utility.PageBlockDivisionCommands
 
 
 ' This line is not mandatory, but improves loading performances
@@ -477,6 +478,8 @@ Namespace Arcxis_Cad_Tools
 
             End Using
 
+            PageBlockDivisionCommands.EnsurePageDivisions()
+
             Dim normalItems = StampLayers.Where(Function(x) Not x.ToLower().Contains("review")).OrderBy(Function(x) x).ToList()
             Dim reviewItems = StampLayers.Where(Function(x) x.ToLower().Contains("review")).OrderBy(Function(x) x).ToList()
 
@@ -503,7 +506,7 @@ Namespace Arcxis_Cad_Tools
                 frm.SealsList.Items.Add(seal)
             Next
 
-            SyncCustomPropsFromAutoPlanPrintInfo()
+            SetCustomDwgPropReliable("PLAN TYPE", "FRAMING")
 
             Dim FormBuilder = GetCustomDwgPropReliable("BUILDER")
             Dim Formplan = GetCustomDwgPropReliable("PLAN")
@@ -512,6 +515,25 @@ Namespace Arcxis_Cad_Tools
             Dim FormSheetLabels = GetCustomDwgPropReliable("SHEET LABELING")
             Dim packageFRWB As String = GetCustomDwgPropReliable("PackageFRWB")
 
+            Dim pageDivisions As List(Of String) =
+    PageBlockDivisionCommands.GetPageBlockDivisions().
+        Select(Function(s) If(s, "").Trim()).
+        Where(Function(s) s <> "").
+        Distinct(StringComparer.OrdinalIgnoreCase).
+        ToList()
+
+            ' CheckedListBox5 = exactly PAGE divisions
+            PageBlockDivisionCommands.SyncCheckedListBoxExact(frm.CheckedListBox2, pageDivisions)
+
+            Dim divisionsValue As String = String.Join(
+        ", ",
+        pageDivisions.
+        Select(Function(s) If(s, "").Trim()).
+        Where(Function(s) s <> "").
+        Distinct(StringComparer.OrdinalIgnoreCase)
+)
+
+            SetCustomDwgPropReliable("DIVISIONS", divisionsValue)
 
             Dim doWSFW As Boolean = String.Equals(packageFRWB, "WSFW", StringComparison.OrdinalIgnoreCase)
             Dim doRFR As Boolean = String.Equals(packageFRWB, "RFR", StringComparison.OrdinalIgnoreCase)
@@ -535,6 +557,7 @@ Namespace Arcxis_Cad_Tools
                     If idx >= 0 Then frm.SealsList.SetItemChecked(idx, True)
                 Next
             End If
+
 
             If FormSheetLabels <> "" Then
                 If FormSheetLabels = "S" Then
@@ -634,6 +657,14 @@ Namespace Arcxis_Cad_Tools
 
             End If
 
+            Dim BuilderDivisionsList As New List(Of String)
+
+            For Each selecteditem In frm.CheckedListBox2.CheckedItems
+
+                BuilderDivisionsList.Add(selecteditem)
+
+            Next
+
             If Not frm.CheckedListBox1.CheckedItems.Contains("Both") Then
                 CustomPrinting = True
             End If
@@ -691,7 +722,7 @@ Namespace Arcxis_Cad_Tools
                 Dim blkTableRec As BlockTableRecord = acTrans.GetObject(blkTable(BlockTableRecord.ModelSpace), OpenMode.ForRead)
 
                 ' --- define desired positions ONCE before the attribute loop ---
-                Dim order As String() = {Nothing, Nothing, "MOD", "SW", "PRNT", "SIZE", "OPTIONS", "ELEV", "", "LXS", "TND"}
+                Dim order As String() = {Nothing, Nothing, "MOD", "SW", "PRNT", "SIZE", "OPTIONS", "ELEV", "", "LXS", "TND", "DIVISIONS"}
 
                 ' Iterate through the ModelSpace block table record
                 For Each objId As ObjectId In blkTableRec
@@ -868,9 +899,6 @@ Namespace Arcxis_Cad_Tools
 
             End If
 
-
-
-
             Dim SelectedFolder As String
             Dim isFile As Boolean
             SelectedFolder = PromptForPathOrFolder(isFile)
@@ -881,285 +909,309 @@ Namespace Arcxis_Cad_Tools
             Dim SealToStamp As String
 
             Dim TodaysDate As String = Date.Today.ToString("MM dd yy", CultureInfo.InvariantCulture)
+            For Each division In BuilderDivisionsList
+                Dim divisionfolder As String
+                If division <> "" Then
+                    divisionfolder = "\" & division
+                Else
+                    divisionfolder = ""
+                End If
 
-            For Each stamp In SealLoop
+                Dim pdfdivision As String
+                If division <> "" Then
+                    pdfdivision = " (" & division & ")"
+                Else
+                    pdfdivision = ""
+                End If
 
-                SealToStamp = "Master Seal File|S-SEAL-" & stamp
-                TurnOnOrOffLayer(SealToStamp, True)
+                For Each stamp In SealLoop
 
-                For Each layer In LayerLoop
+                    SealToStamp = "Master Seal File|S-SEAL-" & stamp
+                    TurnOnOrOffLayer(SealToStamp, True)
 
-                    If layer = "S-FRM-TRUSS" Then
-                        TurnOnOrOffLayer(layer, True)
-                        TurnOnOrOffLayer("S-FRM-STICK", False)
-                    ElseIf layer = "S-FRM-STICK" Then
-                        TurnOnOrOffLayer(layer, True)
-                        TurnOnOrOffLayer("S-FRM-TRUSS", False)
-                    End If
+                    For Each layer In LayerLoop
 
-                    For Each type In PlanType
-                        For Each ElevValue In Elevations
-                            For Each opt In Options
-                                For Each valueList In AllValues
+                        If layer = "S-FRM-TRUSS" Then
+                            TurnOnOrOffLayer(layer, True)
+                            TurnOnOrOffLayer("S-FRM-STICK", False)
+                        ElseIf layer = "S-FRM-STICK" Then
+                            TurnOnOrOffLayer(layer, True)
+                            TurnOnOrOffLayer("S-FRM-TRUSS", False)
+                        End If
 
-                                    'valueList(0) contains blockID
-                                    'valueList(1) contains InsertionPoint
-                                    'valueList(2) contains PlanType
-                                    'valueList(3) contains Swing
-                                    'valueList(4) contains Sequence
-                                    'valueList(5) contains Scale
-                                    'valueList(6) contains Option
-                                    'valueList(7) contains Elevation
-                                    'valuelist(8) inst set yet but is set as the single elevations when multiple
+                        For Each type In PlanType
+                            For Each ElevValue In Elevations
+                                For Each opt In Options
+                                    For Each valueList In AllValues
+
+                                        'valueList(0) contains blockID
+                                        'valueList(1) contains InsertionPoint
+                                        'valueList(2) contains PlanType
+                                        'valueList(3) contains Swing
+                                        'valueList(4) contains Sequence
+                                        'valueList(5) contains Scale
+                                        'valueList(6) contains Option
+                                        'valueList(7) contains Elevation
+                                        'valuelist(8) inst set yet but is set as the single elevations when multiple
 
 
-                                    If valueList(2) = type AndAlso valueList(7).Contains(ElevValue) AndAlso valueList(6) = opt Then
+                                        If valueList(2) = type AndAlso valueList(7).Contains(ElevValue) AndAlso valueList(6) = opt And valueList(11).Contains(division) Then
 
-                                        If valueList(7).Contains(",") Then
-                                            Dim result As New List(Of String)
-                                            Dim parts() As String = valueList(7).Split(","c)
-                                            For Each part As String In parts
-                                                result.Add(part.Trim())
-                                            Next
+                                            If valueList(7).Contains(",") Then
+                                                Dim result As New List(Of String)
+                                                Dim parts() As String = valueList(7).Split(","c)
+                                                For Each part As String In parts
+                                                    result.Add(part.Trim())
+                                                Next
 
-                                            If Not result.Contains(ElevValue.Trim(), StringComparer.OrdinalIgnoreCase) Then
+                                                If Not result.Contains(ElevValue.Trim(), StringComparer.OrdinalIgnoreCase) Then
+                                                    Continue For
+                                                End If
+
+                                            ElseIf valueList(7).Length > ElevValue.Length Then
+
                                                 Continue For
-                                            End If
-
-                                        ElseIf valueList(7).Length > ElevValue.Length Then
-
-                                            Continue For
-
-                                        End If
-
-                                        'Perform the operation when both BeamLayout And FNDElev match
-                                        Dim insertionPointStr As String = valueList(1) ' Example string from valueList
-
-                                        insertionPoint1 = CreatePoint3dFromString(insertionPointStr)
-
-                                        Dim NewHandle As String = valueList(0)
-                                        Dim long1 As Long = NewHandle
-                                        Dim hand As Handle = New Handle(long1)
-                                        Dim objID As ObjectId = acDb.GetObjectId(False, hand, 0)
-
-                                        If CustomPrinting Then
-
-                                            If UCase(valueList(3)) = "L" Or UCase(valueList(3)) = "LEFT" And Swings.Contains("Left") Then
-
-                                                LeftLayoutList.Add(valueList)
-
-                                            ElseIf UCase(valueList(3)) = "R" Or UCase(valueList(3)) = "RIGHT" And Swings.Contains("Right") Then
-
-                                                RightLayoutList.Add(valueList)
 
                                             End If
-                                        Else
 
-                                            If UCase(valueList(3)) = "L" Or UCase(valueList(3)) = "LEFT" Then
-                                                LeftLayoutList.Add(valueList)
+                                            'Perform the operation when both BeamLayout And FNDElev match
+                                            Dim insertionPointStr As String = valueList(1) ' Example string from valueList
+
+                                            insertionPoint1 = CreatePoint3dFromString(insertionPointStr)
+
+                                            Dim NewHandle As String = valueList(0)
+                                            Dim long1 As Long = NewHandle
+                                            Dim hand As Handle = New Handle(long1)
+                                            Dim objID As ObjectId = acDb.GetObjectId(False, hand, 0)
+
+                                            If CustomPrinting Then
+
+                                                If UCase(valueList(3)) = "L" Or UCase(valueList(3)) = "LEFT" And Swings.Contains("Left") Then
+
+                                                    LeftLayoutList.Add(valueList)
+
+                                                ElseIf UCase(valueList(3)) = "R" Or UCase(valueList(3)) = "RIGHT" And Swings.Contains("Right") Then
+
+                                                    RightLayoutList.Add(valueList)
+
+                                                End If
                                             Else
-                                                RightLayoutList.Add(valueList)
+
+                                                If UCase(valueList(3)) = "L" Or UCase(valueList(3)) = "LEFT" Then
+                                                    LeftLayoutList.Add(valueList)
+                                                Else
+                                                    RightLayoutList.Add(valueList)
+                                                End If
+
+                                            End If
+                                        End If
+
+                                    Next
+                                    counter = 1
+
+                                    For Each RightEntry In RightLayoutList
+                                        If RightEntry(4) = counter Then
+                                            RightEntry(8) = ElevValue
+                                            FinalRightList.Add(RightEntry)
+                                            counter += 1
+                                            ZoomObjectsInViewport(RightEntry, planname, Builder, FRsheets, division)
+                                        End If
+                                    Next
+
+                                    If layer = "S-FRM-STICK" Then
+                                        NewFolderLocation = SelectedFolder & "\" & TodaysDate & "\" & planname & divisionfolder & "\" & stamp & "\STICK\" & type
+                                    ElseIf layer = "S-FRM-TRUSS" Then
+                                        NewFolderLocation = SelectedFolder & "\" & TodaysDate & "\" & planname & divisionfolder & "\" & stamp & "\TRUSS\" & type
+                                    Else
+                                        NewFolderLocation = SelectedFolder & "\" & TodaysDate & "\" & planname & divisionfolder & "\" & stamp & "\" & type
+                                    End If
+
+
+                                    If FinalRightList.Count <> 0 Then
+
+                                        If Not Directory.Exists(NewFolderLocation) Then
+
+                                            Directory.CreateDirectory(NewFolderLocation)
+
+                                        End If
+
+                                        If UCase(type) = "FRAMING" Then
+
+                                            pdfname = UCase("RIGHT FR " & planname & " " & ElevValue)
+
+                                        ElseIf UCase(type) = "BRACING" Then
+
+                                            pdfname = UCase("RIGHT WB " & planname & " " & ElevValue & " (WALLBRACING)")
+
+                                            If opt = "115 MPH" Then
+                                                pdfname = pdfname & " 115 MPH"
+                                            ElseIf opt = "130 MPH" Then
+                                                pdfname = pdfname & " 130 MPH"
+                                            ElseIf opt = "142 MPH" Then
+                                                pdfname = pdfname & " 142 MPH"
                                             End If
 
+                                        ElseIf UCase(type) = "WINDSTORM" Then
+
+                                            pdfname = UCase("RIGHT WS " & planname & " " & ElevValue & " (150 MPH)")
+
+                                        End If
+
+
+                                    End If
+
+                                    ' Right side
+                                    If FinalRightList.Count <> 0 Then
+                                        PlotTAutomatedTabs(FinalRightList, (pdfname & pdfdivision), NewFolderLocation, DPISCTB)
+                                        If division <> "" Then
+                                            QueueLayoutsForCsv(FinalRightList, (pdfname & pdfdivision), Builder, planname, ProjectNumber, BuilderDivision:=division)
+                                        Else
+                                            QueueLayoutsForCsv(FinalRightList, (pdfname & pdfdivision), Builder, planname, ProjectNumber, BuilderDivision:=division)
                                         End If
                                     End If
 
-                                Next
-                                counter = 1
 
-                                For Each RightEntry In RightLayoutList
-                                    If RightEntry(4) = counter Then
-                                        RightEntry(8) = ElevValue
-                                        FinalRightList.Add(RightEntry)
-                                        counter += 1
-                                        ZoomObjectsInViewport(RightEntry, planname, Builder, FRsheets)
-                                    End If
-                                Next
+                                    counter = 1
+                                    For Each LeftEntry In LeftLayoutList
+                                        If LeftEntry(4) = counter Then
+                                            LeftEntry(8) = ElevValue
+                                            FinalLeftList.Add(LeftEntry)
+                                            counter += 1
 
-                                If layer = "S-FRM-STICK" Then
-                                    NewFolderLocation = SelectedFolder & "\" & TodaysDate & "\" & planname & "\" & stamp & "\STICK\" & type
-                                ElseIf layer = "S-FRM-TRUSS" Then
-                                    NewFolderLocation = SelectedFolder & "\" & TodaysDate & "\" & planname & "\" & stamp & "\TRUSS\" & type
-                                Else
-                                    NewFolderLocation = SelectedFolder & "\" & TodaysDate & "\" & planname & "\" & stamp & "\" & type
-                                End If
+                                            ZoomObjectsInViewport(LeftEntry, planname, Builder, FRsheets, division)
 
+                                        End If
+                                    Next
 
-                                If FinalRightList.Count <> 0 Then
+                                    If FinalLeftList.Count <> 0 Then
 
-                                    If Not Directory.Exists(NewFolderLocation) Then
+                                        If Not Directory.Exists(NewFolderLocation) Then
 
-                                        Directory.CreateDirectory(NewFolderLocation)
+                                            Directory.CreateDirectory(NewFolderLocation)
 
-                                    End If
-
-                                    If UCase(type) = "FRAMING" Then
-
-                                        pdfname = UCase("RIGHT FR " & planname & " " & ElevValue)
-
-                                    ElseIf UCase(type) = "BRACING" Then
-
-                                        pdfname = UCase("RIGHT WB " & planname & " " & ElevValue & " (WALLBRACING)")
-
-                                        If opt = "115 MPH" Then
-                                            pdfname = pdfname & " 115 MPH"
-                                        ElseIf opt = "130 MPH" Then
-                                            pdfname = pdfname & " 130 MPH"
-                                        ElseIf opt = "142 MPH" Then
-                                            pdfname = pdfname & " 142 MPH"
                                         End If
 
-                                    ElseIf UCase(type) = "WINDSTORM" Then
+                                        If UCase(type) = "FRAMING" Then
 
-                                        pdfname = UCase("RIGHT WS " & planname & " " & ElevValue & " (150 MPH)")
+                                            pdfname = UCase("LEFT FR " & planname & " " & ElevValue)
 
-                                    End If
+                                        ElseIf UCase(type) = "BRACING" Then
 
+                                            pdfname = UCase("LEFT WB " & planname & " " & ElevValue & " (WALLBRACING)")
 
-                                End If
+                                            If opt = "115 MPH" Then
+                                                pdfname = pdfname & " 115 MPH"
+                                            ElseIf opt = "130 MPH" Then
+                                                pdfname = pdfname & " 130 MPH"
+                                            ElseIf opt = "142 MPH" Then
+                                                pdfname = pdfname & " 142 MPH"
+                                            End If
 
-                                ' Right side
-                                If FinalRightList.Count <> 0 Then
-                                    PlotTAutomatedTabs(FinalRightList, pdfname, NewFolderLocation, DPISCTB)
-                                    QueueLayoutsForCsv(FinalRightList, pdfname, Builder, planname, ProjectNumber)
-                                End If
+                                        ElseIf UCase(type) = "WINDSTORM" Then
 
+                                            pdfname = UCase("LEFT WS " & planname & " " & ElevValue & " (150 MPH)")
 
-                                counter = 1
-                                For Each LeftEntry In LeftLayoutList
-                                    If LeftEntry(4) = counter Then
-                                        LeftEntry(8) = ElevValue
-                                        FinalLeftList.Add(LeftEntry)
-                                        counter += 1
-
-                                        ZoomObjectsInViewport(LeftEntry, planname, Builder, FRsheets)
-
-                                    End If
-                                Next
-
-                                If FinalLeftList.Count <> 0 Then
-
-                                    If Not Directory.Exists(NewFolderLocation) Then
-
-                                        Directory.CreateDirectory(NewFolderLocation)
-
-                                    End If
-
-                                    If UCase(type) = "FRAMING" Then
-
-                                        pdfname = UCase("LEFT FR " & planname & " " & ElevValue)
-
-                                    ElseIf UCase(type) = "BRACING" Then
-
-                                        pdfname = UCase("LEFT WB " & planname & " " & ElevValue & " (WALLBRACING)")
-
-                                        If opt = "115 MPH" Then
-                                            pdfname = pdfname & " 115 MPH"
-                                        ElseIf opt = "130 MPH" Then
-                                            pdfname = pdfname & " 130 MPH"
-                                        ElseIf opt = "142 MPH" Then
-                                            pdfname = pdfname & " 142 MPH"
                                         End If
 
-                                    ElseIf UCase(type) = "WINDSTORM" Then
+                                    End If
 
-                                        pdfname = UCase("LEFT WS " & planname & " " & ElevValue & " (150 MPH)")
+                                    ' Left side
+                                    If FinalLeftList.Count <> 0 Then
+                                        PlotTAutomatedTabs(FinalLeftList, (pdfname & pdfdivision), NewFolderLocation, DPISCTB)
+                                        If division <> "" Then
+                                            QueueLayoutsForCsv(FinalLeftList, (pdfname & pdfdivision), Builder, planname, ProjectNumber, BuilderDivision:=division)
+                                        Else
+                                            QueueLayoutsForCsv(FinalLeftList, (pdfname & pdfdivision), Builder, planname, ProjectNumber)
+                                        End If
 
                                     End If
 
-                                End If
-
-                                ' Left side
-                                If FinalLeftList.Count <> 0 Then
-                                    PlotTAutomatedTabs(FinalLeftList, pdfname, NewFolderLocation, DPISCTB)
-                                    QueueLayoutsForCsv(FinalLeftList, pdfname, Builder, planname, ProjectNumber)
-                                End If
-
-                                FinalLeftList.Clear()
-                                FinalRightList.Clear()
-                                LeftLayoutList.Clear()
-                                RightLayoutList.Clear()
+                                    FinalLeftList.Clear()
+                                    FinalRightList.Clear()
+                                    LeftLayoutList.Clear()
+                                    RightLayoutList.Clear()
+                                Next
                             Next
+
                         Next
 
                     Next
 
-                Next
+                    TurnOnOrOffLayer(SealToStamp, False)
 
-                TurnOnOrOffLayer(SealToStamp, False)
+                    ' ... inside the per-stamp loop in AutoFramingPrint(), after TurnOnOrOffLayer(SealToStamp, False)
+                    Dim masterfolderpath As String = SelectedFolder & "\" & TodaysDate & "\" & planname & divisionfolder & "\" & stamp
 
-                ' ... inside the per-stamp loop in AutoFramingPrint(), after TurnOnOrOffLayer(SealToStamp, False)
-                Dim masterfolderpath As String = SelectedFolder & "\" & TodaysDate & "\" & planname & "\" & stamp
+                    ' Package per-elevation FR+WB first (these do NOT register to the global list)
+                    If doWSFW Then
+                        Dim outs As List(Of String) =
+            PackageFrWbPerElevationFromCurrentPublished(
+                masterfolderpath,
+                planname,
+                nameTemplate:="{SWING} WSFW {PLAN} {ELEV} (WSFW WALLBRACE)",
+                subfolderName:="WSFW"
+            )
+                        For Each o In outs
+                            acEd.WriteMessage(vbLf & "WSFW combined PDF written: " & o)
+                        Next
+                    ElseIf doRFR Then
+                        Dim outs As List(Of String) =
+            PackageFrWbPerElevationFromCurrentPublished(
+                masterfolderpath,
+                planname,
+                nameTemplate:="{SWING} RFR {PLAN} {ELEV} - READY FRAME",
+                subfolderName:="RFR"
+            )
+                        For Each o In outs
+                            acEd.WriteMessage(vbLf & "RFR combined PDF written: " & o)
+                        Next
+                    End If
 
-                ' Package per-elevation FR+WB first (these do NOT register to the global list)
-                If doWSFW Then
-                    Dim outs As List(Of String) =
-        PackageFrWbPerElevationFromCurrentPublished(
-            masterfolderpath,
-            planname,
-            nameTemplate:="{SWING} WSFW {PLAN} {ELEV} (WSFW WALLBRACE)",
-            subfolderName:="WSFW"
-        )
-                    For Each o In outs
-                        acEd.WriteMessage(vbLf & "WSFW combined PDF written: " & o)
-                    Next
-                ElseIf doRFR Then
-                    Dim outs As List(Of String) =
-        PackageFrWbPerElevationFromCurrentPublished(
-            masterfolderpath,
-            planname,
-            nameTemplate:="{SWING} RFR {PLAN} {ELEV} - READY FRAME",
-            subfolderName:="RFR"
-        )
-                    For Each o In outs
-                        acEd.WriteMessage(vbLf & "RFR combined PDF written: " & o)
-                    Next
-                End If
+                    ' If WSFW, snapshot the FR/WB originals BEFORE MASTER (CombineRegisteredPdfs clears the registry)
+                    Dim originalsToDelete As List(Of String) = Nothing
+                    If doWSFW Or doRFR Then
+                        originalsToDelete = New List(Of String)()
+                        Dim snap = SnapshotCurrentPublished()
+                        For Each p In snap
+                            Dim meta As Object = Nothing
+                            SyncLock _publishedPdfsLock
+                                _pdfMetaByPath.TryGetValue(p, meta)
+                            End SyncLock
+                            Dim m = TryCast(meta, Object)
+                            If meta IsNot Nothing Then
+                                Dim pm = DirectCast(meta, PdfMeta)
+                                If String.Equals(pm.ModName, "FRAMING", StringComparison.OrdinalIgnoreCase) OrElse
+                   String.Equals(pm.ModName, "BRACING", StringComparison.OrdinalIgnoreCase) OrElse
+                   String.Equals(pm.ModName, "WINDSTORM", StringComparison.OrdinalIgnoreCase) Then
+                                    originalsToDelete.Add(p)
+                                End If
+                            End If
+                        Next
+                    End If
 
-                ' If WSFW, snapshot the FR/WB originals BEFORE MASTER (CombineRegisteredPdfs clears the registry)
-                Dim originalsToDelete As List(Of String) = Nothing
-                If doWSFW Or doRFR Then
-                    originalsToDelete = New List(Of String)()
-                    Dim snap = SnapshotCurrentPublished()
-                    For Each p In snap
-                        Dim meta As Object = Nothing
-                        SyncLock _publishedPdfsLock
-                            _pdfMetaByPath.TryGetValue(p, meta)
-                        End SyncLock
-                        Dim m = TryCast(meta, Object)
-                        If meta IsNot Nothing Then
-                            Dim pm = DirectCast(meta, PdfMeta)
-                            If String.Equals(pm.ModName, "FRAMING", StringComparison.OrdinalIgnoreCase) OrElse
-               String.Equals(pm.ModName, "BRACING", StringComparison.OrdinalIgnoreCase) OrElse
-               String.Equals(pm.ModName, "WINDSTORM", StringComparison.OrdinalIgnoreCase) Then
-                                originalsToDelete.Add(p)
+                    ' Build MASTER (this clears the registry)
+                    Dim out = Path.Combine(masterfolderpath, planname & " MASTER.pdf")
+                    Dim res = CombineRegisteredPdfs(out, "For Review",, 240, 0.06, 330.35)
+
+                    If res IsNot Nothing Then
+                        acEd.WriteMessage(vbLf & "Combined PDF written: " & res)
+
+                        ' After MASTER succeeds, delete the original FR/WB PDFs if WSFW selected
+                        If doWSFW Or doRFR Then
+                            If originalsToDelete IsNot Nothing AndAlso originalsToDelete.Count > 0 Then
+                                DeleteFilesSafe(originalsToDelete)
+                                acEd.WriteMessage(vbLf & $"Deleted {originalsToDelete.Count} original FR/WB PDFs.")
                             End If
                         End If
-                    Next
-                End If
-
-                ' Build MASTER (this clears the registry)
-                Dim out = Path.Combine(masterfolderpath, planname & " MASTER.pdf")
-                Dim res = CombineRegisteredPdfs(out, "For Review",, 240, 0.06, 330.35)
-
-                If res IsNot Nothing Then
-                    acEd.WriteMessage(vbLf & "Combined PDF written: " & res)
-
-                    ' After MASTER succeeds, delete the original FR/WB PDFs if WSFW selected
-                    If doWSFW Or doRFR Then
-                        If originalsToDelete IsNot Nothing AndAlso originalsToDelete.Count > 0 Then
-                            DeleteFilesSafe(originalsToDelete)
-                            acEd.WriteMessage(vbLf & $"Deleted {originalsToDelete.Count} original FR/WB PDFs.")
-                        End If
+                    Else
+                        acEd.WriteMessage(vbLf & "Failed to create combined PDF.")
                     End If
-                Else
-                    acEd.WriteMessage(vbLf & "Failed to create combined PDF.")
-                End If
 
-                out = Path.Combine(masterfolderpath, planname & " PERMIT.pdf")
-                res = CombineRegisteredPdfs(out, "For Permit Only",, 150, 0.06, 330.35)
-                _publishedPdfs.Clear()
+                    out = Path.Combine(masterfolderpath, planname & " PERMIT.pdf")
+                    res = CombineRegisteredPdfs(out, "For Permit Only",, 150, 0.06, 330.35)
+                    _publishedPdfs.Clear()
 
+                Next
             Next
 
             Dim lm As LayoutManager = LayoutManager.Current
@@ -1238,7 +1290,7 @@ Namespace Arcxis_Cad_Tools
             End Using
         End Sub
 
-        Private Sub ZoomObjectsInViewport(Layout As List(Of String), plannumber As String, Builder As String, FRSheets As Boolean)
+        Private Sub ZoomObjectsInViewport(Layout As List(Of String), plannumber As String, Builder As String, FRSheets As Boolean, Optional division As String = "")
 
             Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
@@ -1259,6 +1311,13 @@ Namespace Arcxis_Cad_Tools
                 Swing = "LEFT"
             Else
                 Swing = "RIGHT"
+            End If
+
+            Dim buildername As String
+            If division <> "" Then
+                buildername = Builder & " - " & division.ToUpper()
+            Else
+                buildername = Builder
             End If
 
             Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
@@ -1345,7 +1404,7 @@ Namespace Arcxis_Cad_Tools
 
                                     ElseIf tagvalue.Contains("CUSTOMER'S NAME") Then
 
-                                        attref.TextString = UCase(Builder)
+                                        attref.TextString = UCase(buildername)
 
                                     ElseIf tagvalue.Contains("PLANDATE") Then
 
@@ -2884,6 +2943,7 @@ Namespace Arcxis_Cad_Tools
             Dim PropertiesProject As String
             Dim PropertiesSheetLabeling As String
             Dim PropertiesPlanType As String
+            Dim PropertiesPlanDivisions As String
             Dim Builder As String
             Dim Planname As String
             Dim Stamps As String
@@ -2916,6 +2976,7 @@ Namespace Arcxis_Cad_Tools
                     PropertiesProject = GetCustomDwgPropReliable("PROJECT NUMBER")
                     PropertiesSheetLabeling = GetCustomDwgPropReliable("SHEET LABELING")
                     PropertiesPlanType = If(GetCustomDwgPropReliable("PLAN TYPE"), "").Trim()
+                    PropertiesPlanDivisions = GetCustomDwgPropReliable("DIVISIONS")
                     ' Validate required properties
                     Dim missingProps As New List(Of String)()
 
@@ -2962,87 +3023,9 @@ Namespace Arcxis_Cad_Tools
 
                     End If
 
-                    For Each objId As ObjectId In ms
-
-                        Dim ent As Entity = TryCast(acTrans.GetObject(objId, OpenMode.ForRead), Entity)
-
-                        If TypeOf ent Is BlockReference Then
-
-                            Dim blkRef As BlockReference = CType(ent, BlockReference)
-                            Dim btr As BlockTableRecord = acTrans.GetObject(blkRef.BlockTableRecord, OpenMode.ForRead)
-                            Dim blockName As String = btr.Name
-
-                            ' === CASE 1: Named "TB-INFO" ===
-                            If blockName.Equals("AutoPlanPrintInfo", StringComparison.OrdinalIgnoreCase) Then
-
-                                For Each attId As ObjectId In blkRef.AttributeCollection
-
-                                    ' Open the attribute reference
-                                    Dim attref As AttributeReference = DirectCast(acTrans.GetObject(attId, OpenMode.ForWrite), AttributeReference)
-                                    Dim tagvalue As String = attref.Tag
-                                    Dim textvalue As String = attref.TextString
-
-                                    If tagvalue.Contains("BUILDER") Then
-
-                                        BlockBuilder = attref.TextString
-
-                                    ElseIf tagvalue.Contains("PLAN") Then
-
-                                        BlockPlan = attref.TextString
-
-                                    ElseIf tagvalue.Contains("STAMPS") Then
-
-                                        BlockStamps = attref.TextString
-
-                                    End If
-                                Next
-
-                            End If
-
-                        End If
-
-                    Next
-
-                    If UCase(PropertiesBuilder) <> UCase(BlockBuilder) Then
-
-                        SetCustomDwgProp("BUILDER", BlockBuilder)
-                        wrong = True
-
-                    Else
-
-                        Builder = PropertiesBuilder
-
-                    End If
-
-                    If UCase(PropertiesPlan) <> UCase(BlockPlan) Then
-
-                        SetCustomDwgProp("PLAN", BlockPlan)
-                        wrong = True
-                    Else
-
-                        Planname = PropertiesPlan
-
-                    End If
-
-                    If UCase(PropertiesStamps) <> UCase(BlockStamps) Then
-
-                        SetCustomDwgProp("STAMPS", BlockStamps)
-                        wrong = True
-                    Else
-
-                        Stamps = PropertiesStamps
-
-                    End If
-
                 End Using
 
             End Using
-
-            If wrong = True Then
-                Exit Sub
-            End If
-
-
 
             Dim input As String = Stamps
 
@@ -3054,7 +3037,22 @@ Namespace Arcxis_Cad_Tools
 
             LayerLoop.Add("")
 
+            Dim BuilderDivisionsList As List(Of String)
+            If String.IsNullOrWhiteSpace(PropertiesPlanDivisions) Then
+                BuilderDivisionsList = New List(Of String)()
+            Else
+                BuilderDivisionsList = PropertiesPlanDivisions.Split(","c).
+        Select(Function(s) s.Trim()).
+        Where(Function(s) s <> "").
+        Distinct(StringComparer.OrdinalIgnoreCase).
+        ToList()
+            End If
+
             Dim TempElevs As New List(Of String)
+
+            If BuilderDivisionsList.Count = 0 Then
+                BuilderDivisionsList.Add("")
+            End If
 
             Try
 
@@ -3101,7 +3099,7 @@ Namespace Arcxis_Cad_Tools
                     ' Open the BlockTableRecord (ModelSpace) for read
                     Dim blkTableRec As BlockTableRecord = acTrans.GetObject(blkTable(BlockTableRecord.ModelSpace), OpenMode.ForRead)
 
-                    Dim order As String() = {Nothing, Nothing, "MOD", "SW", "PRNT", "SIZE", "OPTIONS", "ELEV", "", "LXS", "TND"}
+                    Dim order As String() = {Nothing, Nothing, "MOD", "SW", "PRNT", "SIZE", "OPTIONS", "ELEV", "", "LXS", "TND", "DIVISIONS"}
 
                     ' Iterate through the ModelSpace block table record
                     For Each objId As ObjectId In blkTableRec
@@ -3224,214 +3222,230 @@ Namespace Arcxis_Cad_Tools
 
                 Dim SealToStamp As String
 
-                For Each stamp In SealLoop
+                For Each division In BuilderDivisionsList
+                    Dim divisionfolder As String
+                    If division <> "" Then
+                        divisionfolder = "\" & division
+                    Else
+                        divisionfolder = ""
 
-                    SealToStamp = "Master Seal File|S-SEAL-" & stamp
-                    TurnOnOrOffLayer(SealToStamp, True)
+                    End If
 
-                    For Each layer In LayerLoop
+                    Dim pdfdivision As String
+                    If division <> "" Then
+                        pdfdivision = " (" & division & ")"
+                    Else
+                        pdfdivision = ""
+                    End If
 
-                        If layer = "S-FRM-TRUSS" Then
-                            TurnOnOrOffLayer(layer, True)
-                            TurnOnOrOffLayer("S-FRM-STICK", False)
-                        ElseIf layer = "S-FRM-STICK" Then
-                            TurnOnOrOffLayer(layer, True)
-                            TurnOnOrOffLayer("S-FRM-TRUSS", False)
-                        End If
+                    For Each stamp In SealLoop
 
-                        For Each type In PlanType
-                            For Each ElevValue In Elevations
-                                For Each opt In Options
-                                    For Each valueList In AllValues
+                        SealToStamp = "Master Seal File|S-SEAL-" & stamp
+                        TurnOnOrOffLayer(SealToStamp, True)
 
-                                        'valueList(0) contains blockID
-                                        'valueList(1) contains InsertionPoint
-                                        'valueList(2) contains PlanType
-                                        'valueList(3) contains Swing
-                                        'valueList(4) contains Sequence
-                                        'valueList(5) contains Scale
-                                        'valueList(6) contains Option
-                                        'valueList(7) contains Elevation
-                                        'valuelist(8) inst set yet but is set as the single elevations when multiple
+                        For Each layer In LayerLoop
+
+                            If layer = "S-FRM-TRUSS" Then
+                                TurnOnOrOffLayer(layer, True)
+                                TurnOnOrOffLayer("S-FRM-STICK", False)
+                            ElseIf layer = "S-FRM-STICK" Then
+                                TurnOnOrOffLayer(layer, True)
+                                TurnOnOrOffLayer("S-FRM-TRUSS", False)
+                            End If
+
+                            For Each type In PlanType
+                                For Each ElevValue In Elevations
+                                    For Each opt In Options
+                                        For Each valueList In AllValues
+
+                                            'valueList(0) contains blockID
+                                            'valueList(1) contains InsertionPoint
+                                            'valueList(2) contains PlanType
+                                            'valueList(3) contains Swing
+                                            'valueList(4) contains Sequence
+                                            'valueList(5) contains Scale
+                                            'valueList(6) contains Option
+                                            'valueList(7) contains Elevation
+                                            'valuelist(8) inst set yet but is set as the single elevations when multiple
 
 
-                                        If valueList(2) = type AndAlso valueList(7).Contains(ElevValue) AndAlso valueList(6) = opt Then
+                                            If valueList(2) = type AndAlso valueList(7).Contains(ElevValue) AndAlso valueList(6) = opt Then
 
-                                            If valueList(7).Contains(",") Then
-                                                Dim result As New List(Of String)
-                                                Dim parts() As String = valueList(7).Split(","c)
-                                                For Each part As String In parts
-                                                    result.Add(part.Trim())
-                                                Next
+                                                If valueList(7).Contains(",") Then
+                                                    Dim result As New List(Of String)
+                                                    Dim parts() As String = valueList(7).Split(","c)
+                                                    For Each part As String In parts
+                                                        result.Add(part.Trim())
+                                                    Next
 
-                                                If Not result.Contains(ElevValue.Trim(), StringComparer.OrdinalIgnoreCase) Then
+                                                    If Not result.Contains(ElevValue.Trim(), StringComparer.OrdinalIgnoreCase) Then
+                                                        Continue For
+                                                    End If
+
+                                                ElseIf valueList(7).Length > ElevValue.Length Then
+
                                                     Continue For
+
                                                 End If
 
-                                            ElseIf valueList(7).Length > ElevValue.Length Then
+                                                'Perform the operation when both BeamLayout And FNDElev match
+                                                Dim insertionPointStr As String = valueList(1) ' Example string from valueList
 
-                                                Continue For
+                                                insertionPoint1 = CreatePoint3dFromString(insertionPointStr)
+
+                                                Dim NewHandle As String = valueList(0)
+                                                Dim long1 As Long = NewHandle
+                                                Dim hand As Handle = New Handle(long1)
+                                                Dim objID As ObjectId = acDb.GetObjectId(False, hand, 0)
+
+
+
+                                                If UCase(valueList(3)) = "L" Or UCase(valueList(3)) = "LEFT" Then
+                                                    LeftLayoutList.Add(valueList)
+                                                Else
+                                                    RightLayoutList.Add(valueList)
+                                                End If
 
                                             End If
 
-                                            'Perform the operation when both BeamLayout And FNDElev match
-                                            Dim insertionPointStr As String = valueList(1) ' Example string from valueList
+                                        Next
+                                        counter = 1
 
-                                            insertionPoint1 = CreatePoint3dFromString(insertionPointStr)
+                                        For Each RightEntry In RightLayoutList
+                                            If RightEntry(4) = counter Then
+                                                If RightEntry.Count = 8 Then
+                                                    RightEntry.Add(ElevValue)
+                                                Else
+                                                    RightEntry(8) = ElevValue
+                                                End If
+                                                FinalRightList.Add(RightEntry)
+                                                counter += 1
+                                                ZoomObjectsInViewport(RightEntry, Planname, Builder, FRSheets, division)
+                                            End If
+                                        Next
 
-                                            Dim NewHandle As String = valueList(0)
-                                            Dim long1 As Long = NewHandle
-                                            Dim hand As Handle = New Handle(long1)
-                                            Dim objID As ObjectId = acDb.GetObjectId(False, hand, 0)
+                                        Dim TodaysDate As String = Date.Today.ToString("MM dd yy", CultureInfo.InvariantCulture)
+
+                                        NewFolderLocation = SelectedFolder & divisionfolder & "\" & stamp & "\" & type
 
 
+                                        If FinalRightList.Count <> 0 Then
 
-                                            If UCase(valueList(3)) = "L" Or UCase(valueList(3)) = "LEFT" Then
-                                                LeftLayoutList.Add(valueList)
-                                            Else
-                                                RightLayoutList.Add(valueList)
+
+                                            If String.IsNullOrEmpty(SelectedFolder) Then Return
+
+                                            If Not NetworkHelpers.IsNetworkPathAccessible(SelectedFolder) Then
+                                                Return
+                                            End If
+
+                                            If Not NetworkHelpers.CreateDirectoryWithRetry(NewFolderLocation) Then
+                                                Continue For ' Skip this iteration instead of crashing
+                                            End If
+
+                                            If UCase(type) = "FRAMING" Then
+
+                                                pdfname = UCase("RIGHT FR " & Planname & " " & ElevValue)
+
+                                            ElseIf UCase(type) = "BRACING" Then
+
+                                                pdfname = UCase("RIGHT WB " & Planname & " " & ElevValue & " (WALLBRACING)")
+
+                                                If opt = "115 MPH" Then
+                                                    pdfname = pdfname & " 115 MPH"
+                                                ElseIf opt = "130 MPH" Then
+                                                    pdfname = pdfname & " 130 MPH"
+                                                ElseIf opt = "142 MPH" Then
+                                                    pdfname = pdfname & " 142 MPH"
+                                                End If
+
+                                            ElseIf UCase(type) = "WINDSTORM" Then
+
+                                                pdfname = UCase("RIGHT WS " & Planname & " " & ElevValue & " (150 MPH)")
+
                                             End If
 
                                         End If
 
+                                        If FinalRightList.Count <> 0 Then
+                                            PlotTAutomatedTabs(FinalRightList, (pdfname & pdfdivision), NewFolderLocation)
+                                            QueueLayoutsForCsv(FinalRightList, (pdfname & pdfdivision), Builder, Planname, PropertiesProject, BuilderDivision:=division)
+                                        End If
+
+
+                                        counter = 1
+                                        For Each LeftEntry In LeftLayoutList
+                                            If LeftEntry(4) = counter Then
+                                                If LeftEntry.Count = 8 Then
+                                                    LeftEntry.Add(ElevValue)
+                                                Else
+                                                    LeftEntry(8) = ElevValue
+                                                End If
+                                                FinalLeftList.Add(LeftEntry)
+                                                counter += 1
+
+                                                ZoomObjectsInViewport(LeftEntry, Planname, Builder, FRSheets, division)
+
+                                            End If
+                                        Next
+
+                                        If FinalLeftList.Count <> 0 Then
+
+
+                                            If String.IsNullOrEmpty(SelectedFolder) Then Return
+
+                                            If Not NetworkHelpers.IsNetworkPathAccessible(SelectedFolder) Then
+                                                Return
+                                            End If
+
+                                            If Not NetworkHelpers.CreateDirectoryWithRetry(NewFolderLocation) Then
+                                                Continue For ' Skip this iteration instead of crashing
+                                            End If
+
+                                            If UCase(type) = "FRAMING" Then
+
+                                                pdfname = UCase("LEFT FR " & Planname & " " & ElevValue)
+
+                                            ElseIf UCase(type) = "BRACING" Then
+
+                                                pdfname = UCase("LEFT WB " & Planname & " " & ElevValue & " (WALLBRACING)")
+
+                                                If opt = "115 MPH" Then
+                                                    pdfname = pdfname & " 115 MPH"
+                                                ElseIf opt = "130 MPH" Then
+                                                    pdfname = pdfname & " 130 MPH"
+                                                ElseIf opt = "142 MPH" Then
+                                                    pdfname = pdfname & " 142 MPH"
+                                                End If
+
+                                            ElseIf UCase(type) = "WINDSTORM" Then
+
+                                                pdfname = UCase("LEFT WS " & Planname & " " & ElevValue & " (150 MPH)")
+
+                                            End If
+
+                                        End If
+
+                                        If FinalLeftList.Count <> 0 Then
+                                            PlotTAutomatedTabs(FinalLeftList, (pdfname & pdfdivision), NewFolderLocation)
+                                            QueueLayoutsForCsv(FinalLeftList, (pdfname & pdfdivision), Builder, Planname, PropertiesProject, BuilderDivision:=division)
+                                        End If
+
+                                        FinalLeftList.Clear()
+                                        FinalRightList.Clear()
+                                        LeftLayoutList.Clear()
+                                        RightLayoutList.Clear()
                                     Next
-                                    counter = 1
-
-                                    For Each RightEntry In RightLayoutList
-                                        If RightEntry(4) = counter Then
-                                            If RightEntry.Count = 8 Then
-                                                RightEntry.Add(ElevValue)
-                                            Else
-                                                RightEntry(8) = ElevValue
-                                            End If
-                                            FinalRightList.Add(RightEntry)
-                                            counter += 1
-                                            ZoomObjectsInViewport(RightEntry, Planname, Builder, FRSheets)
-                                        End If
-                                    Next
-
-                                    Dim TodaysDate As String = Date.Today.ToString("MM dd yy", CultureInfo.InvariantCulture)
-
-                                    NewFolderLocation = SelectedFolder & "\" & stamp & "\" & type
-
-
-                                    If FinalRightList.Count <> 0 Then
-
-
-                                        If String.IsNullOrEmpty(SelectedFolder) Then Return
-
-                                        If Not NetworkHelpers.IsNetworkPathAccessible(SelectedFolder) Then
-                                            Return
-                                        End If
-
-                                        If Not NetworkHelpers.CreateDirectoryWithRetry(NewFolderLocation) Then
-                                            Continue For ' Skip this iteration instead of crashing
-                                        End If
-
-                                        If UCase(type) = "FRAMING" Then
-
-                                            pdfname = UCase("RIGHT FR " & Planname & " " & ElevValue)
-
-                                        ElseIf UCase(type) = "BRACING" Then
-
-                                            pdfname = UCase("RIGHT WB " & Planname & " " & ElevValue & " (WALLBRACING)")
-
-                                            If opt = "115 MPH" Then
-                                                pdfname = pdfname & " 115 MPH"
-                                            ElseIf opt = "130 MPH" Then
-                                                pdfname = pdfname & " 130 MPH"
-                                            ElseIf opt = "142 MPH" Then
-                                                pdfname = pdfname & " 142 MPH"
-                                            End If
-
-                                        ElseIf UCase(type) = "WINDSTORM" Then
-
-                                            pdfname = UCase("RIGHT WS " & Planname & " " & ElevValue & " (150 MPH)")
-
-                                        End If
-
-
-                                    End If
-
-                                    If FinalRightList.Count <> 0 Then
-                                        PlotTAutomatedTabs(FinalRightList, pdfname, NewFolderLocation)
-                                        QueueLayoutsForCsv(FinalRightList, pdfname, Builder, Planname, PropertiesProject)
-                                    End If
-
-
-                                    counter = 1
-                                    For Each LeftEntry In LeftLayoutList
-                                        If LeftEntry(4) = counter Then
-                                            If LeftEntry.Count = 8 Then
-                                                LeftEntry.Add(ElevValue)
-                                            Else
-                                                LeftEntry(8) = ElevValue
-                                            End If
-                                            FinalLeftList.Add(LeftEntry)
-                                            counter += 1
-
-                                            ZoomObjectsInViewport(LeftEntry, Planname, Builder, FRSheets)
-
-                                        End If
-                                    Next
-
-                                    If FinalLeftList.Count <> 0 Then
-
-
-                                        If String.IsNullOrEmpty(SelectedFolder) Then Return
-
-                                        If Not NetworkHelpers.IsNetworkPathAccessible(SelectedFolder) Then
-                                            Return
-                                        End If
-
-                                        If Not NetworkHelpers.CreateDirectoryWithRetry(NewFolderLocation) Then
-                                            Continue For ' Skip this iteration instead of crashing
-                                        End If
-
-                                        If UCase(type) = "FRAMING" Then
-
-                                            pdfname = UCase("LEFT FR " & Planname & " " & ElevValue)
-
-                                        ElseIf UCase(type) = "BRACING" Then
-
-                                            pdfname = UCase("LEFT WB " & Planname & " " & ElevValue & " (WALLBRACING)")
-
-                                            If opt = "115 MPH" Then
-                                                pdfname = pdfname & " 115 MPH"
-                                            ElseIf opt = "130 MPH" Then
-                                                pdfname = pdfname & " 130 MPH"
-                                            ElseIf opt = "142 MPH" Then
-                                                pdfname = pdfname & " 142 MPH"
-                                            End If
-
-                                        ElseIf UCase(type) = "WINDSTORM" Then
-
-                                            pdfname = UCase("LEFT WS " & Planname & " " & ElevValue & " (150 MPH)")
-
-                                        End If
-
-                                    End If
-
-                                    If FinalLeftList.Count <> 0 Then
-                                        PlotTAutomatedTabs(FinalLeftList, pdfname, NewFolderLocation)
-                                        QueueLayoutsForCsv(FinalLeftList, pdfname, Builder, Planname, PropertiesProject)
-                                    End If
-
-                                    FinalLeftList.Clear()
-                                    FinalRightList.Clear()
-                                    LeftLayoutList.Clear()
-                                    RightLayoutList.Clear()
                                 Next
+
                             Next
+
+
 
                         Next
 
-
+                        TurnOnOrOffLayer(SealToStamp, False)
 
                     Next
-
-                    TurnOnOrOffLayer(SealToStamp, False)
-
                 Next
 
                 Dim lm As LayoutManager = LayoutManager.Current
@@ -4067,7 +4081,7 @@ Namespace Arcxis_Cad_Tools
         ' This replaces the previous wide layout-row accumulation. Multiple calls for the
         ' same PDF will be ignored (first wins) to prevent duplicates.
         Public Shared Sub QueueLayoutsForCsv(layoutList As List(Of List(Of String)), pdfName As String, builder As String, planName As String, projectnumber As String, Optional ByVal IRC As String = "", Optional ByVal IECC As String = "", Optional ByVal MechCounty As String = "",
-                                             Optional ByVal MechMan As String = "", Optional ByVal MechFuel As String = "", Optional ByVal MechPlan As Boolean = False)
+                                             Optional ByVal MechMan As String = "", Optional ByVal MechFuel As String = "", Optional ByVal MechPlan As Boolean = False, Optional ByVal DocType As String = "", Optional ByVal BuilderDivision As String = "")
             If String.IsNullOrWhiteSpace(pdfName) Then Exit Sub
             If layoutList Is Nothing OrElse layoutList.Count = 0 Then Exit Sub
 
@@ -4085,6 +4099,7 @@ Namespace Arcxis_Cad_Tools
             Dim elevation As String = ""
             Dim venttype As String = ""
             Dim attictype As String = ""
+            Dim Community As String = ""
 
             If first.Count > 2 Then modName = If(first(2), "").Trim()
             If first.Count > 3 Then swingRaw = If(first(3), "").Trim()
@@ -4094,9 +4109,13 @@ Namespace Arcxis_Cad_Tools
                 elevation = If(first(7), "").Trim()
             End If
 
-            If modName = "ATTIC VENT" Then
+            If String.Equals(modName, "ATTIC VENT", StringComparison.OrdinalIgnoreCase) Then
                 venttype = If(first(9), "").Trim()
                 attictype = If(first(10), "").Trim()
+            End If
+
+            If String.Equals(DocType, "ENERGY", StringComparison.OrdinalIgnoreCase) Then
+                Community = If(first(9), "").Trim()
             End If
 
 
@@ -4106,6 +4125,9 @@ Namespace Arcxis_Cad_Tools
             _pendingRows.Add(New List(Of String) From {identifier, "PLAN", planName})
             _pendingRows.Add(New List(Of String) From {identifier, "ELEV", elevation})
             _pendingRows.Add(New List(Of String) From {identifier, "SW", swingRaw})
+            If BuilderDivision <> "" Then
+                _pendingRows.Add(New List(Of String) From {identifier, "BUILDER DIVISION", BuilderDivision})
+            End If
             If MechPlan Then
                 _pendingRows.Add(New List(Of String) From {identifier, "PLAN TYPE", "MECHANICAL"})
                 _pendingRows.Add(New List(Of String) From {identifier, "COUNTY", MechCounty})
@@ -4119,6 +4141,9 @@ Namespace Arcxis_Cad_Tools
                 _pendingRows.Add(New List(Of String) From {identifier, "ATTIC TYPE", attictype})
                 _pendingRows.Add(New List(Of String) From {identifier, "IRC", IRC})
                 _pendingRows.Add(New List(Of String) From {identifier, "IECC", IECC})
+            End If
+            If DocType.Equals("ENERGY", StringComparison.OrdinalIgnoreCase) Then
+                _pendingRows.Add(New List(Of String) From {identifier, "COMMUNITY", Community})
             End If
         End Sub
 
