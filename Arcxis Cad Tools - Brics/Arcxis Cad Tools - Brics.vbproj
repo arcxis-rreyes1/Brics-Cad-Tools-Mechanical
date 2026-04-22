@@ -103,9 +103,6 @@
     <Compile Update="Form_Arcxis_TB4.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Form_DrawMembers.vb">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Update="Form_MechanicalPrinting.vb">
       <SubType>Form</SubType>
     </Compile>

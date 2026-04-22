@@ -796,7 +796,6 @@ Namespace Arcxis_Cad_Tools
             End Using
         End Sub
 
-
         <CommandMethod("EAL")>
         Public Sub ExportAllPaperspaceLayouts()
             'Get the current document and database
@@ -818,15 +817,17 @@ Namespace Arcxis_Cad_Tools
                     'acDoc.SendStringToExecute("-updatefields all 0 ", True, False, False)
                     Try
                         ' 1) Ensure output folder exists
-                        Dim outputDir As String = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) & "\"
+                        Dim dwgprefix As String = Application.GetSystemVariable("dwgprefix")
+                        Dim DWGnm As String = Application.GetSystemVariable("dwgName")
+                        Dim dwgFile As String = dwgprefix & DWGnm
+
+                        Dim outputDir As String = dwgprefix
                         Dim DWGname As String = DirectCast(Application.GetSystemVariable("DWGNAME"), String)
                         DWGname = DWGname.Remove(DWGname.Length - 4)
                         Dim pdfFile As String = outputDir & DWGname & ".pdf"
                         Dim dsdFile As String = outputDir & DWGname & ".dsd"
 
-                        Dim dwgprefix As String = Application.GetSystemVariable("dwgprefix")
-                        Dim DWGnm As String = Application.GetSystemVariable("dwgName")
-                        Dim dwgFile As String = dwgprefix & DWGnm
+
 
                         If File.Exists(dsdFile) Then
                             File.Delete(dsdFile)
@@ -842,15 +843,15 @@ Namespace Arcxis_Cad_Tools
 
                         Dim dictLayouts As DBDictionary = acTrans.GetObject(acCurDb.LayoutDictionaryId, OpenMode.ForRead)
 
-                        Dim alllayouts As New List(Of String)
+                        Dim layoutsByOrder As New SortedDictionary(Of Integer, String)()
                         For Each entry As DBDictionaryEntry In dictLayouts
-                            Dim loId As ObjectId = entry.Value
-                            Dim lo As Layout = TryCast(acTrans.GetObject(loId, OpenMode.ForRead), Layout)
+                            Dim lo As Layout = TryCast(acTrans.GetObject(entry.Value, OpenMode.ForRead), Layout)
                             If lo IsNot Nothing AndAlso Not lo.ModelType Then
-                                alllayouts.Add(lo.LayoutName)
+                                layoutsByOrder(lo.TabOrder) = lo.LayoutName
                             End If
                         Next
-                        For Each lay As Object In alllayouts
+
+                        For Each lay As String In layoutsByOrder.Values
                             Dim title As String = DWGnm.Remove(DWGnm.Length - 4) & "-" & lay
 
                             Dim de As New DsdEntry()
@@ -952,7 +953,6 @@ Namespace Arcxis_Cad_Tools
             End Using
 
         End Sub
-
 
     End Class
 End Namespace

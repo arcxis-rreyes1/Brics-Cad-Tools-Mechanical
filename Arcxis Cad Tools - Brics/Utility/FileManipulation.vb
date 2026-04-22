@@ -71,11 +71,6 @@ Namespace Arcxis_Cad_Tools
                 End If
             End SyncLock
         End Sub
-        <CommandMethod("AS")>
-        Sub DrawMember()
-            Dim frm As New Form_DrawMembers
-            frm.Show()
-        End Sub
         ' Temporary: installable first-chance hook to break in VS when Teigha throws
         <CommandMethod("InstallFirstChanceHook")>
         Public Sub InstallFirstChanceHook()
@@ -664,6 +659,10 @@ Namespace Arcxis_Cad_Tools
                 BuilderDivisionsList.Add(selecteditem)
 
             Next
+
+            If BuilderDivisionsList.Count = 0 Then
+                BuilderDivisionsList.Add("")
+            End If
 
             If Not frm.CheckedListBox1.CheckedItems.Contains("Both") Then
                 CustomPrinting = True
