@@ -37,6 +37,7 @@ Public Class Form_FramingProperties
         Dim FormProject = GetCustomDwgPropReliable("PROJECT NUMBER")
         Dim FormSheetLabels = GetCustomDwgPropReliable("SHEET LABELING")
         Dim FormBuilderSpec = GetCustomDwgPropReliable("PackageFRWB")
+        Dim FormDWF = GetCustomDwgPropReliable("DWF")
 
         TextBox1.Text = FormBuilder
         TextBox2.Text = Formplan
@@ -128,6 +129,12 @@ Public Class Form_FramingProperties
             RFR.Checked = True
         End If
 
+        If FormDWF = "TRUE" Then
+            DWF.Checked = True
+        Else
+            DWF.Checked = False
+        End If
+
         If Not String.IsNullOrWhiteSpace(FormStamps) Then
             Dim tokens = FormStamps.Split(","c).
                     Select(Function(s) s.Trim()).
@@ -161,6 +168,9 @@ Public Class Form_FramingProperties
             Button1.Visible = False
         End If
 
+        RFR.AutoCheck = False
+        WSFW.AutoCheck = False
+        DWF.AutoCheck = False
 
     End Sub
 
@@ -196,6 +206,11 @@ Public Class Form_FramingProperties
             SetCustomDwgPropReliable("PackageFRWB", "RFR")
         ElseIf WSFW.Checked = True Then
             SetCustomDwgPropReliable("PackageFRWB", "WSFW")
+        End If
+        If DWF.Checked Then
+            SetCustomDwgPropReliable("DWF", "TRUE")
+        Else
+            SetCustomDwgPropReliable("DWF", "FALSE")
         End If
         Dim selectedStamps = String.Join(", ", SealsList.CheckedItems.Cast(Of String)())
         If selectedStamps <> FormStamps Then
@@ -321,27 +336,34 @@ Public Class Form_FramingProperties
         db.SummaryInfo = b.ToDatabaseSummaryInfo()
     End Sub
 
-    Private Sub RFR_Click(sender As Object, e As EventArgs) Handles RFR.Click
-        If RFR.Checked = True Then
-            RFR.Checked = False
-            WSFW.Checked = False
+    Private Sub PackageToggle_Click(sender As Object, e As EventArgs) Handles RFR.Click, WSFW.Click
+        Dim rb = DirectCast(sender, RadioButton)
+
+        ' If already checked, allow user to uncheck and re-enable the other
+        If rb.Checked Then
+            rb.Checked = False
+            RFR.Enabled = True
             WSFW.Enabled = True
         Else
-            RFR.Checked = True
-            WSFW.Checked = False
-            WSFW.Enabled = False
+            ' Activate this one and lock the other
+            rb.Checked = True
+            If rb Is RFR Then
+                WSFW.Enabled = False
+            Else
+                RFR.Enabled = False
+            End If
         End If
     End Sub
+    Private Sub DWFToggle_Click(sender As Object, e As EventArgs) Handles DWF.Click
+        Dim rb = DirectCast(sender, RadioButton)
 
-    Private Sub WSFW_Click(sender As Object, e As EventArgs) Handles WSFW.Click
-        If WSFW.Checked = True Then
-            WSFW.Checked = False
-            RFR.Checked = False
-            RFR.Enabled = True
+        ' If already checked, allow user to uncheck and re-enable the other
+        If rb.Checked Then
+            ' Click on checked -> uncheck it
+            rb.Checked = False
         Else
-            WSFW.Checked = True
-            RFR.Checked = False
-            RFR.Enabled = False
+            ' Click on unchecked -> check it
+            rb.Checked = True
         End If
     End Sub
 

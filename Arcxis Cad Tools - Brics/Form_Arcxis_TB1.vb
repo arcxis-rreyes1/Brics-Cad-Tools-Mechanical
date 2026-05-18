@@ -2582,18 +2582,17 @@ Public Class Form_Arcxis_TB1
 
                                                 attref.TextString = ComboBox2.Text.ToUpper()
 
-                                            ElseIf tagvalue = "FR-1" Then
+                                                'ElseIf tagvalue = "FR-1" Then
 
-                                                attref.TextString = TextBox7.Text
+                                                '    attref.TextString = TextBox7.Text
 
-                                                Dim layDict As DBDictionary = acCurDb.LayoutDictionaryId.GetObject(OpenMode.ForRead)
-                                                Dim aclayoutmanager As LayoutManager = LayoutManager.Current
-                                                If layDict.Contains(item) Then
-                                                    aclayoutmanager.RenameLayout(item, TextBox7.Text)
-                                                    Selectedlayouts.Remove(item)
-                                                    Selectedlayouts.Add(TextBox7.Text)
-                                                End If
-
+                                                '    Dim layDict As Teigha.DatabaseServices.DBDictionary = acCurDb.LayoutDictionaryId.GetObject(OpenMode.ForWrite)
+                                                '    Dim aclayoutmanager As LayoutManager = LayoutManager.Current
+                                                '    If layDict.Contains(item) Then
+                                                '        aclayoutmanager.RenameLayout(item, TextBox7.Text)
+                                                '        Selectedlayouts.Remove(item)
+                                                '        Selectedlayouts.Add(TextBox7.Text)
+                                                '    End If
 
                                             End If
 

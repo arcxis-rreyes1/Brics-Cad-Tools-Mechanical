@@ -29,7 +29,21 @@ Public NotInheritable Class PageBlockDivisionHelper
             Dim ad As AttributeDefinition = TryCast(tr.GetObject(entId, OpenMode.ForRead), AttributeDefinition)
             If ad IsNot Nothing AndAlso String.Equals(ad.Tag, "DIVISIONS", StringComparison.OrdinalIgnoreCase) Then
                 divisionsDef = ad
-                Exit For
+                divisionsDef.UpgradeOpen()
+                divisionsDef.Position = New Point3d(11.253, -1068, 0)
+                divisionsDef.Height = 48.0092
+                divisionsDef.TextStyleId = db.Textstyle
+                divisionsDef.Justify = AttachmentPoint.TopLeft
+                divisionsDef.Rotation = 0
+                divisionsDef.WidthFactor = 0.8
+                divisionsDef.Constant = False
+                divisionsDef.Verifiable = False
+                divisionsDef.Invisible = False
+                divisionsDef.LockPositionInBlock = True
+                divisionsDef.Layer = "0"
+                divisionsDef.Color = Color.FromColorIndex(ColorMethod.ByAci, 3)
+                divisionsDef.HorizontalMode = TextHorizontalMode.TextLeft
+                divisionsDef.VerticalMode = TextVerticalMode.TextBase
             End If
         Next
 

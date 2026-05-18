@@ -23,6 +23,14 @@ Public Class Framing_Vault_Transfer
             Return ""
         End Get
     End Property
+
+    Public ReadOnly Property PrintDWF As String
+        Get
+            If DWF.Checked Then Return "TRUE"
+            Return "FALSE"
+        End Get
+    End Property
+
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
 
         Dim ElevNumber As Integer = ElevCount.Text
@@ -301,6 +309,7 @@ Public Class Framing_Vault_Transfer
         SetCustomDwgPropReliable("SHEET LABELING", SheetLabeling)
         ' Save the single custom property once, based on radio selection
         SetCustomDwgPropReliable("PackageFRWB", PackageFrWbValue)
+        SetCustomDwgPropReliable("DWF", PrintDWF)
 
         Dim BuilderDivisionsList As New List(Of String)
 
@@ -1308,9 +1317,23 @@ Public Class Framing_Vault_Transfer
         End If
     End Sub
 
+    Private Sub DWFToggle_Click(sender As Object, e As EventArgs) Handles DWF.Click
+        Dim rb = DirectCast(sender, RadioButton)
+
+        ' If already checked, allow user to uncheck and re-enable the other
+        If rb.Checked Then
+            ' Click on checked -> uncheck it
+            rb.Checked = False
+        Else
+            ' Click on unchecked -> check it
+            rb.Checked = True
+        End If
+    End Sub
+
     Private Sub Framing_Vault_Transfer_Load(sender As Object, e As EventArgs) Handles Me.Load
         RFR.AutoCheck = False
         WSFW.AutoCheck = False
+        DWF.AutoCheck = False
         AdjustBuilderDivisionsListHeight()
     End Sub
 

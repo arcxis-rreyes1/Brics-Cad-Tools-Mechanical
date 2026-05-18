@@ -61,8 +61,9 @@ Partial Class Framing_Vault_Transfer
         GroupBox9 = New System.Windows.Forms.GroupBox()
         CheckedListBox2 = New System.Windows.Forms.CheckedListBox()
         GroupBox10 = New System.Windows.Forms.GroupBox()
-        TextBoxNewItem = New System.Windows.Forms.TextBox()
         ButtonAdd = New System.Windows.Forms.Button()
+        TextBoxNewItem = New System.Windows.Forms.TextBox()
+        DWF = New System.Windows.Forms.RadioButton()
         GroupBox1.SuspendLayout()
         GroupBox5.SuspendLayout()
         GroupBox4.SuspendLayout()
@@ -438,13 +439,14 @@ Partial Class Framing_Vault_Transfer
         ' 
         ' GroupBox6
         ' 
+        GroupBox6.Controls.Add(DWF)
         GroupBox6.Controls.Add(RFR)
         GroupBox6.Controls.Add(WSFW)
         GroupBox6.Location = New System.Drawing.Point(20, 612)
         GroupBox6.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
         GroupBox6.Name = "GroupBox6"
         GroupBox6.Padding = New System.Windows.Forms.Padding(4, 3, 4, 3)
-        GroupBox6.Size = New System.Drawing.Size(153, 66)
+        GroupBox6.Size = New System.Drawing.Size(153, 76)
         GroupBox6.TabIndex = 9
         GroupBox6.TabStop = False
         GroupBox6.Text = "Builder Specific Options"
@@ -452,7 +454,7 @@ Partial Class Framing_Vault_Transfer
         ' RFR
         ' 
         RFR.AutoSize = True
-        RFR.Location = New System.Drawing.Point(83, 29)
+        RFR.Location = New System.Drawing.Point(83, 22)
         RFR.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
         RFR.Name = "RFR"
         RFR.Size = New System.Drawing.Size(45, 19)
@@ -464,7 +466,7 @@ Partial Class Framing_Vault_Transfer
         ' WSFW
         ' 
         WSFW.AutoSize = True
-        WSFW.Location = New System.Drawing.Point(7, 29)
+        WSFW.Location = New System.Drawing.Point(7, 22)
         WSFW.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
         WSFW.Name = "WSFW"
         WSFW.Size = New System.Drawing.Size(59, 19)
@@ -502,13 +504,6 @@ Partial Class Framing_Vault_Transfer
         GroupBox10.TabStop = False
         GroupBox10.Text = "Add Market"
         ' 
-        ' TextBoxNewItem
-        ' 
-        TextBoxNewItem.Location = New System.Drawing.Point(11, 22)
-        TextBoxNewItem.Name = "TextBoxNewItem"
-        TextBoxNewItem.Size = New System.Drawing.Size(109, 23)
-        TextBoxNewItem.TabIndex = 0
-        ' 
         ' ButtonAdd
         ' 
         ButtonAdd.Location = New System.Drawing.Point(126, 22)
@@ -518,6 +513,25 @@ Partial Class Framing_Vault_Transfer
         ButtonAdd.Text = "Add"
         ButtonAdd.UseVisualStyleBackColor = True
         ' 
+        ' TextBoxNewItem
+        ' 
+        TextBoxNewItem.Location = New System.Drawing.Point(11, 22)
+        TextBoxNewItem.Name = "TextBoxNewItem"
+        TextBoxNewItem.Size = New System.Drawing.Size(109, 23)
+        TextBoxNewItem.TabIndex = 0
+        ' 
+        ' DWF
+        ' 
+        DWF.AutoSize = True
+        DWF.Location = New System.Drawing.Point(7, 47)
+        DWF.Margin = New System.Windows.Forms.Padding(4, 3, 4, 3)
+        DWF.Name = "DWF"
+        DWF.Size = New System.Drawing.Size(50, 19)
+        DWF.TabIndex = 2
+        DWF.TabStop = True
+        DWF.Text = "DWF"
+        DWF.UseVisualStyleBackColor = True
+        ' 
         ' Framing_Vault_Transfer
         ' 
         AcceptButton = Button1
@@ -525,7 +539,7 @@ Partial Class Framing_Vault_Transfer
         AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         AutoSize = True
         CancelButton = Button2
-        ClientSize = New System.Drawing.Size(401, 690)
+        ClientSize = New System.Drawing.Size(401, 700)
         Controls.Add(GroupBox10)
         Controls.Add(GroupBox9)
         Controls.Add(GroupBox6)
@@ -597,4 +611,5 @@ Partial Class Framing_Vault_Transfer
     Friend WithEvents GroupBox10 As System.Windows.Forms.GroupBox
     Friend WithEvents TextBoxNewItem As System.Windows.Forms.TextBox
     Friend WithEvents ButtonAdd As System.Windows.Forms.Button
+    Friend WithEvents DWF As System.Windows.Forms.RadioButton
 End Class

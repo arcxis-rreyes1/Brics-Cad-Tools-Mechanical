@@ -321,8 +321,8 @@ Namespace Arcxis_Cad_Tools
 
             Dim NewFolderLocation As String
 
-            Dim IECCList As New List(Of String) From {"2015", "2018", "2021", "2024"}
-            Dim IRCList As New List(Of String) From {"2015", "2018", "2021", "2024"}
+            'Dim IECCList As New List(Of String) From {"2015", "2018", "2021", "2024"}
+            'Dim IRCList As New List(Of String) From {"2015", "2018", "2021", "2024"}
 
             Dim SelectedFolder As String
             SelectedFolder = GetCurrentDwgFolder()
@@ -358,7 +358,7 @@ Namespace Arcxis_Cad_Tools
                     Next
                 End Using
             Catch ex As Exception
-                ed.WriteMessage(Environment.NewLine & "Error counting layouts: " & ex.Message)
+                ed.WriteMessage(vbLf & "Error counting layouts: " & ex.Message)
             End Try
 
             Dim CounterSkip As Boolean = False
@@ -368,182 +368,211 @@ Namespace Arcxis_Cad_Tools
 
                     Dim SheetAbbrev As String = ""
                     Dim PlanAbbrev As String = ""
+                    Dim typeNorm As String = type.Trim().ToUpperInvariant()
 
-                    If type.ToUpper() = "FR" Or type.ToUpper() = "FIRE RATED" Then
+                    If typeNorm = "FR" Or typeNorm = "FIRE RATED" Then
                         PlanAbbrev = " - FR"
-                    ElseIf type.ToUpper() = "EV" Or type.ToUpper() = "EDGE VENTS" Or type.ToUpper() = "EDGE" Or type.ToUpper() = "EDGE VENTING" Then
+                    ElseIf typeNorm = "EV" Or typeNorm = "EDGE VENTS" Or typeNorm = "EDGE" Or typeNorm = "EDGE VENTING" Then
                         PlanAbbrev = " - EDGE VENTS"
                     End If
 
-                    For Each iecc In IECCList
+                    If String.IsNullOrEmpty(SelectedFolder) Then Return
 
-                        ' Early validation before the loops
-                        If String.IsNullOrEmpty(SelectedFolder) Then Return
+                    If Not NetworkHelpers.IsNetworkPathAccessible(SelectedFolder) Then
+                        'acEd.WriteMessage(vbLf & "ERROR: Base folder is not accessible: " & SelectedFolder)
+                        'acEd.WriteMessage(vbLf & "Please verify network drive is connected and try again.")
+                        Return
+                    End If
 
-                        If Not NetworkHelpers.IsNetworkPathAccessible(SelectedFolder) Then
-                            'acEd.WriteMessage(vbLf & "ERROR: Base folder is not accessible: " & SelectedFolder)
-                            'acEd.WriteMessage(vbLf & "Please verify network drive is connected and try again.")
-                            Return
-                        End If
+                    ' Replace the directory creation blocks (around lines 384, 393, etc.)
+                    NewFolderLocation = SelectedFolder & "\" & planname
 
-                        ' Replace the directory creation blocks (around lines 384, 393, etc.)
-                        NewFolderLocation = SelectedFolder & "\" & planname & "\" & iecc & " IECC"
+                    If Not NetworkHelpers.CreateDirectoryWithRetry(NewFolderLocation) Then
+                        'acEd.WriteMessage(vbLf & "ERROR: Failed to create directory: " & NewFolderLocation)
+                        Continue For ' Skip this iteration instead of crashing
+                    End If
 
-                        If Not NetworkHelpers.CreateDirectoryWithRetry(NewFolderLocation) Then
-                            'acEd.WriteMessage(vbLf & "ERROR: Failed to create directory: " & NewFolderLocation)
-                            Continue For ' Skip this iteration instead of crashing
-                        End If
+                    'For Each iecc In IECCList
 
-                        For Each irc In IRCList
+                    'If String.IsNullOrEmpty(SelectedFolder) Then Return
 
+                    'If Not NetworkHelpers.IsNetworkPathAccessible(SelectedFolder) Then
+                    '    'acEd.WriteMessage(vbLf & "ERROR: Base folder is not accessible: " & SelectedFolder)
+                    '    'acEd.WriteMessage(vbLf & "Please verify network drive is connected and try again.")
+                    '    Return
+                    'End If
 
-                            If Not NetworkHelpers.IsNetworkPathAccessible(SelectedFolder) Then
-                                'acEd.WriteMessage(vbLf & "ERROR: Base folder is not accessible: " & SelectedFolder)
-                                'acEd.WriteMessage(vbLf & "Please verify network drive is connected and try again.")
-                                Return
-                            End If
+                    '' Replace the directory creation blocks (around lines 384, 393, etc.)
+                    'NewFolderLocation = SelectedFolder & "\" & planname & "\" & iecc & " IECC"
 
-                            ' Replace the directory creation blocks (around lines 384, 393, etc.)
-                            NewFolderLocation = SelectedFolder & "\" & planname & "\" & iecc & " IECC\" & irc & " IRC"
+                    'If Not NetworkHelpers.CreateDirectoryWithRetry(NewFolderLocation) Then
+                    '    'acEd.WriteMessage(vbLf & "ERROR: Failed to create directory: " & NewFolderLocation)
+                    '    Continue For ' Skip this iteration instead of crashing
+                    'End If
 
-                            If Not NetworkHelpers.CreateDirectoryWithRetry(NewFolderLocation) Then
-                                'acEd.WriteMessage(vbLf & "ERROR: Failed to create directory: " & NewFolderLocation)
-                                Continue For ' Skip this iteration instead of crashing
-                            End If
+                    'For Each irc In IRCList
 
-                            UpdateIrcIeccOnGeneralNotes(irc, iecc)
+                    'If Not NetworkHelpers.IsNetworkPathAccessible(SelectedFolder) Then
+                    '    'acEd.WriteMessage(vbLf & "ERROR: Base folder is not accessible: " & SelectedFolder)
+                    '    'acEd.WriteMessage(vbLf & "Please verify network drive is connected and try again.")
+                    '    Return
+                    'End If
 
-                            For Each ElevValue In Elevations
-                                For Each valueList In AllValues
+                    '' Replace the directory creation blocks (around lines 384, 393, etc.)
+                    'NewFolderLocation = SelectedFolder & "\" & planname & "\" & iecc & " IECC\" & irc & " IRC"
 
-                                    'valueList(0) contains blockID
-                                    'valueList(1) contains InsertionPoint
-                                    'valueList(2) contains PlanType
-                                    'valueList(3) contains Swing
-                                    'valueList(4) contains Sequence
-                                    'valueList(5) contains Scale
-                                    'valueList(6) contains Option
-                                    'valueList(7) contains Elevation
-                                    'valuelist(8) inst set yet but is set as the single elevations when multiple
-                                    'valueList(6) = opt
-                                    'CounterSkip = True
+                    'If Not NetworkHelpers.CreateDirectoryWithRetry(NewFolderLocation) Then
+                    '    'acEd.WriteMessage(vbLf & "ERROR: Failed to create directory: " & NewFolderLocation)
+                    '    Continue For ' Skip this iteration instead of crashing
+                    'End If
 
-                                    'If valueList(9) = type AndAlso valueList(10) = AttiType AndAlso valueList(7).Contains(ElevValue) AndAlso valueList(6) = opt Then
-                                    If valueList(9) = type AndAlso valueList(10) = AttiType AndAlso valueList(7).Contains(ElevValue) Then
-                                        If valueList(7).Contains(",") Then
-                                            Dim result As New List(Of String)
-                                            Dim parts() As String = valueList(7).Split(","c)
-                                            For Each part As String In parts
-                                                result.Add(part.Trim())
-                                            Next
+                    'UpdateIrcIeccOnGeneralNotes(irc, iecc)
 
-                                            If Not result.Contains(ElevValue.Trim(), StringComparer.OrdinalIgnoreCase) Then
-                                                Continue For
-                                            End If
+                    For Each ElevValue In Elevations
+                        For Each valueList In AllValues
 
-                                        ElseIf valueList(7).Length > ElevValue.Length Then
+                            'valueList(0) contains blockID
+                            'valueList(1) contains InsertionPoint
+                            'valueList(2) contains PlanType
+                            'valueList(3) contains Swing
+                            'valueList(4) contains Sequence
+                            'valueList(5) contains Scale
+                            'valueList(6) contains Option
+                            'valueList(7) contains Elevation
+                            'valuelist(8) inst set yet but is set as the single elevations when multiple
+                            'valueList(6) = opt
+                            'CounterSkip = True
 
-                                            Continue For
+                            'If valueList(9) = type AndAlso valueList(10) = AttiType AndAlso valueList(7).Contains(ElevValue) AndAlso valueList(6) = opt Then
+                            If valueList(9) = type.Trim() AndAlso valueList(10) = AttiType AndAlso valueList(7).Contains(ElevValue) Then
+                                If valueList(7).Contains(",") Then
+                                    Dim result As New List(Of String)
+                                    Dim parts() As String = valueList(7).Split(","c)
+                                    For Each part As String In parts
+                                        result.Add(part.Trim())
+                                    Next
 
-                                        End If
-
-                                        'Perform the operation when both BeamLayout And FNDElev match
-                                        Dim insertionPointStr As String = valueList(1) ' Example string from valueList
-
-                                        insertionPoint1 = CreatePoint3dFromString(insertionPointStr)
-
-                                        Dim NewHandle As String = valueList(0)
-                                        Dim long1 As Long = NewHandle
-                                        Dim hand As Handle = New Handle(long1)
-                                        Dim objID As ObjectId = acDb.GetObjectId(False, hand, 0)
-
-                                        If CustomPrinting Then
-
-                                            If valueList(3).ToUpper() = "L" Or valueList(3).ToUpper() = "LEFT" And Swings.Contains("Left") Then
-
-                                                LeftLayoutList.Add(valueList)
-
-                                            ElseIf valueList(3).ToUpper() = "R" Or valueList(3).ToUpper() = "RIGHT" And Swings.Contains("Right") Then
-
-                                                RightLayoutList.Add(valueList)
-
-                                            End If
-                                        Else
-
-                                            If valueList(3).ToUpper() = "L" Or valueList(3).ToUpper() = "LEFT" Then
-                                                LeftLayoutList.Add(valueList)
-                                            Else
-                                                RightLayoutList.Add(valueList)
-                                            End If
-
-                                        End If
+                                    If Not result.Contains(ElevValue.Trim(), StringComparer.OrdinalIgnoreCase) Then
+                                        Continue For
                                     End If
 
-                                Next
+                                ElseIf valueList(7).Length > ElevValue.Length Then
 
-                                counter = 1
-
-                                If RightLayoutList.Count > existingLayoutCount Then
-                                    FileManipulation.EnsureLayoutCount(RightLayoutList.Count)
-                                End If
-
-                                ' Sort RightLayoutList by sequence number (index 4) before processing
-                                Dim sortedRightList = RightLayoutList.OrderBy(Function(entry) CInt(entry(4))).ToList()
-
-                                For Each RightEntry In sortedRightList
-                                    RightEntry(8) = ElevValue
-                                    FinalRightList.Add(RightEntry)
-                                    ZoomObjectsInViewport(RightEntry, planname, Builder, False)
-                                Next
-
-                                If FinalRightList.Count <> 0 Then
-
-                                    pdfname = ("RIGHT ATTIC VENT " & planname & " " & ElevValue & PlanAbbrev & " " & iecc & " IECC" & " " & irc & " IRC").ToUpper()
+                                    Continue For
 
                                 End If
 
-                                ' Right side
-                                If FinalRightList.Count <> 0 Then
-                                    PlotTAutomatedTabs(FinalRightList, pdfname, NewFolderLocation)
-                                    FileManipulation.QueueLayoutsForCsv(FinalRightList, pdfname, Builder, planname, ProjectNumber, IRC:=irc, IECC:=iecc)
+                                'Perform the operation when both BeamLayout And FNDElev match
+                                Dim insertionPointStr As String = valueList(1) ' Example string from valueList
+
+                                insertionPoint1 = CreatePoint3dFromString(insertionPointStr)
+
+                                Dim NewHandle As String = valueList(0)
+                                Dim long1 As Long = NewHandle
+                                Dim hand As Handle = New Handle(long1)
+                                Dim objID As ObjectId = acDb.GetObjectId(False, hand, 0)
+
+                                If CustomPrinting Then
+
+                                    If UCase(valueList(3)) = "L" Or UCase(valueList(3)) = "LEFT" And Swings.Contains("Left") Then
+
+                                        LeftLayoutList.Add(valueList)
+
+                                    ElseIf UCase(valueList(3)) = "R" Or UCase(valueList(3)) = "RIGHT" And Swings.Contains("Right") Then
+
+                                        RightLayoutList.Add(valueList)
+
+                                    End If
+                                Else
+
+                                    If UCase(valueList(3)) = "L" Or UCase(valueList(3)) = "LEFT" Then
+                                        LeftLayoutList.Add(valueList)
+                                    Else
+                                        RightLayoutList.Add(valueList)
+                                    End If
+
                                 End If
-
-
-                                counter = 1
-
-                                If LeftLayoutList.Count > existingLayoutCount Then
-                                    FileManipulation.EnsureLayoutCount(LeftLayoutList.Count)
-                                End If
-
-                                ' Sort LeftLayoutList by sequence number (index 4) before processing
-                                Dim sortedLeftList = LeftLayoutList.OrderBy(Function(entry) CInt(entry(4))).ToList()
-
-                                For Each LeftEntry In sortedLeftList
-                                    LeftEntry(8) = ElevValue
-                                    FinalLeftList.Add(LeftEntry)
-                                    ZoomObjectsInViewport(LeftEntry, planname, Builder, False)
-                                Next
-
-                                If FinalLeftList.Count <> 0 Then
-
-                                    pdfname = ("LEFT ATTIC VENT " & planname & " " & ElevValue & PlanAbbrev & " " & iecc & " IECC" & " " & irc & " IRC").ToUpper()
-
-                                End If
-
-                                ' Left side
-                                If FinalLeftList.Count <> 0 Then
-                                    PlotTAutomatedTabs(FinalLeftList, pdfname, NewFolderLocation)
-                                    FileManipulation.QueueLayoutsForCsv(FinalLeftList, pdfname, Builder, planname, ProjectNumber, IRC:=irc, IECC:=iecc)
-                                End If
-
-                                FinalLeftList.Clear()
-                                FinalRightList.Clear()
-                                LeftLayoutList.Clear()
-                                RightLayoutList.Clear()
-                            Next
+                            End If
 
                         Next
+
+                        counter = 1
+
+                        If RightLayoutList.Count > existingLayoutCount Then
+                            FileManipulation.EnsureLayoutCount(RightLayoutList.Count)
+                        End If
+
+                        ' Sort RightLayoutList by sequence number (index 4) before processing
+                        Dim sortedRightList = RightLayoutList.OrderBy(Function(entry) CInt(entry(4))).ToList()
+
+                        For Each RightEntry In sortedRightList
+                            RightEntry(8) = ElevValue
+                            FinalRightList.Add(RightEntry)
+                            ZoomObjectsInViewport(RightEntry, planname, Builder, False)
+                        Next
+
+
+                        If FinalRightList.Count <> 0 Then
+
+                            If Not Directory.Exists(NewFolderLocation) Then
+
+                                Directory.CreateDirectory(NewFolderLocation)
+
+                            End If
+
+                            pdfname = UCase("RIGHT ATTIC VENT " & planname & " " & ElevValue & PlanAbbrev)
+
+                        End If
+
+                        ' Right side
+                        If FinalRightList.Count <> 0 Then
+                            PlotTAutomatedTabs(FinalRightList, pdfname, NewFolderLocation)
+                            FileManipulation.QueueLayoutsForCsv(FinalRightList, pdfname, Builder, planname, ProjectNumber)
+                        End If
+
+
+                        counter = 1
+
+                        If LeftLayoutList.Count > existingLayoutCount Then
+                            FileManipulation.EnsureLayoutCount(LeftLayoutList.Count)
+                        End If
+
+                        ' Sort LeftLayoutList by sequence number (index 4) before processing
+                        Dim sortedLeftList = LeftLayoutList.OrderBy(Function(entry) CInt(entry(4))).ToList()
+
+                        For Each LeftEntry In sortedLeftList
+                            LeftEntry(8) = ElevValue
+                            FinalLeftList.Add(LeftEntry)
+                            ZoomObjectsInViewport(LeftEntry, planname, Builder, False)
+                        Next
+
+                        If FinalLeftList.Count <> 0 Then
+
+                            If Not Directory.Exists(NewFolderLocation) Then
+
+                                Directory.CreateDirectory(NewFolderLocation)
+
+                            End If
+
+
+                            pdfname = UCase("LEFT ATTIC VENT " & planname & " " & ElevValue & PlanAbbrev)
+
+                        End If
+
+                        ' Left side
+                        If FinalLeftList.Count <> 0 Then
+                            PlotTAutomatedTabs(FinalLeftList, pdfname, NewFolderLocation)
+                            FileManipulation.QueueLayoutsForCsv(FinalLeftList, pdfname, Builder, planname, ProjectNumber)
+                        End If
+
+                        FinalLeftList.Clear()
+                        FinalRightList.Clear()
+                        LeftLayoutList.Clear()
+                        RightLayoutList.Clear()
                     Next
+
+                    'Next
+                    'Next
                 Next
             Next
 
@@ -554,11 +583,12 @@ Namespace Arcxis_Cad_Tools
             Elevations.Clear()
             Options.Clear()
 
-            Dim emittedCsv As String = FileManipulation.FlushQueuedCsv(Builder, planname)
-            'If Not String.IsNullOrEmpty(emittedCsv) Then
-            '    'acEd.WriteMessage(vbLf & "CSV written: " & emittedCsv)
-            'End If
+            Dim CadFileName As String = Path.GetFileNameWithoutExtension(acCurDb.Filename)
+            Dim emittedCsv As String = FileManipulation.FlushQueuedCsv(Builder, planname, CadFileName, "Attic Vent")
 
+            If Not String.IsNullOrWhiteSpace(acDb.Filename) Then
+                DeleteStrayDsdFiles(SelectedFolder & "\" & planname)
+            End If
         End Sub
 
         Shared Sub PlotTAutomatedTabs(lAYOUTLIST As List(Of List(Of String)), Pdfname As String, NEWFOLDERLOCATION As String, Optional DPISCTB As Boolean = False)
@@ -575,6 +605,7 @@ Namespace Arcxis_Cad_Tools
                     Dim bgPrev = Application.GetSystemVariable("BackGroundPlot")
                     Dim cmdPrev = Application.GetSystemVariable("CMDDIA")
                     Dim fileDiaPrev = Application.GetSystemVariable("FILEDIA")
+                    Dim pdfFile As String = String.Empty
                     Application.SetSystemVariable("BackGroundPlot", 0)
                     Application.SetSystemVariable("CMDDIA", 0)
                     Application.SetSystemVariable("FILEDIA", 0)
@@ -590,7 +621,7 @@ Namespace Arcxis_Cad_Tools
                         Dim dwgFile As String = Path.Combine(dwgprefix, DWGnm)
 
                         ' 3) Build target file paths safely
-                        Dim pdfFile As String = Path.Combine(outputDir, Pdfname & ".pdf")
+                        pdfFile = Path.Combine(outputDir, Pdfname & ".pdf")
                         Dim dsdFile As String = Path.Combine(outputDir, Pdfname & ".dsd")
 
                         If File.Exists(pdfFile) Then
@@ -654,20 +685,20 @@ Namespace Arcxis_Cad_Tools
                         text = text.Replace("Type=3", "Type=6") ' DWF->PDF if needed
 
                         ' Guarantee we have OutDir and Dst lines (add if missing)
-                        If Not text.Contains(Environment.NewLine & "OutDir=") Then text &= Environment.NewLine & "OutDir=" & outputDir
-                        If Not text.Contains(Environment.NewLine & "Dst=") Then text &= Environment.NewLine & "Dst=" & pdfFile
+                        If Not text.Contains(vbCrLf & "OutDir=") Then text &= vbCrLf & "OutDir=" & outputDir
+                        If Not text.Contains(vbCrLf & "Dst=") Then text &= vbCrLf & "Dst=" & pdfFile
 
                         ' Re-apply our ensure list to be certain
                         For Each line In ensure
                             Dim key = line.Split("="c)(0)
                             Dim idx = text.IndexOf(key & "=", StringComparison.OrdinalIgnoreCase)
                             If idx >= 0 Then
-                                ' replace the whole row - look for CR or LF
-                                Dim rowEnd = text.IndexOfAny({Convert.ToChar(13), Convert.ToChar(10)}, idx)
+                                ' replace the whole row
+                                Dim rowEnd = text.IndexOfAny({ControlChars.Cr, ControlChars.Lf}, idx)
                                 If rowEnd < 0 Then rowEnd = text.Length
                                 text = text.Remove(idx, rowEnd - idx).Insert(idx, line)
                             Else
-                                text &= Environment.NewLine & line
+                                text &= vbCrLf & line
                             End If
                         Next
 
@@ -685,13 +716,25 @@ Namespace Arcxis_Cad_Tools
                         End Try
 
                         ' 7) Publish silently
+                        Dim auditJobId As String = HeadlessPublishAudit.StartJob("AtticVentHeadlessPrinting.PublishPdf", pdfFile, dsdEntries.Count)
                         Application.Publisher.PublishExecute(dsd, pc)
+                        HeadlessPublishAudit.MarkInfo(auditJobId, "AtticVentHeadlessPrinting.PublishPdf", pdfFile, "PublishExecute returned to caller.")
+
+                        If HeadlessPublishAudit.WaitForOutput(pdfFile, 60000) Then
+                            Dim fi As New FileInfo(pdfFile)
+                            HeadlessPublishAudit.MarkSuccess(auditJobId, "AtticVentHeadlessPrinting.PublishPdf", pdfFile, "Output ready. Size=" & fi.Length.ToString() & " bytes.")
+                        Else
+                            HeadlessPublishAudit.MarkFailed(auditJobId, "AtticVentHeadlessPrinting.PublishPdf", pdfFile, "Publish returned but output file did not appear within timeout.")
+                        End If
 
                         ' Cleanup
                         If File.Exists(dsdFile) Then File.Delete(dsdFile)
 
                         acTrans.Commit()
 
+                    Catch ex As System.Exception
+                        HeadlessPublishAudit.MarkFailed("", "AtticVentHeadlessPrinting.PublishPdf", pdfFile, ex.Message)
+                        Throw
                     Finally
                         ' Restore system vars
                         Application.SetSystemVariable("BackGroundPlot", bgPrev)
@@ -798,7 +841,7 @@ Namespace Arcxis_Cad_Tools
 
             Dim layoutId As ObjectId
 
-            If Layout(3) = "L" Or Layout(3).ToUpper() = "LEFT" Then
+            If Layout(3) = "L" Or UCase(Layout(3)) = "LEFT" Then
                 Swing = "LEFT"
             Else
                 Swing = "RIGHT"
@@ -807,19 +850,19 @@ Namespace Arcxis_Cad_Tools
             Dim SheetAbbrev As String = ""
             Dim PlanAbbrev As String = ""
 
-            If Layout(9).ToUpper() = "SOFFIT" Or Layout(9).ToUpper() = "SNAP VENTING" Or Layout(9).ToUpper().Contains("SNAP") Then
+            If UCase(Layout(9)) = "SOFFIT" Or UCase(Layout(9)) = "SNAP VENTING" Or UCase(Layout(9)).Contains("SNAP") Then
                 SheetAbbrev = "AV-"
                 PlanAbbrev = ""
-            ElseIf Layout(9).ToUpper() = "FR" Or Layout(9).ToUpper() = "FIRE RATED" Then
+            ElseIf UCase(Layout(9)) = "FR" Or UCase(Layout(9)) = "FIRE RATED" Then
                 SheetAbbrev = "FR-"
                 PlanAbbrev = " - VENTS"
-            ElseIf Layout(9).ToUpper() = "EDGE VENTS" Or Layout(9).ToUpper() = "EDGE VENTING" Or Layout(9).ToUpper() = "EDGE" Or Layout(9).ToUpper().Contains("EDGE VENT") Then
+            ElseIf UCase(Layout(9)) = "EDGE VENTS" Or UCase(Layout(9)) = "EDGE VENTING" Or UCase(Layout(9)) = "EDGE" Or UCase(Layout(9)).Contains("EDGE VENT") Then
                 SheetAbbrev = "FR-"
                 PlanAbbrev = " - EDGE VENTS"
             End If
 
-            If Layout(6).ToUpper() <> "BASE" Then
-                OptionString = " - " & Layout(6).ToUpper()
+            If UCase(Layout(6)) <> "BASE" Then
+                OptionString = " - " & UCase(Layout(6))
             Else
                 OptionString = ""
             End If
@@ -907,7 +950,7 @@ Namespace Arcxis_Cad_Tools
                                     ElseIf tagvalue.Contains("ELEVATION") Then
                                         attref.TextString = "ELEVATION " & Layout(8) & " - " & Swing & " SWING"
                                     ElseIf tagvalue.Contains("CUSTOMER'S NAME") Then
-                                        attref.TextString = Builder.ToUpper()
+                                        attref.TextString = UCase(Builder)
                                     ElseIf tagvalue.Contains("PLANDATE") Then
                                         attref.TextString = Date.Today.ToString("d")
                                         modified = True
@@ -945,7 +988,7 @@ Namespace Arcxis_Cad_Tools
                     ModifyViewPortCenter(vpIds, Layout(4), Layout(1), Layout(5))
 
                 Catch es As Exception
-                    MessageBox.Show(es.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    MsgBox(es.Message)
                 End Try
 
                 ' Save the changes made
@@ -1182,6 +1225,27 @@ Namespace Arcxis_Cad_Tools
             End SyncLock
         End Function
 
+        Private Shared Sub DeleteStrayDsdFiles(rootFolder As String)
+            If String.IsNullOrWhiteSpace(rootFolder) OrElse Not Directory.Exists(rootFolder) Then Exit Sub
+
+            Try
+                ' Delete all .dsd files in this folder
+                For Each dsdFile In Directory.GetFiles(rootFolder, "*.dsd", SearchOption.TopDirectoryOnly)
+                    Try
+                        File.Delete(dsdFile)
+                    Catch ex As Exception
+                        ' Optionally log or ignore
+                    End Try
+                Next
+
+                ' Recurse into subfolders
+                For Each subDir In Directory.GetDirectories(rootFolder)
+                    DeleteStrayDsdFiles(subDir)
+                Next
+            Catch ex As Exception
+                ' Optionally log or ignore
+            End Try
+        End Sub
 
     End Class
 End Namespace

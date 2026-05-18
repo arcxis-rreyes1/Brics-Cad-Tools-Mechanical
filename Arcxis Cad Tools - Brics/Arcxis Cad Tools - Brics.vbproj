@@ -55,6 +55,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Resources\STD-CONVERT\conversion table.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Resources\STD-CONVERT\conversion table.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="BrxMgd">
       <HintPath>..\..\..\..\..\..\Program Files\Bricsys\BricsCAD V26 en_US\BrxMgd.dll</HintPath>
       <Private>False</Private>

@@ -453,9 +453,15 @@ Namespace Arcxis_Cad_Tools
             Dim SealLoop As New List(Of String)
 
             Dim StampLayers As New List(Of String)
+
+            ReloadNestedXrefsAuto()
+
+
             Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
                 Dim lytab As LayerTable = acTrans.GetObject(acCurDb.LayerTableId, OpenMode.ForRead)
                 Dim cleanlayerstring As String
+
+                'ReloadNestedXrefs(acCurDb, acTrans)
 
                 For Each layer In lytab
 
@@ -897,6 +903,21 @@ Namespace Arcxis_Cad_Tools
                 Next
 
             End If
+
+            Dim maxVal As Integer =
+    AllValues.
+        Where(Function(r) r IsNot Nothing AndAlso r.Count > 0).
+        Select(Function(r)
+                   Dim n As Integer
+                   Return If(Integer.TryParse(r(4), n), n, Integer.MinValue)
+               End Function).
+        Max()
+
+            If maxVal = Integer.MinValue Then
+                maxVal = 0 ' no valid numbers found
+            End If
+
+            EnsureLayoutCount(maxVal)
 
             Dim SelectedFolder As String
             Dim isFile As Boolean
@@ -2294,7 +2315,7 @@ Namespace Arcxis_Cad_Tools
             ' Return the newly added block
             bt = actrans.GetObject(targetDb.BlockTableId, OpenMode.ForRead)
 
-            ReloadNestedXrefs(targetDb, actrans)
+            ' Avoid reloading xrefs inside an active transaction; caller should reload after commit if needed.
 
             Return bt(blockName)
         End Function
@@ -2560,9 +2581,9 @@ Namespace Arcxis_Cad_Tools
                         layout.Erase()
                     Next
 
-                    ReloadNestedXrefs(acCurdb, acTrans)
-
                     acTrans.Commit()
+
+                    ReloadNestedXrefs(acCurdb)
 
                     lm.CurrentLayout = "Model"
 
@@ -2773,30 +2794,70 @@ Namespace Arcxis_Cad_Tools
             End Using
         End Sub
 
-        Public Shared Sub ReloadNestedXrefs(db As Database, tr As Transaction)
-            Dim bt As BlockTable = tr.GetObject(db.BlockTableId, OpenMode.ForWrite)
-            Dim xrefsToReload As New ObjectIdCollection()
+        Private Shared Sub ReloadXrefsInBatches(db As Database, xrefIds As List(Of ObjectId), Optional batchSize As Integer = 20)
+            If db Is Nothing OrElse xrefIds Is Nothing OrElse xrefIds.Count = 0 Then Return
+            If batchSize < 1 Then batchSize = 20
 
-            For Each id In bt
-                Dim btr As BlockTableRecord = tr.GetObject(id, OpenMode.ForWrite)
+            Dim i As Integer = 0
+            While i < xrefIds.Count
+                Dim chunk As New ObjectIdCollection()
+                Dim jLimit As Integer = Math.Min(i + batchSize, xrefIds.Count)
+                Dim j As Integer = i
+                While j < jLimit
+                    chunk.Add(xrefIds(j))
+                    j += 1
+                End While
 
-                ' Reload any xref, not just unresolved ones
-                If btr.IsFromExternalReference Then
-                    ' Special handling for Master Seal File
-                    If btr.Name = "Master Seal File" OrElse btr.XrefStatus = XrefStatus.Unresolved Then
-                        xrefsToReload.Add(btr.ObjectId)
-                    End If
-                End If
-            Next
-
-            ' Reload collected xrefs
-            If xrefsToReload.Count > 0 Then
                 Try
-                    db.ReloadXrefs(xrefsToReload)
+                    db.ReloadXrefs(chunk)
                 Catch
-                    ' Ignore reload errors
+                    ' Ignore reload errors and continue with next chunk.
                 End Try
-            End If
+
+                i = jLimit
+            End While
+        End Sub
+
+        Public Shared Sub ReloadNestedXrefs(db As Database, tr As Transaction)
+            If db Is Nothing Then Return
+
+            ' ReloadXrefs is unsafe with active transactions in some CAD runtimes.
+            ' Keep this signature for compatibility, but do not reload while transaction is active.
+            If tr IsNot Nothing Then Return
+
+            ReloadNestedXrefs(db)
+        End Sub
+
+        Public Shared Sub ReloadNestedXrefs(db As Database)
+            If db Is Nothing Then Return
+
+            Dim xrefIds As New List(Of ObjectId)()
+            Using tr As Transaction = db.TransactionManager.StartOpenCloseTransaction()
+                Dim bt As BlockTable = tr.GetObject(db.BlockTableId, OpenMode.ForRead)
+
+                For Each id As ObjectId In bt
+                    Dim btr As BlockTableRecord = TryCast(tr.GetObject(id, OpenMode.ForRead), BlockTableRecord)
+                    If btr Is Nothing Then Continue For
+
+                    If btr.IsFromExternalReference Then
+                        If btr.Name = "Master Seal File" OrElse btr.XrefStatus = XrefStatus.Unresolved Then
+                            xrefIds.Add(btr.ObjectId)
+                        End If
+                    End If
+                Next
+            End Using
+
+            ReloadXrefsInBatches(db, xrefIds)
+        End Sub
+
+        Public Shared Sub ReloadNestedXrefsAuto()
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
+            If acDoc Is Nothing Then Return
+            Dim acCurDb As Database = acDoc.Database
+            Using acDoc.LockDocument()
+                ReloadNestedXrefs(acCurDb)
+            End Using
+
         End Sub
 
         Public Shared Sub DetachXrefs(db As Database, tr As Transaction, xref As String)
@@ -4151,7 +4212,8 @@ Namespace Arcxis_Cad_Tools
         ' Header: Identifier,Key,Value
         ' Each queued PDF contributes exactly four rows (PLAN/ELEV/SW/MOD).
         ' File name derived from first builder/plan found (sanitized); falls back to Combined.csv.
-        Public Shared Function FlushQueuedCsv(Optional builder As String = Nothing, Optional planName As String = Nothing) As String
+
+        Public Shared Function FlushQueuedCsv(Optional builder As String = Nothing, Optional planName As String = Nothing, Optional FileName As String = "", Optional plantype As String = "") As String
             If _pendingRows Is Nothing OrElse _pendingRows.Count = 0 Then Return Nothing
 
             Dim pendingDir As String = Module_Arcxis_TB.NetworkUNCPathForEgnyte & "\fs2\k\DPIS Drawings\PDF File Data\Pending"
@@ -4171,7 +4233,8 @@ Namespace Arcxis_Cad_Tools
                 End If
             End If
 
-            Dim fileBase As String = $"{SafeSegment(If(builder, ""))}_{SafeSegment(If(planName, ""))}"
+            Dim fileBase As String = $"{SafeSegment(If(builder, ""))}_{SafeSegment(If(planName, ""))}" & If(Not String.IsNullOrWhiteSpace(FileName), "_" & SafeSegment(FileName), "") & If(Not String.IsNullOrWhiteSpace(plantype), "_" & SafeSegment(plantype), "")
+
             If String.IsNullOrWhiteSpace(fileBase.Replace("_", "")) Then fileBase = "Combined"
 
             Dim csvPath As String = Path.Combine(pendingDir, fileBase & ".csv")
@@ -4194,8 +4257,8 @@ Namespace Arcxis_Cad_Tools
 
             _pendingRows.Clear()
             Return csvPath
-        End Function
 
+        End Function
         Private Shared Function SafeSegment(s As String) As String
             If String.IsNullOrWhiteSpace(s) Then Return ""
             Dim cleaned As String = New String(s.Trim().Select(Function(ch) If(Char.IsLetterOrDigit(ch) Or ch = "-"c Or ch = "_"c, ch, "_"c)).ToArray())
@@ -4681,11 +4744,15 @@ Namespace Arcxis_Cad_Tools
             Dim db As Database = acDoc.Database
             Dim ed As Editor = acDoc.Editor
 
+            ' Build the default path dynamically from the network UNC path
+            Dim defaultPath As String = IO.Path.Combine(NetworkUNCPathForEgnyte, "Arcxis\Engineering\Drafting Standards\CAD Lisp Routines\BricsCad")
+
             ' Prompt for Excel file
             Dim ofd As New System.Windows.Forms.OpenFileDialog() With {
-                .Title = "Select Excel file with layer definitions",
-                .Filter = "Excel Files|*.xlsx;*.xls|All Files|*.*",
-                .Multiselect = False
+            .Title = "Select Excel file with layer definitions",
+            .Filter = "Excel Files|*.xlsx;*.xls|All Files|*.*",
+            .Multiselect = False,
+            .InitialDirectory = If(IO.Directory.Exists(defaultPath), defaultPath, "")
             }
             If ofd.ShowDialog() <> DialogResult.OK Then
                 ed.WriteMessage(vbLf & "Import cancelled.")
@@ -4889,11 +4956,30 @@ Namespace Arcxis_Cad_Tools
                         For Each btrId As ObjectId In bt
                             Dim btr As BlockTableRecord = CType(tr.GetObject(btrId, OpenMode.ForRead), BlockTableRecord)
                             For Each entId As ObjectId In btr
-                                Dim ent As Entity = TryCast(tr.GetObject(entId, OpenMode.ForWrite), Entity)
-                                If ent Is Nothing Then Continue For
-                                If ent.LayerId = sourceId Then
-                                    ent.LayerId = targetId
-                                End If
+                                Try
+                                    Dim ent As Entity = TryCast(tr.GetObject(entId, OpenMode.ForWrite), Entity)
+                                    If ent Is Nothing Then Continue For
+                                    If ent.LayerId = sourceId Then
+                                        ent.LayerId = targetId
+                                    End If
+                                Catch ex As Teigha.Runtime.Exception When ex.ErrorStatus = ErrorStatus.OnLockedLayer
+                                    Dim innerEnt As Entity = TryCast(tr.GetObject(entId, OpenMode.ForRead), Entity)
+                                    If innerEnt IsNot Nothing Then
+                                        Dim ltr As LayerTableRecord = CType(tr.GetObject(innerEnt.LayerId, OpenMode.ForRead), LayerTableRecord)
+                                        Dim msg As New System.Text.StringBuilder()
+                                        msg.AppendLine($"Layer ""{ltr.Name}"" is preventing this operation.")
+                                        msg.AppendLine("To fix this, please do one of the following:")
+                                        If ltr.IsLocked Then msg.AppendLine("  • Unlock all layers before retrying.")
+                                        If ltr.IsFrozen Then msg.AppendLine("  • Thaw all layers before retrying.")
+                                        If ltr.IsOff Then msg.AppendLine("  • Turn all layers on before retrying.")
+                                        If ltr.IsDependent Then msg.AppendLine("  • This layer belongs to an external reference (xref) and cannot be modified directly.")
+                                        Bricscad.ApplicationServices.Application.ShowAlertDialog(msg.ToString())
+                                    End If
+                                    Exit Sub
+                                Catch ex As System.Exception
+                                    Bricscad.ApplicationServices.Application.ShowAlertDialog($"Unexpected error processing entity: {ex.Message}")
+                                    Exit Sub
+                                End Try
                             Next
                         Next
 

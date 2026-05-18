@@ -3,7 +3,7 @@
     "BricsCad": {
       "commandName": "Executable",
       "executablePath": "C:\\Program Files\\Bricsys\\BricsCAD V26 en_US\\bricscad.exe",
-      "commandLineArgs": "/L\r\n\"C:\\test\\TEST2.dwg\""
+      "commandLineArgs": "/L\r\n\"E:\\Shared\\Arcxis\\Engineering\\User Development Files\\Brandon Hartman\\ARCXIS CAD Customization\\Frame-E CAD lisp\\(LD)STD-CONVERT\\TEST TRANSULATE.dwg\""
     }
   }
 }
