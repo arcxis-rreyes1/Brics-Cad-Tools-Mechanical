@@ -72,19 +72,22 @@ Namespace Arcxis_Cad_Tools
                     Dim layerName As String = ln.Layer
                     Dim layerU As String = layerName.ToUpperInvariant()
 
-                    If layerU.StartsWith("S-FRM-GROUP", StringComparison.OrdinalIgnoreCase) Then
+                    If layerU.StartsWith("S-FRM-GROUP", StringComparison.OrdinalIgnoreCase) OrElse
+                       layerU.StartsWith("S-FRM-FL-GROUP-", StringComparison.OrdinalIgnoreCase) Then
 
-                        ' Extract group number after "S-FRM-GROUP"
-                        Dim prefix As String = "S-FRM-GROUP"
-                        Dim grpNumStr As String = layerName.Substring(prefix.Length)
+                        ' Extract group number from old/new group layer names
+                        Dim grpNumStr As String
+                        If layerU.StartsWith("S-FRM-FL-GROUP-", StringComparison.OrdinalIgnoreCase) Then
+                            grpNumStr = layerName.Substring("S-FRM-FL-GROUP-".Length)
+                        Else
+                            grpNumStr = layerName.Substring("S-FRM-GROUP".Length)
+                        End If
 
-                        ' Keep only leading digits
+                        ' Keep all digits in suffix (handles "1" and "-1")
                         Dim digits As String = ""
                         For Each ch As Char In grpNumStr
                             If Char.IsDigit(ch) Then
                                 digits &= ch
-                            Else
-                                Exit For
                             End If
                         Next
 
@@ -107,7 +110,9 @@ Namespace Arcxis_Cad_Tools
                         ' Place rotated label text like VBA did
                         PlaceRotatedLabel(tr, db, mappedLabel & "-" & lenFt & "'", ln)
 
-                    ElseIf layerU.EndsWith("RM-RI", StringComparison.OrdinalIgnoreCase) OrElse layerU.EndsWith("RIM", StringComparison.OrdinalIgnoreCase) Then
+                    ElseIf layerU.EndsWith("RM-RI", StringComparison.OrdinalIgnoreCase) OrElse
+                           layerU.EndsWith("RIM", StringComparison.OrdinalIgnoreCase) OrElse
+                           layerU.EndsWith("-RIM", StringComparison.OrdinalIgnoreCase) Then
 
                         Dim lenFt As Integer = CInt(Math.Round((ln.Length + 6.0) / 12.0, 0, MidpointRounding.AwayFromZero))
 
@@ -119,7 +124,9 @@ Namespace Arcxis_Cad_Tools
                             .Layer = layerName
                         })
 
-                    ElseIf layerU.EndsWith("RM-BL", StringComparison.OrdinalIgnoreCase) OrElse layerU.EndsWith("BLK", StringComparison.OrdinalIgnoreCase) Then
+                    ElseIf layerU.EndsWith("RM-BL", StringComparison.OrdinalIgnoreCase) OrElse
+                           layerU.EndsWith("BLK", StringComparison.OrdinalIgnoreCase) OrElse
+                           layerU.EndsWith("-BLK", StringComparison.OrdinalIgnoreCase) Then
 
                         Dim lenFt As Integer = CInt(Math.Round((ln.Length + 6.0) / 12.0, 0, MidpointRounding.AwayFromZero))
 
@@ -146,13 +153,13 @@ Namespace Arcxis_Cad_Tools
                     Dim thick As Double = ln.Thickness
 
                     Select Case layerName.ToUpperInvariant()
-                        Case "S-FRM-3.5"
+                        Case "S-FRM-3.5", "S-FRM-BM-3.5"
                             items.Add(New Item With {.SortNum = 6, .Product = "3.5x" & thick.ToString() & """" & " PSL 2.0E", .LengthFt = lenFt, .Qty = 1, .Layer = layerName})
-                        Case "S-FRM-5.25"
+                        Case "S-FRM-5.25", "S-FRM-BM-5.25"
                             items.Add(New Item With {.SortNum = 6, .Product = "5.25x" & thick.ToString() & """" & " PSL 2.0E", .LengthFt = lenFt, .Qty = 1, .Layer = layerName})
-                        Case "S-FRM-7"
+                        Case "S-FRM-7", "S-FRM-BM-7"
                             items.Add(New Item With {.SortNum = 6, .Product = "7x" & thick.ToString() & """" & " PSL 2.0E", .LengthFt = lenFt, .Qty = 1, .Layer = layerName})
-                        Case "S-FRM-1.75"
+                        Case "S-FRM-1.75", "S-FRM-BM-1.75"
                             Dim prod As String
                             If ln.Color.ColorIndex = 213 Then
                                 prod = "1.75x" & thick.ToString() & """" & " LSL 1.55E"

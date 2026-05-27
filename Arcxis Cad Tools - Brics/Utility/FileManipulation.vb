@@ -1029,7 +1029,10 @@ Namespace Arcxis_Cad_Tools
                                     Next
                                     counter = 1
 
-                                    For Each RightEntry In RightLayoutList
+                                    ' Sort RightLayoutList by sequence number (index 4) before processing
+                                    Dim sortedRightList = RightLayoutList.OrderBy(Function(entry) CInt(entry(4))).ToList()
+
+                                    For Each RightEntry In sortedRightList
                                         If RightEntry(4) = counter Then
                                             RightEntry(8) = ElevValue
                                             FinalRightList.Add(RightEntry)
@@ -1083,16 +1086,14 @@ Namespace Arcxis_Cad_Tools
                                     ' Right side
                                     If FinalRightList.Count <> 0 Then
                                         PlotTAutomatedTabs(FinalRightList, (pdfname & pdfdivision), NewFolderLocation, DPISCTB)
-                                        If division <> "" Then
-                                            QueueLayoutsForCsv(FinalRightList, (pdfname & pdfdivision), Builder, planname, ProjectNumber, BuilderDivision:=division)
-                                        Else
-                                            QueueLayoutsForCsv(FinalRightList, (pdfname & pdfdivision), Builder, planname, ProjectNumber, BuilderDivision:=division)
-                                        End If
+                                        QueueLayoutsForCsv(FinalRightList, (pdfname & pdfdivision), Builder, planname, ProjectNumber, BuilderDivision:=division)
                                     End If
 
 
+                                    Dim sortedLeftList = LeftLayoutList.OrderBy(Function(entry) CInt(entry(4))).ToList()
+
                                     counter = 1
-                                    For Each LeftEntry In LeftLayoutList
+                                    For Each LeftEntry In sortedLeftList
                                         If LeftEntry(4) = counter Then
                                             LeftEntry(8) = ElevValue
                                             FinalLeftList.Add(LeftEntry)
@@ -1138,12 +1139,7 @@ Namespace Arcxis_Cad_Tools
                                     ' Left side
                                     If FinalLeftList.Count <> 0 Then
                                         PlotTAutomatedTabs(FinalLeftList, (pdfname & pdfdivision), NewFolderLocation, DPISCTB)
-                                        If division <> "" Then
-                                            QueueLayoutsForCsv(FinalLeftList, (pdfname & pdfdivision), Builder, planname, ProjectNumber, BuilderDivision:=division)
-                                        Else
-                                            QueueLayoutsForCsv(FinalLeftList, (pdfname & pdfdivision), Builder, planname, ProjectNumber)
-                                        End If
-
+                                        QueueLayoutsForCsv(FinalLeftList, (pdfname & pdfdivision), Builder, planname, ProjectNumber, BuilderDivision:=division)
                                     End If
 
                                     FinalLeftList.Clear()
@@ -4131,22 +4127,19 @@ Namespace Arcxis_Cad_Tools
 
             Return inside
         End Function
-        ' ================== NEW QUEUING MODEL (one logical set per PDF) ==================
-        ' We now capture exactly one metadata set per PDF (PLAN, ELEV, SW, MOD) and store
-        ' rows as triples: Identifier | Key | Value.
-        ' Identifier format: "Builder - PdfName"
-        ' Keys: PLAN, ELEV, SW, MOD
-        ' Value: extracted or empty.
-        '
-        ' This replaces the previous wide layout-row accumulation. Multiple calls for the
-        ' same PDF will be ignored (first wins) to prevent duplicates.
+
         Public Shared Sub QueueLayoutsForCsv(layoutList As List(Of List(Of String)), pdfName As String, builder As String, planName As String, projectnumber As String, Optional ByVal IRC As String = "", Optional ByVal IECC As String = "", Optional ByVal MechCounty As String = "",
                                              Optional ByVal MechMan As String = "", Optional ByVal MechFuel As String = "", Optional ByVal MechPlan As Boolean = False, Optional ByVal DocType As String = "", Optional ByVal BuilderDivision As String = "")
             If String.IsNullOrWhiteSpace(pdfName) Then Exit Sub
             If layoutList Is Nothing OrElse layoutList.Count = 0 Then Exit Sub
 
             ' Build identifier ("Builder - PdfName")
-            Dim identifier As String = (If(builder, "").Trim() & " - " & Path.GetFileNameWithoutExtension(If(pdfName, "").Trim())).Trim()
+            Dim pdfKey As String = If(pdfName, "").Trim()
+            If pdfKey.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) Then
+                pdfKey = pdfKey.Substring(0, pdfKey.Length - 4)
+            End If
+
+            Dim identifier As String = $"{If(builder, "").Trim()} - {pdfKey}".Trim()
 
             ' Prevent duplicate queuing for same identifier (already queued)
             Dim alreadyQueued As Boolean = _pendingRows.Any(Function(r) r.Count >= 1 AndAlso String.Equals(r(0), identifier, StringComparison.OrdinalIgnoreCase))
@@ -4160,6 +4153,14 @@ Namespace Arcxis_Cad_Tools
             Dim venttype As String = ""
             Dim attictype As String = ""
             Dim Community As String = ""
+            Dim ClimateZone As String = ""
+            Dim IeccValue As String = ""
+            Dim InsulationValue As String = ""
+            Dim FuelValue As String = ""
+            Dim VersionValue As String = ""
+            ' NEW: collect all layoutList(6) values, unique, comma-separated
+            Dim planOption As String = String.Join(", ", layoutList.Where(Function(r) r IsNot Nothing AndAlso r.Count > 6).Select(Function(r) If(r(6), "").Trim()).
+            Where(Function(v) v <> "").Distinct(StringComparer.OrdinalIgnoreCase))
 
             If first.Count > 2 Then modName = If(first(2), "").Trim()
             If first.Count > 3 Then swingRaw = If(first(3), "").Trim()
@@ -4172,10 +4173,17 @@ Namespace Arcxis_Cad_Tools
             If String.Equals(modName, "ATTIC VENT", StringComparison.OrdinalIgnoreCase) Then
                 venttype = If(first(9), "").Trim()
                 attictype = If(first(10), "").Trim()
+                ' Optional: don't overwrite the aggregated planOption from all rows
+                ' If first.Count > 6 Then planOption = If(first(6), "").Trim()
             End If
 
             If String.Equals(DocType, "ENERGY", StringComparison.OrdinalIgnoreCase) Then
-                Community = If(first(9), "").Trim()
+                If first.Count > 9 Then Community = If(first(9), "").Trim()
+                If first.Count > 10 Then ClimateZone = If(first(10), "").Trim()
+                If first.Count > 11 Then IeccValue = If(first(11), "").Trim()
+                If first.Count > 12 Then InsulationValue = If(first(12), "").Trim()
+                If first.Count > 13 Then FuelValue = If(first(13), "").Trim()
+                If first.Count > 14 Then VersionValue = If(first(14), "").Trim()
             End If
 
 
@@ -4183,10 +4191,16 @@ Namespace Arcxis_Cad_Tools
 
             ' Store four logical rows: PLAN / ELEV / SW / MOD
             _pendingRows.Add(New List(Of String) From {identifier, "PLAN", planName})
-            _pendingRows.Add(New List(Of String) From {identifier, "ELEV", elevation})
-            _pendingRows.Add(New List(Of String) From {identifier, "SW", swingRaw})
+            _pendingRows.Add(New List(Of String) From {identifier, "ELEVATION", elevation})
+            _pendingRows.Add(New List(Of String) From {identifier, "SWING", swingRaw})
             If BuilderDivision <> "" Then
                 _pendingRows.Add(New List(Of String) From {identifier, "BUILDER DIVISION", BuilderDivision})
+            End If
+            If modName.Equals("BRACING", StringComparison.OrdinalIgnoreCase) Or modName.Equals("WINDSTORM", StringComparison.OrdinalIgnoreCase) Then
+                If Not String.IsNullOrWhiteSpace(planOption) Then
+                    Dim planOptionFirstPart As String = If(String.IsNullOrWhiteSpace(planOption), "", planOption.Split(" "c)(0))
+                    _pendingRows.Add(New List(Of String) From {identifier, "WINDSPEED", planOptionFirstPart})
+                End If
             End If
             If MechPlan Then
                 _pendingRows.Add(New List(Of String) From {identifier, "PLAN TYPE", "MECHANICAL"})
@@ -4199,19 +4213,32 @@ Namespace Arcxis_Cad_Tools
             If modName.Equals("ATTIC VENT", StringComparison.OrdinalIgnoreCase) Then
                 _pendingRows.Add(New List(Of String) From {identifier, "VENT TYPE", venttype})
                 _pendingRows.Add(New List(Of String) From {identifier, "ATTIC TYPE", attictype})
-                _pendingRows.Add(New List(Of String) From {identifier, "IRC", IRC})
-                _pendingRows.Add(New List(Of String) From {identifier, "IECC", IECC})
+                If Not String.IsNullOrWhiteSpace(planOption) Then
+                    _pendingRows.Add(New List(Of String) From {identifier, "OPTION", planOption})
+                End If
             End If
             If DocType.Equals("ENERGY", StringComparison.OrdinalIgnoreCase) Then
-                _pendingRows.Add(New List(Of String) From {identifier, "COMMUNITY", Community})
+                _pendingRows.Add(New List(Of String) From {identifier, "PLAN TYPE", "ENERGY"})
+                If Not String.IsNullOrWhiteSpace(Community) Then
+                    _pendingRows.Add(New List(Of String) From {identifier, "COMMUNITY", Community})
+                End If
+                If Not String.IsNullOrWhiteSpace(ClimateZone) Then
+                    _pendingRows.Add(New List(Of String) From {identifier, "CLIMATE ZONE", ClimateZone})
+                End If
+                If Not String.IsNullOrWhiteSpace(IeccValue) Then
+                    _pendingRows.Add(New List(Of String) From {identifier, "IECC", IeccValue})
+                End If
+                If Not String.IsNullOrWhiteSpace(InsulationValue) Then
+                    _pendingRows.Add(New List(Of String) From {identifier, "INSULATION TYPE", InsulationValue})
+                End If
+                If Not String.IsNullOrWhiteSpace(FuelValue) Then
+                    _pendingRows.Add(New List(Of String) From {identifier, "FUEL TYPE", FuelValue})
+                End If
+                If Not String.IsNullOrWhiteSpace(VersionValue) Then
+                    _pendingRows.Add(New List(Of String) From {identifier, "PLAN VERSION", VersionValue})
+                End If
             End If
         End Sub
-
-        ' ================== FLUSH UPDATED FORMAT ==================
-        ' Emits a single CSV aggregating all queued PDFs:
-        ' Header: Identifier,Key,Value
-        ' Each queued PDF contributes exactly four rows (PLAN/ELEV/SW/MOD).
-        ' File name derived from first builder/plan found (sanitized); falls back to Combined.csv.
 
         Public Shared Function FlushQueuedCsv(Optional builder As String = Nothing, Optional planName As String = Nothing, Optional FileName As String = "", Optional plantype As String = "") As String
             If _pendingRows Is Nothing OrElse _pendingRows.Count = 0 Then Return Nothing
@@ -4259,6 +4286,7 @@ Namespace Arcxis_Cad_Tools
             Return csvPath
 
         End Function
+
         Private Shared Function SafeSegment(s As String) As String
             If String.IsNullOrWhiteSpace(s) Then Return ""
             Dim cleaned As String = New String(s.Trim().Select(Function(ch) If(Char.IsLetterOrDigit(ch) Or ch = "-"c Or ch = "_"c, ch, "_"c)).ToArray())
