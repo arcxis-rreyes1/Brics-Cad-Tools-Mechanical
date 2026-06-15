@@ -20,7 +20,6 @@ Namespace Arcxis_Cad_Tools
             Dim aced As Editor = Bricscad.ApplicationServices.Application.DocumentManager.MdiActiveDocument.Editor
             'Dim ltsc As Integer = Bricscad.ApplicationServices.Application.GetSystemVariable("ltscale")
             Dim acLine As Line
-            Dim LineCross As Object
             '' Set system variable to new value
             'Bricscad.ApplicationServices.Application.SetSystemVariable("FIELDDISPLAY", 0)
 
@@ -106,17 +105,10 @@ Namespace Arcxis_Cad_Tools
 
                             For Each SSSObj As ObjectId In SS.GetObjectIds()
 
-                                Dim ent As Object = TryCast(acTrans.GetObject(SSSObj, OpenMode.ForRead), Entity)
+                                Dim ent As Entity = TryCast(acTrans.GetObject(SSSObj, OpenMode.ForRead), Entity)
+                                If ent Is Nothing OrElse Not IsLineOrPolyline(ent) Then Continue For
 
-                                Dim typ As String = ent.ObjectId.ObjectClass.Name()
-
-                                If typ = "AcDbPolyline" OrElse typ = "AcDbLine" Then
-
-                                    LineCross = acTrans.GetObject(ent.ObjectId, OpenMode.ForRead, False, True)
-
-                                    LineCross.IntersectWith(acLine, Intersect.OnBothOperands, crossingPts, IntPtr.Zero, IntPtr.Zero)
-
-                                End If
+                                AddIntersectionsWithLine(ent, acLine, crossingPts)
 
                             Next
 
@@ -233,44 +225,34 @@ Namespace Arcxis_Cad_Tools
 
 
                     Dim SlabIptCol As New Point3dCollection()
-                    SlabIptCol.Clear()
-                    Dim SlabTendonIptList As New List(Of Point3d)
-                    SlabTendonIptList.Clear()
-                    Dim SortedSlabTendonPts As New List(Of Point3d)
-                    SortedSlabTendonPts.Clear()
                     Dim SlabLineIptCol As New Point3dCollection()
-                    SlabLineIptCol.Clear()
-
                     Dim IntWithTendon As New Point3dCollection()
 
-                    Dim acTypValAr As TypedValue() = New TypedValue() {New TypedValue(0, "LINE,LWPOLYLINE"), New TypedValue(DxfCode.LayerName, "S-FND-STEND")}
+                    Dim acTypValAr As TypedValue() = New TypedValue() {
+                        New TypedValue(0, "LINE,LWPOLYLINE"),
+                        New TypedValue(DxfCode.LayerName, "S-FND-SLAB,S-FND-STEND")
+                    }
                     Dim acSelFtr As SelectionFilter = New SelectionFilter(acTypValAr)
                     Dim prSelRes As PromptSelectionResult = acDoc.Editor.SelectFence(pts, acSelFtr)
 
-                    Dim SlabEnt As Object
-
-                    Dim TendEnt As Object
+                    Dim SlabEnt As Entity = Nothing
 
                     Dim CrossingPoint1 As New Point3d()
                     Dim Crossingpoint2 As New Point3d()
 
-                    Dim DistanceFromSlab As Double = 18
+                    Const DistanceFromSlab As Double = 6
 
                     Dim LengthOfLine As Double
                     Dim NumberofTendons As Double
-                    Dim Xory As Double
                     Dim StartPoint As New Point3d
                     Dim EndPoint As New Point3d
+                    Dim StartWithTendon As Boolean = False
+                    Dim EndWithTendon As Boolean = False
 
                     Dim minX As Double
                     Dim maxX As Double
                     Dim minY As Double
                     Dim maxY As Double
-                    Dim firstPt As New Point2d
-
-
-                    ''''this is for spacing between tendons
-                    Dim TendonDistance As New List(Of Point3d)
 
                     If prSelRes.Status = PromptStatus.OK Then
 
@@ -280,138 +262,253 @@ Namespace Arcxis_Cad_Tools
 
                             For Each SSSObj As ObjectId In SS.GetObjectIds()
 
-                                Dim ent As Object = TryCast(acTrans.GetObject(SSSObj, OpenMode.ForRead), Entity)
+                                Dim ent As Entity = TryCast(acTrans.GetObject(SSSObj, OpenMode.ForRead), Entity)
+                                If ent Is Nothing OrElse Not IsLineOrPolyline(ent) Then Continue For
 
-                                Dim typ As String = ent.ObjectId.ObjectClass.Name()
+                                If String.Equals(ent.Layer, "S-FND-SLAB", StringComparison.OrdinalIgnoreCase) Then
+                                    SlabEnt = ent
+                                    AddIntersectionsWithLine(ent, acLine, SlabIptCol)
+                                    SetSlabExtents(ent, minX, maxX, minY, maxY)
 
-
-
-                                If typ = "AcDbPolyline" OrElse typ = "AcDbLine" Then
-
-                                    If ent.Layer = "S-FND-STEND" Then
-
-                                        TendEnt = acTrans.GetObject(ent.ObjectId, OpenMode.ForRead, False, True)
-
-                                        TendEnt.IntersectWith(acLine, Intersect.OnBothOperands, IntWithTendon, IntPtr.Zero, IntPtr.Zero)
-
-                                    End If
-
+                                ElseIf String.Equals(ent.Layer, "S-FND-STEND", StringComparison.OrdinalIgnoreCase) Then
+                                    AddIntersectionsWithLine(ent, acLine, IntWithTendon)
                                 End If
 
                             Next
 
-                            'because of the dual function we will now have to check for either the double cross or no cross on slabline to see which instance to run, tendon to tendon, tendon to slab or slab to slab
+                            ' tendon to tendon, tendon to slab, or slab to slab
+                            If SlabIptCol.Count < 2 Then
+                                If SlabIptCol.Count < 1 Then
+                                    Dim peo As New PromptEntityOptions(vbLf & "Select outerslabline:")
+                                    Dim per As PromptEntityResult = aced.GetEntity(peo)
+                                    If per.Status <> PromptStatus.OK Then Exit Sub
 
-                            Dim peo As New PromptEntityOptions(vbLf & "Select outerslabline:")
-                            Dim per As PromptEntityResult = aced.GetEntity(peo)
+                                    SlabEnt = TryCast(acTrans.GetObject(per.ObjectId, OpenMode.ForRead), Entity)
+                                    If SlabEnt Is Nothing Then Exit Sub
 
-                            SlabEnt = acTrans.GetObject(per.ObjectId, OpenMode.ForRead, False, True)
+                                    AddIntersectionsWithLine(SlabEnt, acLine, SlabIptCol)
+                                    SetSlabExtents(SlabEnt, minX, maxX, minY, maxY)
 
-                            If IntWithTendon.Count < 2 Then
-                                acDoc.Editor.WriteMessage(vbLf & "FENCE MUST CROSS TWO TENDONS!!")
+                                    If IntWithTendon.Count < 1 Then
+                                        acDoc.Editor.WriteMessage(vbLf & "FENCE MUST CROSS A TENDON!!")
+                                        Exit Sub
+                                    ElseIf IntWithTendon.Count = 1 AndAlso SlabIptCol.Count >= 1 Then
+                                        SetTendonToSlabBounds(SlabIptCol(0), IntWithTendon(0), FLineAngD, DistanceFromSlab,
+                                                              StartPoint, EndPoint, StartWithTendon, EndWithTendon,
+                                                              LengthOfLine, NumberofTendons, NewTendonSpacing, spacing)
+                                    ElseIf IntWithTendon.Count < 2 Then
+                                        acDoc.Editor.WriteMessage(vbLf & "FENCE MUST CROSS TWO TENDONS!!")
+                                        Exit Sub
+                                    Else
+                                        If FLineAngD = 0 Or FLineAngD = 180 Or FLineAngD = 360 Then
+                                            If IntWithTendon(0).X < IntWithTendon(1).X Then
+                                                CrossingPoint1 = IntWithTendon(0)
+                                                Crossingpoint2 = IntWithTendon(1)
+                                            Else
+                                                CrossingPoint1 = IntWithTendon(1)
+                                                Crossingpoint2 = IntWithTendon(0)
+                                            End If
+
+                                            StartPoint = New Point3d(CrossingPoint1.X, CrossingPoint1.Y, 0)
+                                            EndPoint = New Point3d(Crossingpoint2.X, Crossingpoint2.Y, 0)
+                                            LengthOfLine = CrossingPoint1.X - Crossingpoint2.X
+                                            NumberofTendons = Math.Ceiling(Math.Abs(LengthOfLine) / spacing)
+                                            NewTendonSpacing = Math.Abs(LengthOfLine / NumberofTendons)
+                                        Else
+                                            If IntWithTendon(0).Y > IntWithTendon(1).Y Then
+                                                CrossingPoint1 = IntWithTendon(0)
+                                                Crossingpoint2 = IntWithTendon(1)
+                                            Else
+                                                CrossingPoint1 = IntWithTendon(1)
+                                                Crossingpoint2 = IntWithTendon(0)
+                                            End If
+
+                                            StartPoint = New Point3d(CrossingPoint1.X, CrossingPoint1.Y, 0)
+                                            EndPoint = New Point3d(Crossingpoint2.X, Crossingpoint2.Y, 0)
+                                            LengthOfLine = Math.Abs(CrossingPoint1.Y) - Math.Abs(Crossingpoint2.Y)
+                                            NumberofTendons = Math.Ceiling(Math.Abs(LengthOfLine) / spacing)
+                                            NewTendonSpacing = Math.Abs(LengthOfLine / NumberofTendons)
+                                        End If
+
+                                        StartWithTendon = True
+                                        EndWithTendon = True
+                                    End If
+
+                                Else
+                                    If IntWithTendon.Count < 1 Then
+                                        acDoc.Editor.WriteMessage(vbLf & "FENCE MUST CROSS A TENDON!!")
+                                        Exit Sub
+                                    End If
+
+                                    Dim boundaryTendonInt As Point3d = IntWithTendon(0)
+                                    If IntWithTendon.Count > 1 Then
+                                        Dim minDistance As Double = SlabIptCol(0).DistanceTo(boundaryTendonInt)
+                                        For idx As Integer = 1 To IntWithTendon.Count - 1
+                                            Dim currentDistance As Double = SlabIptCol(0).DistanceTo(IntWithTendon(idx))
+                                            If currentDistance < minDistance Then
+                                                minDistance = currentDistance
+                                                boundaryTendonInt = IntWithTendon(idx)
+                                            End If
+                                        Next
+                                    End If
+
+                                    SetTendonToSlabBounds(SlabIptCol(0), boundaryTendonInt, FLineAngD, DistanceFromSlab,
+                                                          StartPoint, EndPoint, StartWithTendon, EndWithTendon,
+                                                          LengthOfLine, NumberofTendons, NewTendonSpacing, spacing)
+                                End If
+
+                            ElseIf SlabIptCol.Count = 2 Then
+
+                                Dim useMixedSlabTendonBounds As Boolean = False
+                                Dim slabBoundary As Point3d = SlabIptCol(0)
+                                Dim tendonBoundary As Point3d = New Point3d()
+
+                                If IntWithTendon.Count > 0 Then
+                                    Dim nearestSlabToStart As Point3d = SlabIptCol(0)
+                                    Dim nearestSlabToEnd As Point3d = SlabIptCol(0)
+                                    Dim nearestTendonToStart As Point3d = IntWithTendon(0)
+                                    Dim nearestTendonToEnd As Point3d = IntWithTendon(0)
+
+                                    Dim minSlabStartDist As Double = ptStart.DistanceTo(nearestSlabToStart)
+                                    Dim minSlabEndDist As Double = ptEnd.DistanceTo(nearestSlabToEnd)
+                                    For sIdx As Integer = 1 To SlabIptCol.Count - 1
+                                        Dim slabStartDist As Double = ptStart.DistanceTo(SlabIptCol(sIdx))
+                                        If slabStartDist < minSlabStartDist Then
+                                            minSlabStartDist = slabStartDist
+                                            nearestSlabToStart = SlabIptCol(sIdx)
+                                        End If
+
+                                        Dim slabEndDist As Double = ptEnd.DistanceTo(SlabIptCol(sIdx))
+                                        If slabEndDist < minSlabEndDist Then
+                                            minSlabEndDist = slabEndDist
+                                            nearestSlabToEnd = SlabIptCol(sIdx)
+                                        End If
+                                    Next
+
+                                    Dim minTendonStartDist As Double = ptStart.DistanceTo(nearestTendonToStart)
+                                    Dim minTendonEndDist As Double = ptEnd.DistanceTo(nearestTendonToEnd)
+                                    For tIdx As Integer = 1 To IntWithTendon.Count - 1
+                                        Dim tendonStartDist As Double = ptStart.DistanceTo(IntWithTendon(tIdx))
+                                        If tendonStartDist < minTendonStartDist Then
+                                            minTendonStartDist = tendonStartDist
+                                            nearestTendonToStart = IntWithTendon(tIdx)
+                                        End If
+
+                                        Dim tendonEndDist As Double = ptEnd.DistanceTo(IntWithTendon(tIdx))
+                                        If tendonEndDist < minTendonEndDist Then
+                                            minTendonEndDist = tendonEndDist
+                                            nearestTendonToEnd = IntWithTendon(tIdx)
+                                        End If
+                                    Next
+
+                                    Dim startPrefersSlab As Boolean = (minSlabStartDist <= minTendonStartDist)
+                                    Dim endPrefersSlab As Boolean = (minSlabEndDist <= minTendonEndDist)
+
+                                    If startPrefersSlab <> endPrefersSlab Then
+                                        useMixedSlabTendonBounds = True
+                                        If startPrefersSlab Then
+                                            slabBoundary = nearestSlabToStart
+                                            tendonBoundary = nearestTendonToEnd
+                                        Else
+                                            slabBoundary = nearestSlabToEnd
+                                            tendonBoundary = nearestTendonToStart
+                                        End If
+                                    End If
+                                End If
+
+                                If useMixedSlabTendonBounds Then
+                                    If FLineAngD = 0 Or FLineAngD = 180 Or FLineAngD = 360 Then
+                                        Dim slabOffsetPoint As Point3d
+                                        If slabBoundary.X < tendonBoundary.X Then
+                                            slabOffsetPoint = New Point3d(slabBoundary.X + DistanceFromSlab, slabBoundary.Y, 0)
+                                            StartPoint = slabOffsetPoint
+                                            EndPoint = New Point3d(tendonBoundary.X, tendonBoundary.Y, 0)
+                                            EndWithTendon = True
+                                        Else
+                                            slabOffsetPoint = New Point3d(slabBoundary.X - DistanceFromSlab, slabBoundary.Y, 0)
+                                            StartPoint = New Point3d(tendonBoundary.X, tendonBoundary.Y, 0)
+                                            EndPoint = slabOffsetPoint
+                                            StartWithTendon = True
+                                        End If
+
+                                        LengthOfLine = Math.Abs(StartPoint.X - EndPoint.X)
+                                        NumberofTendons = Math.Ceiling(Math.Abs(LengthOfLine) / spacing)
+                                        NewTendonSpacing = Math.Abs(LengthOfLine / NumberofTendons)
+                                    Else
+                                        Dim slabOffsetPoint As Point3d
+                                        If slabBoundary.Y > tendonBoundary.Y Then
+                                            slabOffsetPoint = New Point3d(slabBoundary.X, slabBoundary.Y - DistanceFromSlab, 0)
+                                            StartPoint = slabOffsetPoint
+                                            EndPoint = New Point3d(tendonBoundary.X, tendonBoundary.Y, 0)
+                                            EndWithTendon = True
+                                        Else
+                                            slabOffsetPoint = New Point3d(slabBoundary.X, slabBoundary.Y + DistanceFromSlab, 0)
+                                            StartPoint = New Point3d(tendonBoundary.X, tendonBoundary.Y, 0)
+                                            EndPoint = slabOffsetPoint
+                                            StartWithTendon = True
+                                        End If
+
+                                        LengthOfLine = Math.Abs(StartPoint.Y - EndPoint.Y)
+                                        NumberofTendons = Math.Ceiling(Math.Abs(LengthOfLine) / spacing)
+                                        NewTendonSpacing = Math.Abs(LengthOfLine / NumberofTendons)
+                                    End If
+                                Else
+                                    If FLineAngD = 0 Or FLineAngD = 180 Or FLineAngD = 360 Then
+                                        If SlabIptCol(0).X < SlabIptCol(1).X Then
+                                            CrossingPoint1 = SlabIptCol(0)
+                                            Crossingpoint2 = SlabIptCol(1)
+                                        Else
+                                            CrossingPoint1 = SlabIptCol(1)
+                                            Crossingpoint2 = SlabIptCol(0)
+                                        End If
+
+                                        StartPoint = New Point3d(CrossingPoint1.X + DistanceFromSlab, CrossingPoint1.Y, 0)
+                                        EndPoint = New Point3d(Crossingpoint2.X - DistanceFromSlab, Crossingpoint2.Y, 0)
+                                        LengthOfLine = (CrossingPoint1.X + DistanceFromSlab) - (Crossingpoint2.X - DistanceFromSlab)
+                                        NumberofTendons = Math.Ceiling(Math.Abs(LengthOfLine) / spacing)
+                                        NewTendonSpacing = Math.Abs(LengthOfLine / NumberofTendons)
+                                    Else
+                                        If SlabIptCol(0).Y > SlabIptCol(1).Y Then
+                                            CrossingPoint1 = SlabIptCol(0)
+                                            Crossingpoint2 = SlabIptCol(1)
+                                        Else
+                                            CrossingPoint1 = SlabIptCol(1)
+                                            Crossingpoint2 = SlabIptCol(0)
+                                        End If
+
+                                        StartPoint = New Point3d(CrossingPoint1.X, CrossingPoint1.Y - DistanceFromSlab, 0)
+                                        EndPoint = New Point3d(Crossingpoint2.X, Crossingpoint2.Y + DistanceFromSlab, 0)
+                                        LengthOfLine = (CrossingPoint1.Y - DistanceFromSlab) - (Crossingpoint2.Y + DistanceFromSlab)
+                                        NumberofTendons = Math.Ceiling(Math.Abs(LengthOfLine) / spacing)
+                                        NewTendonSpacing = Math.Abs(LengthOfLine / NumberofTendons)
+                                    End If
+                                End If
+                            End If
+
+                            If SlabEnt Is Nothing Then
+                                acDoc.Editor.WriteMessage(vbLf & "No slab boundary found along fence line.")
                                 Exit Sub
                             End If
 
-                            'get legths for lines later to find intersections with slabline
-
-                            minX = SlabEnt.bounds.minpoint.x
-                            maxX = SlabEnt.bounds.maxpoint.x
-                            maxY = SlabEnt.bounds.maxpoint.y
-                            minY = SlabEnt.bounds.minpoint.y
-
-                            minX = minX - 12
-                            maxX = maxX + 12
-                            minY = minY - 12
-                            maxY = maxY + 12
-
-                            Dim FirstTenInt As Point3d = IntWithTendon(0)
-
-                            Dim SecondTenInt As Point3d = IntWithTendon(1)
-
-                            If FLineAngD = 0 Or FLineAngD = 180 Or FLineAngD = 360 Then
-
-                                If IntWithTendon(0).X < IntWithTendon(1).X Then
-
-                                    '''''getting distance for diving left to right
-                                    CrossingPoint1 = IntWithTendon(0)
-                                    Crossingpoint2 = IntWithTendon(1)
-
-                                Else
-
-                                    CrossingPoint1 = IntWithTendon(1)
-                                    Crossingpoint2 = IntWithTendon(0)
-
-                                End If
-
-                                StartPoint = New Point3d(CrossingPoint1.X, CrossingPoint1.Y, 0)
-                                EndPoint = New Point3d(Crossingpoint2.X, Crossingpoint2.Y, 0)
-                                LengthOfLine = (CrossingPoint1.X) - (Crossingpoint2.X)
-                                NumberofTendons = Math.Ceiling(Math.Abs(LengthOfLine) / spacing)
-                                NewTendonSpacing = spacing
-
-
-
-                            Else
-
-                                If IntWithTendon(0).Y > IntWithTendon(1).Y Then
-
-                                    '''''getting distance for diving vertically
-                                    CrossingPoint1 = IntWithTendon(0)
-                                    Crossingpoint2 = IntWithTendon(1)
-
-                                Else
-
-                                    CrossingPoint1 = IntWithTendon(1)
-                                    Crossingpoint2 = IntWithTendon(0)
-
-                                End If
-
-                                StartPoint = New Point3d(CrossingPoint1.X, CrossingPoint1.Y, 0)
-                                EndPoint = New Point3d(Crossingpoint2.X, Crossingpoint2.Y, 0)
-                                LengthOfLine = Math.Abs(CrossingPoint1.Y) - Math.Abs(Crossingpoint2.Y)
-                                NumberofTendons = Math.Ceiling(Math.Abs(LengthOfLine) / spacing)
-                                NewTendonSpacing = spacing
-
-                            End If
-
                             Dim NewTendonPoint As New Point3d
-
                             TendonPointsList.Clear()
 
+                            If StartWithTendon = False Then
+                                TendonPointsList.Add(StartPoint)
+                            End If
 
                             For i = 1 To NumberofTendons - 1
-
                                 If FLineAngD = 0 Or FLineAngD = 180 Or FLineAngD = 360 Then
-
-                                    If acLine.StartPoint.X < acLine.EndPoint.X Then
-
-                                        NewTendonPoint = New Point3d(StartPoint.X + (i * NewTendonSpacing), StartPoint.Y, 0)
-                                        TendonPointsList.Add(NewTendonPoint)
-
-                                    Else
-
-                                        NewTendonPoint = New Point3d(EndPoint.X - (i * NewTendonSpacing), StartPoint.Y, 0)
-                                        TendonPointsList.Add(NewTendonPoint)
-
-                                    End If
-
+                                    NewTendonPoint = New Point3d(StartPoint.X + (i * NewTendonSpacing), StartPoint.Y, 0)
                                 Else
-
-                                    If acLine.StartPoint.Y > acLine.EndPoint.Y Then
-
-                                        NewTendonPoint = New Point3d(StartPoint.X, StartPoint.Y - (i * NewTendonSpacing), 0)
-                                        TendonPointsList.Add(NewTendonPoint)
-
-                                    Else
-
-                                        NewTendonPoint = New Point3d(EndPoint.X, EndPoint.Y + (i * NewTendonSpacing), 0)
-                                        TendonPointsList.Add(NewTendonPoint)
-
-                                    End If
-
+                                    NewTendonPoint = New Point3d(StartPoint.X, StartPoint.Y - (i * NewTendonSpacing), 0)
                                 End If
-
+                                TendonPointsList.Add(NewTendonPoint)
                             Next
+
+                            If EndWithTendon = False Then
+                                TendonPointsList.Add(EndPoint)
+                            End If
 
                             For Each point In TendonPointsList
 
@@ -464,45 +561,40 @@ Namespace Arcxis_Cad_Tools
 
                                     SlabEnt.IntersectWith(TendoLine, Intersect.OnBothOperands, SlabLineIptCol, IntPtr.Zero, IntPtr.Zero)
 
-                                    If SlabLineIptCol.Count <> 0 Then
-                                        If SlabLineIptCol.Count <= 2 Then
+                                    If SlabLineIptCol.Count <= 2 Then
 
-                                            TendoStart = New Point3d(SlabLineIptCol(0).X, point.Y, 0)
-                                            TendoEnd = New Point3d(SlabLineIptCol(1).X, point.Y, 0)
-                                            TendoLine = New Line(TendoStart, TendoEnd)
+                                        TendoStart = New Point3d(SlabLineIptCol(0).X, point.Y, 0)
+                                        TendoEnd = New Point3d(SlabLineIptCol(1).X, point.Y, 0)
+                                        TendoLine = New Line(TendoStart, TendoEnd)
 
-                                        ElseIf SlabLineIptCol.Count <= 4 Then
-                                            Dim value As Double
-                                            value = point.X
-                                            For h = 0 To SlabLineIptCol.Count - 2
-                                                If Math.Abs(value) < Math.Max(Math.Abs(SlabLineIptCol(h).X), Math.Abs(SlabLineIptCol(h + 1).X)) And Math.Abs(value) > Math.Min(Math.Abs(SlabLineIptCol(h).X), Math.Abs(SlabLineIptCol(h + 1).X)) Then
-                                                    TendoStart = New Point3d(SlabLineIptCol(h).X, point.Y, 0)
-                                                    TendoEnd = New Point3d(SlabLineIptCol(h + 1).X, point.Y, 0)
-                                                    Exit For
-                                                End If
-                                            Next
-                                            'TendoStart = New Point3d(point.X, SlabLineIptCol(0).Y, 0)
-                                            'TendoEnd = New Point3d(point.X, SlabLineIptCol(1).Y, 0)
-                                            TendoLine = New Line(TendoStart, TendoEnd)
-
-                                        End If
-
-                                        TendoLine.Layer = "S-FND-STEND"
-
-                                        acBlkTblRec.AppendEntity(TendoLine)
-                                        acTrans.AddNewlyCreatedDBObject(TendoLine, True)
-                                        SlabLineIptCol.Clear()
+                                    ElseIf SlabLineIptCol.Count <= 4 Then
+                                        Dim value As Double
+                                        value = point.X
+                                        For h = 0 To SlabLineIptCol.Count - 2
+                                            If Math.Abs(value) < Math.Max(Math.Abs(SlabLineIptCol(h).X), Math.Abs(SlabLineIptCol(h + 1).X)) And Math.Abs(value) > Math.Min(Math.Abs(SlabLineIptCol(h).X), Math.Abs(SlabLineIptCol(h + 1).X)) Then
+                                                TendoStart = New Point3d(SlabLineIptCol(h).X, point.Y, 0)
+                                                TendoEnd = New Point3d(SlabLineIptCol(h + 1).X, point.Y, 0)
+                                                Exit For
+                                            End If
+                                        Next
+                                        TendoLine = New Line(TendoStart, TendoEnd)
 
                                     End If
+
+                                    TendoLine.Layer = "S-FND-STEND"
+
+                                    acBlkTblRec.AppendEntity(TendoLine)
+                                    acTrans.AddNewlyCreatedDBObject(TendoLine, True)
+                                    SlabLineIptCol.Clear()
 
                                 End If
 
                             Next
 
-                            acLine.StartPoint = StartPoint
-                            acLine.EndPoint = EndPoint
-                            acBlkTblRec.AppendEntity(acLine)
-                            acTrans.AddNewlyCreatedDBObject(acLine, True)
+                            'acLine.StartPoint = StartPoint
+                            'acLine.EndPoint = EndPoint
+                            'acBlkTblRec.AppendEntity(acLine)
+                            'acTrans.AddNewlyCreatedDBObject(acLine, True)
 
                         End If
 
@@ -1054,6 +1146,88 @@ Namespace Arcxis_Cad_Tools
                 Next
             End Using
 
+        End Sub
+
+        Private Shared Function IsLineOrPolyline(ent As Entity) As Boolean
+            Return TypeOf ent Is Line OrElse TypeOf ent Is Polyline
+        End Function
+
+        Private Shared Sub AddIntersectionsWithLine(ent As Entity, line As Line, points As Point3dCollection)
+            ent.IntersectWith(line, Intersect.OnBothOperands, points, IntPtr.Zero, IntPtr.Zero)
+        End Sub
+
+        Private Shared Sub SetTendonToSlabBounds(slabInt As Point3d, boundaryTendonInt As Point3d, fLineAngD As Integer,
+                                                 distanceFromSlab As Double, ByRef startPoint As Point3d, ByRef endPoint As Point3d,
+                                                 ByRef startWithTendon As Boolean, ByRef endWithTendon As Boolean,
+                                                 ByRef lengthOfLine As Double, ByRef numberOfTendons As Double,
+                                                 ByRef newTendonSpacing As Double, spacing As Double)
+            startWithTendon = False
+            endWithTendon = False
+
+            If fLineAngD = 0 Or fLineAngD = 180 Or fLineAngD = 360 Then
+                Dim slabOffsetPoint As Point3d
+                If slabInt.X < boundaryTendonInt.X Then
+                    slabOffsetPoint = New Point3d(slabInt.X + distanceFromSlab, slabInt.Y, 0)
+                    startPoint = slabOffsetPoint
+                    endPoint = New Point3d(boundaryTendonInt.X, boundaryTendonInt.Y, 0)
+                    endWithTendon = True
+                Else
+                    slabOffsetPoint = New Point3d(slabInt.X - distanceFromSlab, slabInt.Y, 0)
+                    startPoint = New Point3d(boundaryTendonInt.X, boundaryTendonInt.Y, 0)
+                    endPoint = slabOffsetPoint
+                    startWithTendon = True
+                End If
+
+                lengthOfLine = Math.Abs(startPoint.X - endPoint.X)
+            Else
+                Dim slabOffsetPoint As Point3d
+                If slabInt.Y > boundaryTendonInt.Y Then
+                    slabOffsetPoint = New Point3d(slabInt.X, slabInt.Y - distanceFromSlab, 0)
+                    startPoint = slabOffsetPoint
+                    endPoint = New Point3d(boundaryTendonInt.X, boundaryTendonInt.Y, 0)
+                    endWithTendon = True
+                Else
+                    slabOffsetPoint = New Point3d(slabInt.X, slabInt.Y + distanceFromSlab, 0)
+                    startPoint = New Point3d(boundaryTendonInt.X, boundaryTendonInt.Y, 0)
+                    endPoint = slabOffsetPoint
+                    startWithTendon = True
+                End If
+
+                lengthOfLine = Math.Abs(startPoint.Y - endPoint.Y)
+            End If
+
+            numberOfTendons = Math.Ceiling(Math.Abs(lengthOfLine) / spacing)
+            newTendonSpacing = Math.Abs(lengthOfLine / numberOfTendons)
+        End Sub
+
+        Private Shared Sub SetSlabExtents(ent As Entity, ByRef minX As Double, ByRef maxX As Double, ByRef minY As Double, ByRef maxY As Double)
+            Dim pline As Polyline = TryCast(ent, Polyline)
+            If pline IsNot Nothing Then
+                Dim firstPt As Point2d = pline.GetPoint2dAt(0)
+                minX = firstPt.X
+                maxX = firstPt.X
+                minY = firstPt.Y
+                maxY = firstPt.Y
+
+                For i As Integer = 1 To pline.NumberOfVertices - 1
+                    Dim pt As Point2d = pline.GetPoint2dAt(i)
+                    If pt.X < minX Then minX = pt.X
+                    If pt.X > maxX Then maxX = pt.X
+                    If pt.Y < minY Then minY = pt.Y
+                    If pt.Y > maxY Then maxY = pt.Y
+                Next
+            Else
+                Dim ext As Extents3d = ent.GeometricExtents
+                minX = ext.MinPoint.X
+                maxX = ext.MaxPoint.X
+                minY = ext.MinPoint.Y
+                maxY = ext.MaxPoint.Y
+            End If
+
+            minX -= 12
+            maxX += 12
+            minY -= 12
+            maxY += 12
         End Sub
 
         Private Sub InsertTendonTail(acDoc As Document, acCurDb As Database, aced As Editor, acTrans As Transaction, TailRot As Double, TailIpt As Point3d)
