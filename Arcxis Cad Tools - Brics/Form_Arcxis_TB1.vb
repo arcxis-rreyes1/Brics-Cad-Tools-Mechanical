@@ -1,4 +1,5 @@
 ﻿Imports System
+Imports System.Collections.Generic
 Imports System.Drawing.Printing
 Imports System.IO
 Imports Bricscad.ApplicationServices
@@ -18,6 +19,19 @@ Imports Color = Teigha.Colors.Color
 
 Public Class Form_Arcxis_TB1
 
+    Private ReadOnly _layoutViewportData As New Dictionary(Of String, LayoutViewportData)(StringComparer.OrdinalIgnoreCase)
+
+    Private Class LayoutViewportData
+        Public ClonedModelViewportIds As HashSet(Of ObjectId)
+        Public TemplateFingerprints As List(Of ModelViewportFingerprint)
+    End Class
+
+    Private Class ModelViewportFingerprint
+        Public CenterX As Double
+        Public CenterY As Double
+        Public Width As Double
+        Public Height As Double
+    End Class
 
     Private Sub CheckBox1_CheckedChanged(sender As Object, e As EventArgs) Handles CheckBox1.CheckedChanged
 
@@ -1157,7 +1171,7 @@ Public Class Form_Arcxis_TB1
     End Sub
 
     Private Sub PDF24x36_Click(sender As Object, e As EventArgs) Handles PDF24x36.Click
-
+        Arcxis_Cad_Tools.ArcxisActivityLog.LogUi("Form_Arcxis_TB1 PDF24x36 plot")
 
         PageSetUp24x36()
 
@@ -1365,6 +1379,7 @@ Public Class Form_Arcxis_TB1
 
     End Sub
     Private Sub PlotPDF11x17_Click(sender As Object, e As EventArgs) Handles PlotPDF11x17.Click
+        Arcxis_Cad_Tools.ArcxisActivityLog.LogUi("Form_Arcxis_TB1 PlotPDF11x17")
 
         PageSetUp11x17()
 
@@ -1513,6 +1528,7 @@ Public Class Form_Arcxis_TB1
     End Sub
 
     Private Sub Plot_Click(sender As Object, e As EventArgs) Handles Plot.Click
+        Arcxis_Cad_Tools.ArcxisActivityLog.LogUi("Form_Arcxis_TB1 Plot")
 
         Module_Arcxis_TB.ATB_PlotterName = ComboBox6.Text
 
@@ -3273,6 +3289,7 @@ Public Class Form_Arcxis_TB1
 
         Dim frm As New Form_Arcxis_TB1
         Module_Arcxis_TB.ATB_UserSelect = ""
+        _layoutViewportData.Clear()
 
         ' Get the current document and database
         Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
@@ -3719,6 +3736,8 @@ Public Class Form_Arcxis_TB1
 
         SetPSLTScale()
 
+        FinalizeNewLayoutViewports()
+
         Me.Update()
         Me.BringToFront()
         frm.Update()
@@ -3727,87 +3746,327 @@ Public Class Form_Arcxis_TB1
 
     End Sub
 
-    Private Sub CreateLeftSwing(RightLayoutName As String, NextlayoutName As String)
+    Private Shared Function IsOverallViewport(vp As Viewport) As Boolean
+        If vp Is Nothing Then Return False
+        Return vp.Number = 1
+    End Function
 
-        ' Get the current document and database
-        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
-        Dim acCurDb As Database = acDoc.Database
+    Private Shared Function CaptureSourceModelViewportIds(sourceBtr As BlockTableRecord, acTrans As Transaction) As List(Of ObjectId)
+        Dim ids As New List(Of ObjectId)
+        For Each entId As ObjectId In sourceBtr
+            Dim sourceVp = TryCast(acTrans.GetObject(entId, OpenMode.ForRead), Viewport)
+            If sourceVp Is Nothing Then Continue For
+            If IsOverallViewport(sourceVp) OrElse IsKnownBricsCadDefaultViewport(sourceVp) Then Continue For
+            ids.Add(entId)
+        Next
+        Return ids
+    End Function
 
-        ' Get the current document and database
-        Dim acDocex As Document = Application.DocumentManager.MdiActiveDocument
-        Dim acCurDbex As Database = acDoc.Database
+    Private Shared Function CaptureTemplateModelViewportFingerprints(sourceBtr As BlockTableRecord, acTrans As Transaction) As List(Of ModelViewportFingerprint)
+        Dim fingerprints As New List(Of ModelViewportFingerprint)
+        For Each entId As ObjectId In sourceBtr
+            Dim sourceVp = TryCast(acTrans.GetObject(entId, OpenMode.ForRead), Viewport)
+            If sourceVp Is Nothing Then Continue For
+            If IsOverallViewport(sourceVp) OrElse IsKnownBricsCadDefaultViewport(sourceVp) Then Continue For
+            fingerprints.Add(New ModelViewportFingerprint With {
+                .CenterX = sourceVp.CenterPoint.X,
+                .CenterY = sourceVp.CenterPoint.Y,
+                .Width = sourceVp.Width,
+                .Height = sourceVp.Height
+            })
+        Next
+        Return fingerprints
+    End Function
+
+    Private Shared Function MatchesTemplateModelViewport(vp As Viewport, fingerprints As List(Of ModelViewportFingerprint)) As Boolean
+        If vp Is Nothing OrElse fingerprints Is Nothing OrElse fingerprints.Count = 0 Then Return False
+        Const tol As Double = 0.15
+        For Each fp In fingerprints
+            If Math.Abs(vp.CenterPoint.X - fp.CenterX) <= tol AndAlso
+               Math.Abs(vp.CenterPoint.Y - fp.CenterY) <= tol AndAlso
+               Math.Abs(vp.Width - fp.Width) <= tol AndAlso
+               Math.Abs(vp.Height - fp.Height) <= tol Then
+                Return True
+            End If
+        Next
+        Return False
+    End Function
+
+    Private Shared Function ShouldKeepModelViewport(vp As Viewport, entId As ObjectId, clonedModelViewportIds As HashSet(Of ObjectId), templateFingerprints As List(Of ModelViewportFingerprint)) As Boolean
+        If vp Is Nothing OrElse IsOverallViewport(vp) Then Return False
+        If IsKnownBricsCadDefaultViewport(vp) Then Return False
+        If clonedModelViewportIds IsNot Nothing AndAlso clonedModelViewportIds.Contains(entId) Then Return True
+        Return MatchesTemplateModelViewport(vp, templateFingerprints)
+    End Function
+
+    Private Shared Sub SafeEraseViewport(vp As Viewport)
+        If vp Is Nothing OrElse vp.IsErased OrElse IsOverallViewport(vp) Then Return
+        If vp.Locked Then vp.Locked = False
+        Try
+            vp.Erase()
+        Catch ex As Exception
+            Try
+                vp.On = False
+                vp.Erase()
+            Catch
+            End Try
+        End Try
+    End Sub
+
+    Private Shared Sub RemoveAllModelViewports(btr As BlockTableRecord, acTrans As Transaction)
+        For Each entId As ObjectId In btr
+            Dim vp = TryCast(acTrans.GetObject(entId, OpenMode.ForWrite), Viewport)
+            If vp Is Nothing OrElse vp.IsErased OrElse IsOverallViewport(vp) Then Continue For
+            SafeEraseViewport(vp)
+        Next
+    End Sub
+
+    Private Shared Function IsKnownBricsCadDefaultViewport(vp As Viewport) As Boolean
+        If vp Is Nothing OrElse IsOverallViewport(vp) Then Return False
+        Const centerTol As Double = 0.25
+        Const sizeTol As Double = 0.35
+
+        If Math.Abs(vp.CenterPoint.X - 5.25) <= centerTol AndAlso Math.Abs(vp.CenterPoint.Y - 4.0) <= centerTol Then
+            Dim minDim As Double = Math.Min(vp.Width, vp.Height)
+            Dim maxDim As Double = Math.Max(vp.Width, vp.Height)
+            If Math.Abs(minDim - 6.375) <= sizeTol AndAlso Math.Abs(maxDim - 8.375) <= sizeTol Then Return True
+            If Math.Abs(minDim - 6.4) <= sizeTol AndAlso Math.Abs(maxDim - 8.4) <= sizeTol Then Return True
+            If String.Equals(vp.Layer, "S-ANNO-AUTOMATION", StringComparison.OrdinalIgnoreCase) AndAlso maxDim < 12.0 AndAlso minDim < 10.0 Then Return True
+        End If
+
+        Return False
+    End Function
+
+    Private Sub StoreLayoutViewportData(layoutName As String, clonedIds As HashSet(Of ObjectId), fingerprints As List(Of ModelViewportFingerprint))
+        _layoutViewportData(layoutName) = New LayoutViewportData With {
+            .ClonedModelViewportIds = New HashSet(Of ObjectId)(clonedIds),
+            .TemplateFingerprints = fingerprints
+        }
+    End Sub
+
+    Private Function GetLayoutViewportData(layoutName As String) As LayoutViewportData
+        Dim data As LayoutViewportData = Nothing
+        _layoutViewportData.TryGetValue(layoutName, data)
+        Return data
+    End Function
+
+    Private Shared Function BuildClonedViewportKeepSet(idmap As IdMapping, sourceViewportIds As List(Of ObjectId), acTrans As Transaction) As HashSet(Of ObjectId)
+        Dim kept As New HashSet(Of ObjectId)
+
+        For Each sourceId As ObjectId In sourceViewportIds
+            If Not idmap.Contains(sourceId) Then Continue For
+            Dim pair As IdPair = idmap(sourceId)
+            If pair.IsCloned AndAlso Not pair.Value.IsNull Then kept.Add(pair.Value)
+        Next
+
+        For Each pair As IdPair In idmap
+            If Not pair.IsCloned OrElse pair.Value.IsNull OrElse kept.Contains(pair.Value) Then Continue For
+            Dim sourceVp = TryCast(acTrans.GetObject(pair.Key, OpenMode.ForRead), Viewport)
+            If sourceVp Is Nothing OrElse IsKnownBricsCadDefaultViewport(sourceVp) Then Continue For
+            kept.Add(pair.Value)
+        Next
+
+        Return kept
+    End Function
+
+    Private Shared Sub PrepareLayoutViewports(acDoc As Document, acCurDb As Database, layoutName As String, layoutData As LayoutViewportData)
+        If layoutData Is Nothing Then Return
+
+        Dim lm As LayoutManager = LayoutManager.Current
+        Dim previousLayout As String = lm.CurrentLayout
+
+        Try
+            lm.CurrentLayout = layoutName
+        Catch
+            Return
+        End Try
+
+        Try
+            acDoc.Editor.Regen()
+        Catch
+        End Try
 
         Using acLckDoc As DocumentLock = acDoc.LockDocument()
-            ' Create a transaction for the external drawing
-            Using acTransEx As Transaction = acCurDbex.TransactionManager.StartTransaction()
-
-                Dim layoutsEx As DBDictionary = TryCast(acTransEx.GetObject(acCurDbex.LayoutDictionaryId, OpenMode.ForRead), DBDictionary)
-
-                ' Check to see if the layout exists in the external drawing
-                If layoutsEx.Contains(NextlayoutName) = False Then
-
-                    Dim Layid As ObjectId = layoutsEx.GetAt(RightLayoutName)
-                    ' Windows.MessageBox.Show(id.ToString & " id")
-                    Dim layex As Layout = TryCast(acTransEx.GetObject(Layid, OpenMode.ForRead), Layout)
-
-                    Dim blkBlkRecEx As BlockTableRecord = acTransEx.GetObject(layex.BlockTableRecordId, OpenMode.ForRead)
-
-                    ' Get the objects from the block associated with the layout
-                    Dim idCol As ObjectIdCollection = New ObjectIdCollection()
-                    For Each id As ObjectId In blkBlkRecEx
-
-                        idCol.Add(id)
-
-                    Next
-
-                    ' Create a transaction for the current drawing
-                    Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
-
-                        ' Get the block table and create a new block then copy the objects between drawings
-                        Dim blkTbl As BlockTable = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForWrite)
-
-
-                        Using blkBlkRec As New BlockTableRecord
-                            blkBlkRec.Name = "*Paper_Space" & CStr(layoutsEx.Count() - 1)
-
-                            blkTbl.Add(blkBlkRec)
-                            acTrans.AddNewlyCreatedDBObject(blkBlkRec, True)
-
-                            Dim idmap As New IdMapping
-                            acCurDb.DeepCloneObjects(idCol, blkBlkRec.ObjectId, idmap, False)
-
-                            ' Create a new layout and then copy properties between drawings
-                            Dim layouts As DBDictionary = acTrans.GetObject(acCurDb.LayoutDictionaryId, OpenMode.ForWrite)
-
-                            Using lay As New Layout
-                                lay.LayoutName = NextlayoutName
-                                lay.AddToLayoutDictionary(acCurDb, blkBlkRec.ObjectId)
-                                acTrans.AddNewlyCreatedDBObject(lay, True)
-                                lay.CopyFrom(layex)
-                                'lay.Extents =
-
-
-                            End Using
-
-                        End Using
-
-                        ' Regen the drawing to get the layout tab to display
-                        acDoc.Editor.Regen()
-
-                        ' Save the changes made
-                        acTrans.Commit()
-                    End Using
-                Else
-                    ' Display a message if the layout could not be found in the specified drawing
-                    acDoc.Editor.WriteMessage(vbLf & "Layout '" & RightLayoutName & "' could not be imported '" & "'.")
+            Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
+                Dim layouts As DBDictionary = TryCast(acTrans.GetObject(acCurDb.LayoutDictionaryId, OpenMode.ForRead), DBDictionary)
+                If layouts.Contains(layoutName) Then
+                    Dim layId As ObjectId = layouts.GetAt(layoutName)
+                    Dim lay As Layout = TryCast(acTrans.GetObject(layId, OpenMode.ForRead), Layout)
+                    If lay IsNot Nothing Then
+                        Dim btr As BlockTableRecord = TryCast(acTrans.GetObject(lay.BlockTableRecordId, OpenMode.ForWrite), BlockTableRecord)
+                        If btr IsNot Nothing Then
+                            SyncLayoutModelViewports(btr, acTrans, layoutData.ClonedModelViewportIds, layoutData.TemplateFingerprints)
+                        End If
+                    End If
                 End If
-
-                ' Discard the changes made to the external drawing file
-                acTransEx.Commit()
+                acTrans.Commit()
             End Using
         End Using
 
+        Try
+            If Not String.IsNullOrEmpty(previousLayout) AndAlso previousLayout <> layoutName Then
+                lm.CurrentLayout = previousLayout
+            End If
+        Catch
+        End Try
+    End Sub
 
+    Private Sub FinalizeNewLayoutViewports()
+        If _layoutViewportData.Count = 0 Then Return
+
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
+        Dim acCurDb As Database = acDoc.Database
+
+        For Each kvp In _layoutViewportData
+            PrepareLayoutViewports(acDoc, acCurDb, kvp.Key, kvp.Value)
+        Next
+    End Sub
+
+    Private Shared Function HasOverallViewport(btr As BlockTableRecord, acTrans As Transaction) As Boolean
+        For Each entId As ObjectId In btr
+            Dim vp = TryCast(acTrans.GetObject(entId, OpenMode.ForRead), Viewport)
+            If vp IsNot Nothing AndAlso Not vp.IsErased AndAlso IsOverallViewport(vp) Then Return True
+        Next
+        Return False
+    End Function
+
+    Private Shared Sub SyncLayoutModelViewports(btr As BlockTableRecord, acTrans As Transaction, clonedModelViewportIds As HashSet(Of ObjectId), templateFingerprints As List(Of ModelViewportFingerprint))
+        If Not HasOverallViewport(btr, acTrans) Then Return
+
+        Dim modelVpIds As New List(Of ObjectId)
+        For Each entId As ObjectId In btr
+            Dim vp = TryCast(acTrans.GetObject(entId, OpenMode.ForRead), Viewport)
+            If vp Is Nothing OrElse vp.IsErased OrElse IsOverallViewport(vp) Then Continue For
+            modelVpIds.Add(entId)
+        Next
+
+        Dim keepIds As New HashSet(Of ObjectId)
+        For Each entId As ObjectId In modelVpIds
+            Dim vp = TryCast(acTrans.GetObject(entId, OpenMode.ForRead), Viewport)
+            If vp IsNot Nothing AndAlso ShouldKeepModelViewport(vp, entId, clonedModelViewportIds, templateFingerprints) Then
+                keepIds.Add(entId)
+            End If
+        Next
+
+        If keepIds.Count = 0 AndAlso modelVpIds.Count > 0 AndAlso templateFingerprints IsNot Nothing AndAlso templateFingerprints.Count > 0 Then
+            For Each entId As ObjectId In modelVpIds
+                Dim vp = TryCast(acTrans.GetObject(entId, OpenMode.ForRead), Viewport)
+                If vp IsNot Nothing AndAlso Not IsKnownBricsCadDefaultViewport(vp) AndAlso MatchesTemplateModelViewport(vp, templateFingerprints) Then
+                    keepIds.Add(entId)
+                End If
+            Next
+        End If
+
+        For Each entId As ObjectId In modelVpIds
+            Dim vp = TryCast(acTrans.GetObject(entId, OpenMode.ForWrite), Viewport)
+            If vp Is Nothing Then Continue For
+            If keepIds.Contains(entId) Then
+                vp.On = True
+            Else
+                SafeEraseViewport(vp)
+            End If
+        Next
+    End Sub
+
+    Private Shared Sub ClearLayoutBlockExceptOverall(btr As BlockTableRecord, acTrans As Transaction)
+        Dim toErase As New List(Of ObjectId)
+        For Each entId As ObjectId In btr
+            Dim vp = TryCast(acTrans.GetObject(entId, OpenMode.ForRead), Viewport)
+            If vp IsNot Nothing AndAlso IsOverallViewport(vp) Then Continue For
+            toErase.Add(entId)
+        Next
+        For Each entId As ObjectId In toErase
+            Dim obj = acTrans.GetObject(entId, OpenMode.ForWrite)
+            If obj Is Nothing OrElse obj.IsErased Then Continue For
+            Dim vp = TryCast(obj, Viewport)
+            If vp IsNot Nothing Then
+                SafeEraseViewport(vp)
+            Else
+                obj.Erase()
+            End If
+        Next
+    End Sub
+
+    Private Sub CloneTemplateViewports(sourceBtr As BlockTableRecord, targetBtr As BlockTableRecord, acTrans As Transaction, layoutName As String, templateFingerprints As List(Of ModelViewportFingerprint))
+        Dim sourceModelViewportIds As List(Of ObjectId) = CaptureSourceModelViewportIds(sourceBtr, acTrans)
+        RemoveAllModelViewports(targetBtr, acTrans)
+
+        Dim viewportIdmap As New IdMapping()
+        Dim modelVpCol As New ObjectIdCollection()
+        For Each entId As ObjectId In sourceModelViewportIds
+            modelVpCol.Add(entId)
+        Next
+        If modelVpCol.Count > 0 Then
+            sourceBtr.Database.DeepCloneObjects(modelVpCol, targetBtr.ObjectId, viewportIdmap, False)
+        End If
+
+        Dim clonedModelViewportIds As HashSet(Of ObjectId) = BuildClonedViewportKeepSet(viewportIdmap, sourceModelViewportIds, acTrans)
+        StoreLayoutViewportData(layoutName, clonedModelViewportIds, templateFingerprints)
+    End Sub
+
+    Private Sub CreateLeftSwing(RightLayoutName As String, NextlayoutName As String)
+
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
+        Dim acCurDb As Database = acDoc.Database
+
+        Dim needsPostRegenSync As Boolean = False
+
+        Using acLckDoc As DocumentLock = acDoc.LockDocument()
+            Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
+
+                Dim layouts As DBDictionary = TryCast(acTrans.GetObject(acCurDb.LayoutDictionaryId, OpenMode.ForRead), DBDictionary)
+
+                If Not layouts.Contains(RightLayoutName) Then
+                    acDoc.Editor.WriteMessage(vbLf & "Layout '" & RightLayoutName & "' was not found.")
+                    acTrans.Commit()
+                    Return
+                End If
+
+                If layouts.Contains(NextlayoutName) Then
+                    acTrans.Commit()
+                    Return
+                End If
+
+                Dim sourceLayId As ObjectId = layouts.GetAt(RightLayoutName)
+                Dim layex As Layout = TryCast(acTrans.GetObject(sourceLayId, OpenMode.ForRead), Layout)
+                Dim sourceBtr As BlockTableRecord = acTrans.GetObject(layex.BlockTableRecordId, OpenMode.ForRead)
+                Dim templateFingerprints As List(Of ModelViewportFingerprint) = CaptureTemplateModelViewportFingerprints(sourceBtr, acTrans)
+
+                If Application.GetSystemVariable("LAYOUTREGENCTL") <> 0 Then
+                    Application.SetSystemVariable("LAYOUTREGENCTL", 0)
+                End If
+
+                Dim geometryCol As New ObjectIdCollection()
+                For Each id As ObjectId In sourceBtr
+                    Dim sourceVp = TryCast(acTrans.GetObject(id, OpenMode.ForRead), Viewport)
+                    If sourceVp IsNot Nothing Then Continue For
+                    geometryCol.Add(id)
+                Next
+
+                Dim lm As LayoutManager = LayoutManager.Current
+                Dim targetLayId As ObjectId = lm.CreateLayout(NextlayoutName)
+                Dim targetLay As Layout = TryCast(acTrans.GetObject(targetLayId, OpenMode.ForWrite), Layout)
+                targetLay.CopyFrom(layex)
+
+                Dim targetBtrId As ObjectId = targetLay.BlockTableRecordId
+                Dim targetBtr As BlockTableRecord = acTrans.GetObject(targetBtrId, OpenMode.ForWrite)
+                ClearLayoutBlockExceptOverall(targetBtr, acTrans)
+
+                Dim geometryIdmap As New IdMapping()
+                If geometryCol.Count > 0 Then
+                    acCurDb.DeepCloneObjects(geometryCol, targetBtrId, geometryIdmap, False)
+                End If
+
+                CloneTemplateViewports(sourceBtr, targetBtr, acTrans, NextlayoutName, templateFingerprints)
+
+                needsPostRegenSync = True
+                acTrans.Commit()
+            End Using
+        End Using
+
+        If needsPostRegenSync Then
+            PrepareLayoutViewports(acDoc, acCurDb, NextlayoutName, GetLayoutViewportData(NextlayoutName))
+        End If
 
     End Sub
 
@@ -3835,13 +4094,22 @@ Public Class Form_Arcxis_TB1
                     Dim acBlkTbl As BlockTable = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead)
                     '' Open the Block table record Paper space for write
                     Dim acBlkTblRec As BlockTableRecord = acTrans.GetObject(acBlkTbl(BlockTableRecord.PaperSpace), OpenMode.ForWrite)
-                    Dim blkBlkRec As BlockTableRecord = acTrans.GetObject(lay.BlockTableRecordId, OpenMode.ForRead)
+                    Dim blkBlkRec As BlockTableRecord = acTrans.GetObject(lay.BlockTableRecordId, OpenMode.ForWrite)
+
+                    Dim layoutData As LayoutViewportData = GetLayoutViewportData(NextlayoutName)
+                    Dim clonedViewportIds As HashSet(Of ObjectId) = If(layoutData IsNot Nothing, layoutData.ClonedModelViewportIds, Nothing)
+                    Dim templateFingerprints As List(Of ModelViewportFingerprint) = If(layoutData IsNot Nothing, layoutData.TemplateFingerprints, Nothing)
+                    SyncLayoutModelViewports(blkBlkRec, acTrans, clonedViewportIds, templateFingerprints)
+
                     Dim vpIds As ObjectIdCollection = New ObjectIdCollection()
 
                     For Each objID As ObjectId In blkBlkRec
 
                         If (objID.ObjectClass.DxfName.ToUpper = "VIEWPORT") Then
 
+                            Dim layoutVp = TryCast(acTrans.GetObject(objID, OpenMode.ForRead), Viewport)
+                            If layoutVp Is Nothing Then Continue For
+                            If Not ShouldKeepModelViewport(layoutVp, objID, clonedViewportIds, templateFingerprints) Then Continue For
                             vpIds.Add(objID)
 
                         ElseIf (objID.ObjectClass.DxfName.ToUpper = "INSERT") Then
@@ -3885,6 +4153,9 @@ Public Class Form_Arcxis_TB1
 
                         If layoutviewport IsNot Nothing Then
 
+                            Dim wasLocked As Boolean = layoutviewport.Locked
+                            layoutviewport.Locked = False
+
                             Dim vcp As Point2d = layoutviewport.ViewCenter
                             Dim vtp As Point3d = layoutviewport.ViewTarget
                             Dim cp As Point3d = layoutviewport.CenterPoint
@@ -3896,11 +4167,15 @@ Public Class Form_Arcxis_TB1
                             layoutviewport.CenterPoint = New Point3d(cp.X, cp.Y, cp.Z)
                             layoutviewport.Width = wvp
                             layoutviewport.Height = hvp
+                            layoutviewport.On = True
 
+                            layoutviewport.Locked = wasLocked
 
                         End If
 
                     Next
+
+                    SyncLayoutModelViewports(blkBlkRec, acTrans, clonedViewportIds, templateFingerprints)
 
                 Else
                     ' Display a message if the layout could not be found in the specified drawing

@@ -318,5 +318,112 @@ Module Module_Arcxis_TB
         End If
 
     End Sub
+    Public Sub AddNewPaths(Optional ByVal CurTrustPathList As List(Of String) = Nothing)
+
+
+        Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
+        Dim acCurDb As Database = acDoc.Database
+        Dim aced As Editor = acDoc.Editor
+        'Dim acpref As AcadPreferences = Application.Preferences
+        Dim CleanedTrustPathList As List(Of String) = New List(Of String)
+
+        ' Ensure we have a list to work with
+        If CurTrustPathList Is Nothing OrElse CurTrustPathList.Count = 0 Then
+            CurTrustPathList = GetPaths()
+        End If
+
+        For Each curpath As String In CurTrustPathList
+            If String.IsNullOrWhiteSpace(curpath) Then Continue For
+
+            ' Normalize and validate absolute paths only
+            Dim p As String = curpath.Trim()
+            Dim hasDpis As Boolean = p.IndexOf("dpis", StringComparison.OrdinalIgnoreCase) >= 0
+            Dim hasSeal As Boolean = p.IndexOf("seal$", StringComparison.OrdinalIgnoreCase) >= 0
+            Dim hasSDrive As Boolean = p.IndexOf("s:\", StringComparison.OrdinalIgnoreCase) >= 0
+            Dim hasegnyte As Boolean = p.IndexOf("\\egnytedrive\", StringComparison.OrdinalIgnoreCase) >= 0
+            Dim HasEngyteDriveLetter As Boolean = p.IndexOf(":\Shared\Arcxis\", StringComparison.OrdinalIgnoreCase) >= 0
+
+            If hasDpis OrElse hasSeal OrElse hasSDrive Then
+                ' Skip paths containing DPIS, SEAL$, or S:\ (case-insensitive)
+            Else
+                If Global.System.IO.Path.IsPathRooted(p) Then
+                    ' Add only if not already present (case-insensitive)
+                    If Not CleanedTrustPathList.Any(Function(x) String.Equals(x, p, StringComparison.OrdinalIgnoreCase)) Then
+                        CleanedTrustPathList.Add(p)
+                    End If
+                End If
+            End If
+        Next
+
+        UNCPath()
+
+        Dim TrustPathListAdd As List(Of String) = New List(Of String)
+        Dim FinalTrustPathList As List(Of String) = New List(Of String)
+
+        ' Build dynamic paths based on discovered Egnyte configuration
+        ' Add mapped drive path only if we actually found a mapped letter
+        If Not String.IsNullOrEmpty(NetworkLetterForEgnyte) Then
+            Dim mappedEgnyte = Global.System.IO.Path.Combine(NetworkLetterForEgnyte, "shared\arcxis\engineering\drafting standards\CAD Lisp Routines\BricsCad")
+            TrustPathListAdd.Add(mappedEgnyte)
+        End If
+
+        ' Add UNC paths using the discovered base path
+        If Not String.IsNullOrEmpty(NetworkUNCPathForEgnyte) Then
+            TrustPathListAdd.Add(Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "arcxis\engineering\drafting standards\cad lisp routines\BricsCad"))
+            TrustPathListAdd.Add(Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "arcxis\engineering\drafting standards\cad lisp routines\BricsCad\Support Files"))
+
+            ' Only add seals path if it exists
+            Dim sealsPath As String = Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "onyx file system\templates\engineering\sealsoriginal")
+            If Directory.Exists(sealsPath) Then
+                TrustPathListAdd.Add(sealsPath)
+            Else
+                ' Notify user that seals access is not available
+                Dim sealsFullPath As String = Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "onyx file system\Templates\Engineering\SealsOriginal")
+                Dim errorMsg As String = vbCrLf & "Active access to seals drive does not exist." & vbCrLf &
+                                         "Please reach out to IT for access to:" & vbCrLf & vbCrLf & sealsFullPath
+                aced.WriteMessage(errorMsg)
+            End If
+        End If
+
+        For Each candidate In CleanedTrustPathList
+            If Not String.IsNullOrWhiteSpace(candidate) AndAlso Global.System.IO.Path.IsPathRooted(candidate) Then
+                If Not FinalTrustPathList.Any(Function(pth) String.Equals(pth, candidate, StringComparison.OrdinalIgnoreCase)) Then
+                    FinalTrustPathList.Add(candidate)
+                End If
+            End If
+        Next
+
+        For Each candidate As String In TrustPathListAdd
+            If Not String.IsNullOrWhiteSpace(candidate) AndAlso Global.System.IO.Path.IsPathRooted(candidate) Then
+                If Not FinalTrustPathList.Any(Function(pth) String.Equals(pth, candidate, StringComparison.OrdinalIgnoreCase)) Then
+                    FinalTrustPathList.Add(candidate)
+                End If
+            End If
+        Next
+
+        If FinalTrustPathList.Count > 0 Then
+            Dim NewTrustPath As String = String.Join(";", FinalTrustPathList)
+            ' Use correct system variable name and avoid altering path casing
+            Application.SetSystemVariable("SRCHPATH", NewTrustPath)
+        End If
+
+
+        Dim acadApp As Object = Application.AcadApplication
+
+        ' Build dynamic printer paths using discovered Egnyte configuration
+        Dim NewPrinterStyleSheetDir As String = ""
+        Dim NewPrinterConfigDir As String = ""
+
+        If Not String.IsNullOrEmpty(NetworkUNCPathForEgnyte) Then
+            NewPrinterStyleSheetDir = Global.System.IO.Path.Combine(NetworkUNCPathForEgnyte, "Arcxis\Engineering\Drafting Standards\CAD Plot Styles")
+            NewPrinterConfigDir = NewPrinterStyleSheetDir
+        End If
+
+        If Not String.IsNullOrEmpty(NewPrinterConfigDir) Then
+            acadApp.Preferences.Files.PrinterConfigPath = NewPrinterConfigDir
+            acadApp.Preferences.Files.PrinterStyleSheetPath = NewPrinterStyleSheetDir
+        End If
+
+    End Sub
 
 End Module

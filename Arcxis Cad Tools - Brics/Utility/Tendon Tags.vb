@@ -11,6 +11,16 @@ Imports Teigha.Colors
 Namespace Arcxis_Cad_Tools
     Public Class TendonTagging
 
+        Private Class WestTendonCableRun
+            Public Property SourceEntity As Entity
+            Public Property StartPoint As Point3d
+            Public Property EndPoint As Point3d
+            Public Property SegmentLength As Double
+            Public Property TagAnchorPoint As Point3d
+            Public Property TailPoint As Point3d
+            Public Property IsHorizontal As Boolean
+        End Class
+
         <CommandMethod("DST")>
         Public Sub DimensionTendons()
 
@@ -636,17 +646,13 @@ Namespace Arcxis_Cad_Tools
             Dim CableTailIptList As New List(Of Point3d)
             Dim TailIptAng As New Dictionary(Of Point3d, Integer)
             Dim HeadIptAng As New Dictionary(Of Point3d, Integer)
-            Dim CableStart As Point3d
-            Dim CableEnd As Point3d
-            Dim CableAng As Double
-            Dim CableAngD As Integer
             Dim TailRot As Double
             Dim TailIpt As Point3d
             Dim HeadIpt As Point3d
-            Dim HoriCableList As New List(Of Object)
+            Dim HoriCableList As New List(Of WestTendonCableRun)
             Dim HoriCablePointsList As New List(Of Point3d)
             Dim SortedHoriCablePointsList As New List(Of Point3d)
-            Dim VertCableList As New List(Of Object)
+            Dim VertCableList As New List(Of WestTendonCableRun)
             Dim VertCablePointsList As New List(Of Point3d)
             Dim SortedVertCablePointsList As New List(Of Point3d)
             Dim VertTendon2Num As Integer
@@ -670,53 +676,21 @@ Namespace Arcxis_Cad_Tools
                     '' Step through the objects in the selection set
                     For Each acSSObj As SelectedObject In acSSet
 
-                        Dim typ As String = acSSObj.ObjectId.ObjectClass.Name()
-                        Dim acEnt As Object = acTrans.GetObject(acSSObj.ObjectId, OpenMode.ForRead, False, True)
+                        Dim acEnt As Entity = TryCast(acTrans.GetObject(acSSObj.ObjectId, OpenMode.ForRead, False, True), Entity)
+                        If acEnt Is Nothing Then Continue For
 
+                        For Each cableRun As WestTendonCableRun In GetWestTendonCableRuns(acEnt)
+                            If cableRun.IsHorizontal Then
+                                HoriCableList.Add(cableRun)
+                                HoriCablePointsList.Add(cableRun.TagAnchorPoint)
+                            Else
+                                VertCableList.Add(cableRun)
+                                VertCablePointsList.Add(cableRun.TagAnchorPoint)
+                            End If
 
-                        If typ = "AcDbLine" Then
-
-                            CableStart = acEnt.StartPoint
-                            CableEnd = acEnt.EndPoint
-                            CableAng = acEnt.Angle
-                            CableAngD = CableAng * 180.0 / Math.PI
-
-                        Else typ = "AcDbPolyline"
-
-                            CableStart = acEnt.StartPoint
-                            CableEnd = acEnt.EndPoint
-                            Dim lwp As Polyline = TryCast(acEnt, Polyline)
-                            Dim lwpStartpt As Point3d = lwp.GetPoint3dAt(0)
-                            Dim lwpEndpt As Point3d = lwp.GetPoint3dAt(1)
-                            CableAng = Math.Atan2(lwpEndpt.Y - lwpStartpt.Y, lwpEndpt.X - lwpStartpt.X)
-                            CableAngD = CableAng * 180.0 / Math.PI
-
-                        End If
-
-                        If CableAngD = 0 OrElse CableAngD = 360 Then
-
-                            HoriCableList.Add(acEnt)
-                            HoriCablePointsList.Add(CableStart)
-
-                        ElseIf CableAngD = 90 OrElse CableAngD = -270 Then
-
-                            VertCableList.Add(acEnt)
-                            VertCablePointsList.Add(CableStart)
-
-                        ElseIf CableAngD = 180 OrElse CableAngD = -180 Then
-
-                            HoriCableList.Add(acEnt)
-                            HoriCablePointsList.Add(CableEnd)
-
-                        ElseIf CableAngD = 270 OrElse CableAngD = -90 Then
-
-                            VertCableList.Add(acEnt)
-                            VertCablePointsList.Add(CableEnd)
-
-                        End If
-
-                        CablePointsList.Add(CableStart)
-                        CablePointsList.Add(CableEnd)
+                            CablePointsList.Add(cableRun.StartPoint)
+                            CablePointsList.Add(cableRun.EndPoint)
+                        Next
 
                     Next
 
@@ -730,53 +704,24 @@ Namespace Arcxis_Cad_Tools
                     Dim CableYPT As Point3d = SortedCableYPointsList(SortedCableYPointsList.Count - 1)
                     Dim CableY As Double = Math.Round(CableYPT.Y, 10)
                     Dim HoriTendon2Num As Integer = 1
-                    Dim HoriTendonLen As String = "0"
                     Dim HoriTendon3Num As Integer = 1
-                    Dim CableLength As Double
 
 
                     SortedHoriCablePointsList = (From Ypnt In HoriCablePointsList Order By Ypnt.Y Select Ypnt).ToList
 
                     For Each pt As Point3d In SortedHoriCablePointsList
 
-                        For Each CableEnt As Object In HoriCableList
+                        For Each cableRun As WestTendonCableRun In HoriCableList
 
-                            CableStart = CableEnt.StartPoint
-                            CableEnd = CableEnt.EndPoint
-                            Dim ID As String = CableEnt.objectid.ToString
-                            Dim CableColor As String = CableEnt.ColorIndex
-                            Dim CableLayer As String = CableEnt.layer
-                            Dim IDpart As String() = ID.Split("(")
-                            Dim IDpart1 As String = IDpart(1)
-                            Dim IDpart2 As String() = IDpart1.Split(")")
-                            Dim CableID As String = IDpart2(0)
-                            CableLength = (Math.Abs(CableStart.X - CableEnd.X) / 12)
-
-
-                            If CableStart = pt Then
-
-                                HoriTendonLen = "%<\AcExpr ((round(((%<\AcObjProp Object(%<\_ObjId " & CableID & ">%).Length \f ""%lu2%pr2"">%+18.12)/12)+.499))) \f ""%lu2%pr0%ps[(,)]"">%"
-                                TailIpt = CableEnd
+                            If cableRun.TagAnchorPoint = pt Then
+                                TailIpt = cableRun.TailPoint
+                                HeadIpt = New Point3d(CableXPT.X, cableRun.TagAnchorPoint.Y, 0)
                                 TailRot = 1.570796
-                                HeadIpt = New Point3d(CableXPT.X, CableStart.Y, 0)
-
-
-                            ElseIf CableEnd = pt Then
-
-                                HoriTendonLen = "%<\AcExpr ((round(((%<\AcObjProp Object(%<\_ObjId " & CableID & ">%).Length \f ""%lu2%pr2"">%+18.12)/12)+.499))) \f ""%lu2%pr0%ps[(,)]"">%"
-                                TailIpt = CableStart
-                                TailRot = 1.570796
-                                HeadIpt = New Point3d(CableXPT.X, CableEnd.Y, 0)
-
-                            End If
-
-                            If CableStart = pt OrElse CableEnd = pt Then
 
                                 InsertTendonTail(acDoc, acCurDb, aced, acTrans, TailRot, TailIpt)
 
-                                HoriTendonHeadInsertAdi(acDoc, acCurDb, aced, acTrans, HeadIpt, HoriTendon2Num, CableLength, "S-FND-DBL")
+                                HoriTendonHeadInsertAdi(acDoc, acCurDb, aced, acTrans, HeadIpt, HoriTendon2Num, cableRun, "S-FND-DBL")
                                 HoriTendon2Num = HoriTendon2Num + 1
-
 
                             End If
 
@@ -785,47 +730,22 @@ Namespace Arcxis_Cad_Tools
                     Next
 
                     VertTendon2Num = HoriTendon2Num
-                    Dim VertTendonLen As String = "0"
                     VertTendon3Num = HoriTendon3Num
 
                     SortedVertCablePointsList = (From Xpnt In VertCablePointsList Order By Xpnt.X Select Xpnt).ToList
 
                     For Each pt As Point3d In SortedVertCablePointsList
 
-                        For Each CableEnt As Object In VertCableList
+                        For Each cableRun As WestTendonCableRun In VertCableList
 
-                            CableStart = CableEnt.StartPoint
-                            CableEnd = CableEnt.EndPoint
-                            Dim ID As String = CableEnt.objectid.ToString
-                            Dim CableColor As String = CableEnt.ColorIndex
-                            Dim CableLayer As String = CableEnt.layer
-                            Dim IDpart As String() = ID.Split("(")
-                            Dim IDpart1 As String = IDpart(1)
-                            Dim IDpart2 As String() = IDpart1.Split(")")
-                            Dim CableID As String = IDpart2(0)
-                            CableLength = (Math.Abs(CableStart.Y - CableEnd.Y) / 12)
-
-                            If CableStart = pt Then
-
-                                VertTendonLen = "%<\AcExpr ((round(((%<\AcObjProp Object(%<\_ObjId " & CableID & ">%).Length \f ""%lu2%pr2"">%+18.12)/12)+.499))) \f ""%lu2%pr0%ps[(,)]"">%"
-                                TailIpt = CableStart
+                            If cableRun.TagAnchorPoint = pt Then
+                                TailIpt = GetVerticalSouthPoint(cableRun)
+                                HeadIpt = GetVerticalHeadPoint(cableRun, CableYPT)
                                 TailRot = 0.0
-                                HeadIpt = New Point3d(CableStart.X, CableYPT.Y, 0)
-
-                            ElseIf CableEnd = pt Then
-
-                                VertTendonLen = "%<\AcExpr ((round(((%<\AcObjProp Object(%<\_ObjId " & CableID & ">%).Length \f ""%lu2%pr2"">%+18.12)/12)+.499))) \f ""%lu2%pr0%ps[(,)]"">%"
-                                TailIpt = CableEnd
-                                TailRot = 0.0
-                                HeadIpt = New Point3d(CableStart.X, CableYPT.Y, 0)
-
-                            End If
-
-                            If CableStart = pt OrElse CableEnd = pt Then
 
                                 InsertTendonTail(acDoc, acCurDb, aced, acTrans, TailRot, TailIpt)
 
-                                VertSlabTendonInsertAdi(acDoc, acCurDb, aced, acTrans, HeadIpt, VertTendon2Num, CableLength, "S-FND-DBL")
+                                VertSlabTendonInsertAdi(acDoc, acCurDb, aced, acTrans, HeadIpt, VertTendon2Num, cableRun, "S-FND-DBL")
                                 VertTendon2Num = VertTendon2Num + 1
 
                             End If
@@ -845,7 +765,193 @@ Namespace Arcxis_Cad_Tools
 
         End Sub
 
-        Private Sub HoriTendonHeadInsertAdi(acDoc As Document, acCurDb As Database, aced As Editor, acTrans As Transaction, HeadIpt As Point3d, HoriTendon2Num As Integer, HoriTendonLen As String, BlockLayer As String)
+        ''' <summary>
+        ''' Inserts labeled field tests beside a selected cable entity so you can verify
+        ''' which BricsCAD field patterns evaluate correctly. Run REGEN/UPDATEFIELD after
+        ''' moving or stretching the cable to see whether nested formulas stay linked.
+        ''' </summary>
+        <CommandMethod("WTTFIELDTST")>
+        Public Sub WestTendonFieldTest()
+            Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
+            Dim acCurDb As Database = acDoc.Database
+            Dim aced As Editor = acDoc.Editor
+
+            Dim opts As New PromptEntityOptions(vbLf & "Select a tendon line or polyline for field tests: ")
+            opts.SetRejectMessage(vbLf & "Only lines and lightweight polylines are supported.")
+            opts.AddAllowedClass(GetType(Line), True)
+            opts.AddAllowedClass(GetType(Polyline), True)
+
+            Dim entPrompt As PromptEntityResult = aced.GetEntity(opts)
+            If entPrompt.Status <> PromptStatus.OK Then Return
+
+            Dim ptPrompt As PromptPointResult = aced.GetPoint(vbLf & "Pick insertion point for field test labels: ")
+            If ptPrompt.Status <> PromptStatus.OK Then Return
+
+            Using acTrans As Transaction = acCurDb.TransactionManager.StartTransaction()
+                Dim cableEnt As Entity = TryCast(acTrans.GetObject(entPrompt.ObjectId, OpenMode.ForRead), Entity)
+                If cableEnt Is Nothing Then
+                    aced.WriteMessage(vbLf & "Could not open selected entity.")
+                    Return
+                End If
+
+                Dim cableId As String = GetCableObjectIdString(cableEnt)
+                Dim entityLength As Double = GetCableEntityLength(cableEnt)
+                Dim computedFeet As Integer = ComputeWestTendonLengthFeet(cableEnt)
+                Dim computedElong As String = FormatInchesAsFraction(ComputeWestTendonElongationInches(entityLength))
+
+                Dim tests As (Label As String, FieldCode As String)() = {
+                    ("1 ObjProp Length only", BuildCableLengthField(cableId)),
+                    ("2 WTT nested formula", BuildWestTendonLengthField(cableId)),
+                    ("3 Flat formula (L+18.12)/12", BuildFlatTendonLengthField(cableId)),
+                    ("4 Static (code calc)", computedFeet.ToString() & "'  Elong " & computedElong)
+                }
+
+                Dim ms As BlockTableRecord = DirectCast(acTrans.GetObject(
+                    DirectCast(acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead), BlockTable)(BlockTableRecord.ModelSpace),
+                    OpenMode.ForWrite), BlockTableRecord)
+
+                Dim yOffset As Double = 0
+                Dim lineSpacing As Double = 0.35
+                Dim results As New List(Of String)
+
+                For Each test In tests
+                    Dim insertPt As New Point3d(ptPrompt.Value.X, ptPrompt.Value.Y - yOffset, 0)
+                    yOffset += lineSpacing
+
+                    Using labelText As New DBText()
+                        labelText.TextString = test.Label & ":"
+                        labelText.Height = 0.12
+                        labelText.Position = insertPt
+                        ms.AppendEntity(labelText)
+                        acTrans.AddNewlyCreatedDBObject(labelText, True)
+                    End Using
+
+                    Using valueText As New DBText()
+                        valueText.TextString = test.FieldCode
+                        valueText.Height = 0.12
+                        valueText.Position = New Point3d(insertPt.X + 4.5, insertPt.Y, 0)
+                        ms.AppendEntity(valueText)
+                        acTrans.AddNewlyCreatedDBObject(valueText, True)
+
+                        Dim displayValue As String = EvaluateDbTextField(valueText, acTrans)
+                        results.Add(String.Format("{0} => {1}", test.Label, displayValue))
+                    End Using
+                Next
+
+                acTrans.Commit()
+
+                aced.WriteMessage(vbLf & "WTTFIELDTST results for cable ObjId " & cableId &
+                                  " (entity length " & entityLength.ToString("0.##") & "):")
+                For Each result In results
+                    aced.WriteMessage(vbLf & "  " & result)
+                Next
+                aced.WriteMessage(vbLf & "  Code-calculated length: " & computedFeet.ToString() & "'")
+                aced.WriteMessage(vbLf & "  Code-calculated elongation: " & computedElong)
+                aced.WriteMessage(vbLf & "If rows 1-3 show raw %<\...>% text, BricsCAD did not evaluate the fields.")
+                aced.WriteMessage(vbLf & "WTT now uses code-based values (row 4 approach) instead of nested fields.")
+            End Using
+
+            acDoc.Editor.Regen()
+        End Sub
+
+        Private Shared Function GetCableObjectIdString(cableEnt As Entity) As String
+            Dim idText As String = cableEnt.ObjectId.ToString()
+            If idText.Contains("("c) Then
+                Dim openParen As Integer = idText.IndexOf("("c)
+                Dim closeParen As Integer = idText.IndexOf(")"c, openParen + 1)
+                If closeParen > openParen Then
+                    Return idText.Substring(openParen + 1, closeParen - openParen - 1)
+                End If
+            End If
+
+            If Not String.IsNullOrWhiteSpace(idText) Then
+                Return idText.Trim()
+            End If
+
+            Return cableEnt.Handle.Value.ToString()
+        End Function
+
+        Private Shared Function GetCableEntityLength(cableEnt As Entity) As Double
+            Dim ln As Line = TryCast(cableEnt, Line)
+            If ln IsNot Nothing Then Return ln.Length
+
+            Dim pl As Polyline = TryCast(cableEnt, Polyline)
+            If pl IsNot Nothing Then Return pl.Length
+
+            Return 0
+        End Function
+
+        Private Shared Function BuildCableLengthField(cableId As String) As String
+            Return "%<\AcObjProp Object(%<\_ObjId " & cableId & ">%).Length \f ""%lu2%pr2"">%"
+        End Function
+
+        Private Shared Function BuildWestTendonLengthField(cableId As String) As String
+            Return "%<\AcExpr ((round(((%<\AcObjProp Object(%<\_ObjId " & cableId & ">%).Length \f ""%lu2%pr2"">%+18.12)/12)+.499))) \f ""%lu2%pr0%ps[(,)]"">%"
+        End Function
+
+        Private Shared Function BuildFlatTendonLengthField(cableId As String) As String
+            Return "%<\AcExpr ((round((%<\AcObjProp Object(%<\_ObjId " & cableId & ">%).Length+18.12)/12+0.499))) \f ""%lu2%pr0"">%"
+        End Function
+
+        Private Shared Function ComputeWestTendonLengthFeet(cableEnt As Entity) As Integer
+            Return ComputeWestTendonLengthFeetFromInches(GetCableEntityLength(cableEnt))
+        End Function
+
+        Private Shared Function ComputeWestTendonLengthFeetFromInches(segmentLength As Double) As Integer
+            Return CInt(Math.Floor((segmentLength + 18.12) / 12.0 + 0.499))
+        End Function
+
+        Private Shared Function ComputeWestTendonElongationInches(entityLength As Double) As Double
+            Return Math.Round((0.007 * entityLength) * 8) / 8
+        End Function
+
+        Private Shared Function FormatWestTendonLengthFeet(lengthFeet As Integer) As String
+            Return lengthFeet.ToString() & "'"
+        End Function
+
+        Private Shared Sub SetWestTendonAttributeValue(attDef As AttributeDefinition, attRef As AttributeReference,
+                                                       blkRef As BlockReference, tendonNumber As Integer,
+                                                       segmentLength As Double)
+            attRef.SetAttributeFromBlock(attDef, blkRef.BlockTransform)
+
+            Dim lengthFeet As Integer = ComputeWestTendonLengthFeetFromInches(segmentLength)
+            Dim elongInches As Double = ComputeWestTendonElongationInches(segmentLength)
+            Dim tag As String = attDef.Tag.ToUpperInvariant()
+
+            Select Case tag
+                Case "TENDONNUMBER"
+                    attRef.TextString = tendonNumber.ToString()
+                Case "ELONGATION"
+                    attRef.TextString = FormatInchesAsFraction(elongInches)
+                Case "LENGTH", "TENDONLENGTH", "LEN"
+                    attRef.TextString = FormatWestTendonLengthFeet(lengthFeet)
+            End Select
+        End Sub
+
+        Private Shared Function EvaluateDbTextField(textEnt As DBText, acTrans As Transaction) As String
+            If Not textEnt.HasFields Then
+                Return textEnt.TextString
+            End If
+
+            Dim fieldId As ObjectId = textEnt.GetField()
+            If fieldId.IsNull Then
+                Return "(field id missing)"
+            End If
+
+            Dim fld As Field = TryCast(acTrans.GetObject(fieldId, OpenMode.ForWrite), Field)
+            If fld Is Nothing Then
+                Return "(field object missing)"
+            End If
+
+            Try
+                fld.Evaluate()
+                Return fld.Value.ToString()
+            Catch ex As System.Exception
+                Return "(evaluate failed: " & ex.Message & ")"
+            End Try
+        End Function
+
+        Private Sub HoriTendonHeadInsertAdi(acDoc As Document, acCurDb As Database, aced As Editor, acTrans As Transaction, HeadIpt As Point3d, HoriTendon2Num As Integer, cableRun As WestTendonCableRun, BlockLayer As String)
 
             Dim Dimscale As Double = 1
             Dim acBlkTbl As BlockTable = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead)
@@ -955,18 +1061,12 @@ Namespace Arcxis_Cad_Tools
                         Dim attDef As AttributeDefinition = CType(dbObj, AttributeDefinition)
                         If Not attDef.Constant Then
                             Dim attRef As New AttributeReference()
-                            If attDef.Tag = "TENDONNUMBER" Then
-                                attRef.SetAttributeFromBlock(attDef, blkRef2.BlockTransform)
-                                attRef.TextString = HoriTendon2Num ' <-- Your value goes here
-                            ElseIf attDef.Tag = "ELONGATION" Then
-                                Dim ElongNumber As Double
-                                ElongNumber = Math.Round((0.007 * (HoriTendonLen * 12)) * 8) / 8
-                                attRef.SetAttributeFromBlock(attDef, blkRef2.BlockTransform)
-                                attRef.TextString = FormatInchesAsFraction(ElongNumber)
+                            Dim tag As String = attDef.Tag.ToUpperInvariant()
+                            If tag = "TENDONNUMBER" OrElse tag = "ELONGATION" OrElse tag = "LENGTH" OrElse tag = "TENDONLENGTH" OrElse tag = "LEN" Then
+                                SetWestTendonAttributeValue(attDef, attRef, blkRef2, HoriTendon2Num, cableRun.SegmentLength)
+                                blkRef2.AttributeCollection.AppendAttribute(attRef)
+                                acTrans.AddNewlyCreatedDBObject(attRef, True)
                             End If
-
-                            blkRef2.AttributeCollection.AppendAttribute(attRef)
-                            acTrans.AddNewlyCreatedDBObject(attRef, True)
 
                         End If
                     End If
@@ -974,7 +1074,7 @@ Namespace Arcxis_Cad_Tools
             End Using
         End Sub
 
-        Function FormatInchesAsFraction(value As Double) As String
+        Private Shared Function FormatInchesAsFraction(value As Double) As String
             Dim wholeInches As Integer = Math.Floor(value)
             Dim fractionDecimal As Double = value - wholeInches
 
@@ -1016,7 +1116,7 @@ Namespace Arcxis_Cad_Tools
 
         End Function
 
-        Private Sub VertSlabTendonInsertAdi(acDoc As Document, acCurDb As Database, aced As Editor, acTrans As Transaction, HeadIpt As Point3d, VertTendon2Num As Integer, VertTendonLen As String, BlockLayer As String)
+        Private Sub VertSlabTendonInsertAdi(acDoc As Document, acCurDb As Database, aced As Editor, acTrans As Transaction, HeadIpt As Point3d, VertTendon2Num As Integer, cableRun As WestTendonCableRun, BlockLayer As String)
 
             Dim Dimscale As Double = 1
             Dim acBlkTbl As BlockTable = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead)
@@ -1128,18 +1228,12 @@ Namespace Arcxis_Cad_Tools
                         Dim attDef As AttributeDefinition = CType(dbObj, AttributeDefinition)
                         If Not attDef.Constant Then
                             Dim attRef As New AttributeReference()
-                            If attDef.Tag = "TENDONNUMBER" Then
-                                attRef.SetAttributeFromBlock(attDef, blkRef2.BlockTransform)
-                                attRef.TextString = VertTendon2Num ' <-- Your value goes here
-                            ElseIf attDef.Tag = "ELONGATION" Then
-                                Dim ElongNumber As Double
-                                ElongNumber = Math.Round((0.007 * (VertTendonLen * 12)) * 8) / 8
-                                attRef.SetAttributeFromBlock(attDef, blkRef2.BlockTransform)
-                                attRef.TextString = FormatInchesAsFraction(ElongNumber)
+                            Dim tag As String = attDef.Tag.ToUpperInvariant()
+                            If tag = "TENDONNUMBER" OrElse tag = "ELONGATION" OrElse tag = "LENGTH" OrElse tag = "TENDONLENGTH" OrElse tag = "LEN" Then
+                                SetWestTendonAttributeValue(attDef, attRef, blkRef2, VertTendon2Num, cableRun.SegmentLength)
+                                blkRef2.AttributeCollection.AppendAttribute(attRef)
+                                acTrans.AddNewlyCreatedDBObject(attRef, True)
                             End If
-
-                            blkRef2.AttributeCollection.AppendAttribute(attRef)
-                            acTrans.AddNewlyCreatedDBObject(attRef, True)
 
                         End If
                     End If
@@ -1151,6 +1245,163 @@ Namespace Arcxis_Cad_Tools
         Private Shared Function IsLineOrPolyline(ent As Entity) As Boolean
             Return TypeOf ent Is Line OrElse TypeOf ent Is Polyline
         End Function
+
+        Private Shared Function GetWestTendonCableRuns(ent As Entity) As List(Of WestTendonCableRun)
+            Dim runs As New List(Of WestTendonCableRun)
+
+            Dim ln As Line = TryCast(ent, Line)
+            If ln IsNot Nothing Then
+                Dim lineRun As WestTendonCableRun = BuildWestTendonCableRun(ent, ln.StartPoint, ln.EndPoint, ln.Length)
+                If lineRun IsNot Nothing Then runs.Add(lineRun)
+                Return runs
+            End If
+
+            Dim pl As Polyline = TryCast(ent, Polyline)
+            If pl IsNot Nothing AndAlso pl.NumberOfVertices >= 2 Then
+                Dim horizontalLength As Double = 0
+                Dim verticalLength As Double = 0
+
+                For i As Integer = 0 To pl.NumberOfVertices - 2
+                    Dim segStart As Point3d = pl.GetPoint3dAt(i)
+                    Dim segEnd As Point3d = pl.GetPoint3dAt(i + 1)
+                    Dim segLength As Double = segStart.DistanceTo(segEnd)
+                    If segLength <= Tolerance.Global.EqualPoint Then Continue For
+
+                    Dim angleD As Integer = GetCableSegmentAngleD(segStart, segEnd)
+                    If IsHorizontalCableAngle(angleD) Then
+                        horizontalLength += segLength
+                    ElseIf IsVerticalCableAngle(angleD) Then
+                        verticalLength += segLength
+                    End If
+                Next
+
+                If horizontalLength <= 0 AndAlso verticalLength <= 0 Then Return runs
+
+                Dim startPoint As Point3d = pl.GetPoint3dAt(0)
+                Dim endPoint As Point3d = pl.GetPoint3dAt(pl.NumberOfVertices - 1)
+                Dim polyRun As New WestTendonCableRun With {
+                    .SourceEntity = ent,
+                    .StartPoint = startPoint,
+                    .EndPoint = endPoint,
+                    .SegmentLength = pl.Length
+                }
+
+                If horizontalLength >= verticalLength Then
+                    polyRun.IsHorizontal = True
+                    polyRun.TagAnchorPoint = GetExtremePolylinePoint(pl, horizontal:=True, findMinimum:=True)
+                    polyRun.TailPoint = GetExtremePolylinePoint(pl, horizontal:=True, findMinimum:=False)
+                Else
+                    polyRun.IsHorizontal = False
+                    polyRun.TagAnchorPoint = GetExtremePolylinePoint(pl, horizontal:=False, findMinimum:=True)
+                    polyRun.TailPoint = GetExtremePolylinePoint(pl, horizontal:=False, findMinimum:=False)
+                End If
+
+                runs.Add(polyRun)
+            End If
+
+            Return runs
+        End Function
+
+        Private Shared Function BuildWestTendonCableRun(sourceEntity As Entity, startPoint As Point3d, endPoint As Point3d, length As Double) As WestTendonCableRun
+            Dim angleD As Integer = GetCableSegmentAngleD(startPoint, endPoint)
+            If Not IsHorizontalCableAngle(angleD) AndAlso Not IsVerticalCableAngle(angleD) Then Return Nothing
+
+            Dim run As New WestTendonCableRun With {
+                .SourceEntity = sourceEntity,
+                .StartPoint = startPoint,
+                .EndPoint = endPoint,
+                .SegmentLength = length
+            }
+
+            If IsHorizontalCableAngle(angleD) Then
+                run.IsHorizontal = True
+                If angleD = 0 OrElse angleD = 360 Then
+                    run.TagAnchorPoint = startPoint
+                    run.TailPoint = endPoint
+                Else
+                    run.TagAnchorPoint = endPoint
+                    run.TailPoint = startPoint
+                End If
+            Else
+                run.IsHorizontal = False
+                If startPoint.Y <= endPoint.Y Then
+                    run.TagAnchorPoint = startPoint
+                    run.TailPoint = endPoint
+                Else
+                    run.TagAnchorPoint = endPoint
+                    run.TailPoint = startPoint
+                End If
+            End If
+
+            Return run
+        End Function
+
+        Private Shared Function GetVerticalSouthPoint(cableRun As WestTendonCableRun) As Point3d
+            Return If(cableRun.TagAnchorPoint.Y <= cableRun.TailPoint.Y,
+                      cableRun.TagAnchorPoint,
+                      cableRun.TailPoint)
+        End Function
+
+        Private Shared Function GetVerticalNorthPoint(cableRun As WestTendonCableRun) As Point3d
+            Return If(cableRun.TagAnchorPoint.Y >= cableRun.TailPoint.Y,
+                      cableRun.TagAnchorPoint,
+                      cableRun.TailPoint)
+        End Function
+
+        Private Shared Function GetVerticalHeadPoint(cableRun As WestTendonCableRun, cableYPT As Point3d) As Point3d
+            Dim northPoint As Point3d = GetVerticalNorthPoint(cableRun)
+            Dim southPoint As Point3d = GetVerticalSouthPoint(cableRun)
+
+            If Math.Abs(southPoint.X - northPoint.X) > Tolerance.Global.EqualPoint Then
+                Return New Point3d(northPoint.X, northPoint.Y, 0)
+            End If
+
+            Return New Point3d(northPoint.X, cableYPT.Y, 0)
+        End Function
+
+        Private Shared Function GetExtremePolylinePoint(pl As Polyline, horizontal As Boolean, findMinimum As Boolean) As Point3d
+            Dim extreme As Point3d = pl.GetPoint3dAt(0)
+
+            For i As Integer = 1 To pl.NumberOfVertices - 1
+                Dim pt As Point3d = pl.GetPoint3dAt(i)
+                If horizontal Then
+                    If findMinimum AndAlso pt.X < extreme.X Then extreme = pt
+                    If Not findMinimum AndAlso pt.X > extreme.X Then extreme = pt
+                Else
+                    If findMinimum AndAlso pt.Y < extreme.Y Then extreme = pt
+                    If Not findMinimum AndAlso pt.Y > extreme.Y Then extreme = pt
+                End If
+            Next
+
+            Return extreme
+        End Function
+
+        Private Shared Function GetCableSegmentAngleD(startPoint As Point3d, endPoint As Point3d) As Integer
+            Return CInt(Math.Round(Math.Atan2(endPoint.Y - startPoint.Y, endPoint.X - startPoint.X) * 180.0 / Math.PI))
+        End Function
+
+        Private Shared Function IsHorizontalCableAngle(angleD As Integer) As Boolean
+            Return angleD = 0 OrElse angleD = 360 OrElse angleD = 180 OrElse angleD = -180
+        End Function
+
+        Private Shared Function IsVerticalCableAngle(angleD As Integer) As Boolean
+            Return angleD = 90 OrElse angleD = -270 OrElse angleD = 270 OrElse angleD = -90
+        End Function
+
+        Private Shared Sub GetCableEndpoints(cableEnt As Entity, ByRef startPoint As Point3d, ByRef endPoint As Point3d)
+            Dim ln As Line = TryCast(cableEnt, Line)
+            If ln IsNot Nothing Then
+                startPoint = ln.StartPoint
+                endPoint = ln.EndPoint
+                Return
+            End If
+
+            Dim pl As Polyline = TryCast(cableEnt, Polyline)
+            If pl IsNot Nothing AndAlso pl.NumberOfVertices >= 2 Then
+                startPoint = pl.GetPoint3dAt(0)
+                endPoint = pl.GetPoint3dAt(pl.NumberOfVertices - 1)
+            End If
+        End Sub
 
         Private Shared Sub AddIntersectionsWithLine(ent As Entity, line As Line, points As Point3dCollection)
             ent.IntersectWith(line, Intersect.OnBothOperands, points, IntPtr.Zero, IntPtr.Zero)

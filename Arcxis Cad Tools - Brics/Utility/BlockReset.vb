@@ -69,79 +69,58 @@ Namespace Arcxis_Cad_Tools
 
             Using trans As Transaction = db.TransactionManager.StartTransaction()
                 Try
-                    ' Get the block reference
                     Dim blockRef As BlockReference = CType(trans.GetObject(blockId, OpenMode.ForRead), BlockReference)
-
-                    ' Capture the current viewstate
-                    Dim viewState As BlockViewState = CaptureBlockViewState(blockRef)
-
-                    ' Get the parent block table record (modelspace or paperspace)
-                    Dim parentBtr As BlockTableRecord = CType(trans.GetObject(blockRef.OwnerId, OpenMode.ForWrite), BlockTableRecord)
-
-                    ' Create a collection to hold the exploded entities
-                    Dim explodedEntities As New DBObjectCollection()
-
-                    ' Upgrade to write mode and explode
-                    blockRef.UpgradeOpen()
-                    blockRef.Explode(explodedEntities)
-
-                    ' Apply the viewstate transformations to exploded entities
-                    ApplyViewStateToExplodedEntities(explodedEntities, viewState, parentBtr, trans)
-
-                    ' Erase the original block reference
-                    blockRef.Erase()
-
+                    Dim entityCount = ExplodeBlockPreservingDynamicState(blockRef, trans)
                     trans.Commit()
-                    'ed.WriteMessage(vbLf & $"Block exploded into {explodedEntities.Count} entities with viewstate preserved." & vbLf)
+                    ed.WriteMessage(vbLf & $"Block exploded into {entityCount} entities with current dynamic state preserved." & vbLf)
                 Catch ex As Exception
                     ed.WriteMessage(vbLf & "Error: " & ex.Message & vbLf)
                 End Try
             End Using
         End Sub
 
+        Private Function ExplodeBlockPreservingDynamicState(blockRef As BlockReference, trans As Transaction) As Integer
+            Dim viewState As BlockViewState = CaptureBlockViewState(blockRef)
+            Dim parentBtr As BlockTableRecord = CType(trans.GetObject(blockRef.OwnerId, OpenMode.ForWrite), BlockTableRecord)
+
+            blockRef.UpgradeOpen()
+
+            If blockRef.IsDynamicBlock Then
+                blockRef.ResetBlock()
+                RestoreBlockViewState(blockRef, viewState)
+            End If
+
+            EnsureBlockExplodable(blockRef, trans)
+
+            Dim explodedEntities As New DBObjectCollection()
+            blockRef.Explode(explodedEntities)
+            ApplyViewStateToExplodedEntities(explodedEntities, viewState, parentBtr, trans)
+            blockRef.Erase()
+
+            Return explodedEntities.Count
+        End Function
+
+        Private Sub EnsureBlockExplodable(blockRef As BlockReference, trans As Transaction)
+            Dim blockDef As BlockTableRecord = CType(trans.GetObject(blockRef.BlockTableRecord, OpenMode.ForWrite), BlockTableRecord)
+            blockDef.Explodable = True
+        End Sub
+
         Private Sub ApplyViewStateToExplodedEntities(explodedEntities As DBObjectCollection, viewState As BlockViewState, parentBtr As BlockTableRecord, trans As Transaction)
-            Dim doc As Document = Application.DocumentManager.MdiActiveDocument
-            Dim ed As Editor = doc.Editor
-
-            ed.WriteMessage(vbLf & "=== APPLYING VIEWSTATE TO EXPLODED ENTITIES ===" & vbLf)
-            ed.WriteMessage($"  Applying transformation to {explodedEntities.Count} entities" & vbLf)
-
             For Each entity As Entity In explodedEntities
                 Try
-                    ' Apply layer
                     entity.Layer = viewState.Layer
-                    ed.WriteMessage($"  - {entity.GetType().Name} layer set to: {viewState.Layer}" & vbLf)
-
-                    ' Apply color
                     entity.Color = viewState.Color
-                    ed.WriteMessage($"  - {entity.GetType().Name} color applied" & vbLf)
-
-                    ' Apply linetype
                     entity.Linetype = viewState.Linetype
-                    ed.WriteMessage($"  - {entity.GetType().Name} linetype set to: {viewState.Linetype}" & vbLf)
-
-                    ' Apply line weight
                     entity.LineWeight = viewState.LineWeight
-                    ed.WriteMessage($"  - {entity.GetType().Name} line weight applied" & vbLf)
-
-                    ' Apply transparency
                     entity.Transparency = viewState.Transparency
-                    ed.WriteMessage($"  - {entity.GetType().Name} transparency applied" & vbLf)
-
-                    ' Apply linetype scale
                     entity.LinetypeScale = viewState.LinetypeScale
-                    ed.WriteMessage($"  - {entity.GetType().Name} linetype scale applied" & vbLf)
 
-                    ' Add entity to modelspace/paperspace
                     parentBtr.AppendEntity(entity)
                     trans.AddNewlyCreatedDBObject(entity, True)
-
-                Catch ex As Exception
-                    ed.WriteMessage($"  - Warning: Could not apply properties to {entity.GetType().Name}: {ex.Message}" & vbLf)
+                Catch
+                    ' Skip entities that cannot accept the requested properties
                 End Try
             Next
-
-            ed.WriteMessage("========================" & vbLf)
         End Sub
 
         Private Function CaptureBlockViewState(blockRef As BlockReference) As BlockViewState
@@ -373,6 +352,44 @@ Namespace Arcxis_Cad_Tools
 
                     trans.Commit()
                     ed.WriteMessage(vbLf & $"Reset {blockCount} selected blocks with viewstate preserved." & vbLf)
+                Catch ex As Exception
+                    ed.WriteMessage(vbLf & "Error: " & ex.Message & vbLf)
+                End Try
+            End Using
+        End Sub
+
+        <CommandMethod("DBX")>
+        Public Sub ExplodeSelectedDynamicBlocks()
+            Dim doc As Document = Application.DocumentManager.MdiActiveDocument
+            Dim db As Database = doc.Database
+            Dim ed As Editor = doc.Editor
+
+            Dim psr As PromptSelectionResult = ed.GetSelection()
+            If psr.Status <> PromptStatus.OK Then
+                ed.WriteMessage(vbLf & "No blocks selected." & vbLf)
+                Return
+            End If
+
+            Using trans As Transaction = db.TransactionManager.StartTransaction()
+                Try
+                    Dim blockCount As Integer = 0
+                    Dim entityCount As Integer = 0
+
+                    For Each selObj As SelectedObject In psr.Value
+                        Try
+                            Dim obj As DBObject = trans.GetObject(selObj.ObjectId, OpenMode.ForRead)
+                            If TypeOf obj Is BlockReference Then
+                                Dim blockRef As BlockReference = CType(obj, BlockReference)
+                                entityCount += ExplodeBlockPreservingDynamicState(blockRef, trans)
+                                blockCount += 1
+                            End If
+                        Catch ex As Exception
+                            ed.WriteMessage(vbLf & $"Warning: Could not explode object: {ex.Message}" & vbLf)
+                        End Try
+                    Next
+
+                    trans.Commit()
+                    ed.WriteMessage(vbLf & $"Exploded {blockCount} block(s) into {entityCount} entities with current dynamic state preserved." & vbLf)
                 Catch ex As Exception
                     ed.WriteMessage(vbLf & "Error: " & ex.Message & vbLf)
                 End Try

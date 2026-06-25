@@ -72,6 +72,7 @@ Namespace Arcxis_Cad_Tools
 
             Dim TempElevs As New List(Of String)
 
+            Application.SetSystemVariable("ANNOALLVISIBLE", 1)
 
             Using acTrans3 As Transaction = acCurDb.TransactionManager.StartTransaction()
 
@@ -212,10 +213,9 @@ Namespace Arcxis_Cad_Tools
 
                                         Case "SW"
 
-                                            If Swings.Contains(attRef.TextString) Then
-
-                                                Swings.Add(attRef.TextString)
-
+                                            Dim swingLabel As String = NormalizeSwingLabel(attRef.TextString)
+                                            If swingLabel <> "" AndAlso Not Swings.Any(Function(s) String.Equals(s, swingLabel, StringComparison.OrdinalIgnoreCase)) Then
+                                                Swings.Add(swingLabel)
                                             End If
 
                                         Case "COUNTY"
@@ -274,6 +274,13 @@ Namespace Arcxis_Cad_Tools
             End Using
 
             Elevations.Sort()
+            Swings.Sort()
+            Dim swingsToProcess As New List(Of String)
+            If Swings.Count = 0 Then
+                swingsToProcess.Add("")
+            Else
+                swingsToProcess.AddRange(Swings)
+            End If
             Dim NewInsertPoint As New List(Of List(Of String))
             Dim NewInsertPointList As New List(Of String)
             Dim insertionPoint1 As Point3d
@@ -296,6 +303,8 @@ Namespace Arcxis_Cad_Tools
 
             Application.SetSystemVariable("imageframe", 1)
             Application.SetSystemVariable("imageframe", 0)
+            Application.SetSystemVariable("OLEFRAME", 1)
+            Application.SetSystemVariable("OLEQUALITY", 3)
 
             TurnOnOrOffLayer(SealToStamp, False)
 
@@ -330,6 +339,39 @@ Namespace Arcxis_Cad_Tools
                 ed.WriteMessage(vbLf & "Error counting layouts: " & ex.Message)
             End Try
 
+            Dim maxSequence As Integer = If(AllValues.Count > 0, AllValues.Max(Function(v) CInt(v(4))), 0)
+
+            For loopPass As Integer = 1 To 3
+                If existingLayoutCount < maxSequence Then
+                    FileManipulation.EnsureLayoutCount(maxSequence)
+                End If
+            Next
+
+            Dim lm3 As LayoutManager = LayoutManager.Current
+            Dim prevLayout As String = lm3.CurrentLayout
+
+            Using tr As Transaction = acCurDb.TransactionManager.StartTransaction()
+
+                Dim layoutDict As DBDictionary =
+        CType(tr.GetObject(acCurDb.LayoutDictionaryId, OpenMode.ForRead), DBDictionary)
+
+                For Each entry As DBDictionaryEntry In layoutDict
+
+                    Dim lo As Layout =
+            CType(tr.GetObject(entry.Value, OpenMode.ForRead), Layout)
+
+                    If lo.ModelType Then Continue For   ' skip Model
+
+                    lm3.CurrentLayout = lo.LayoutName
+
+                    Application.SetSystemVariable("ANNOALLVISIBLE", 1)
+
+                Next
+
+                lm3.CurrentLayout = prevLayout
+                tr.Commit()
+            End Using
+
             For Each Manufacturer In Manufacturers
 
                 If String.IsNullOrEmpty(SelectedFolder) Then Return
@@ -347,25 +389,21 @@ Namespace Arcxis_Cad_Tools
 
                 For Each fuel In GasType
 
-                    If String.IsNullOrEmpty(SelectedFolder) Then Return
-
                     If Not NetworkHelpers.IsNetworkPathAccessible(SelectedFolder) Then
-                        'acEd.WriteMessage(vbLf & "ERROR: Base folder is not accessible: " & SelectedFolder)
-                        'acEd.WriteMessage(vbLf & "Please verify network drive is connected and try again.")
                         Return
                     End If
 
-                    ' Replace the directory creation blocks (around lines 384, 393, etc.)
                     NewFolderLocation = SelectedFolder & "\" & planname & "\" & Manufacturer & "\" & fuel
 
                     If Not NetworkHelpers.CreateDirectoryWithRetry(NewFolderLocation) Then
-                        'acEd.WriteMessage(vbLf & "ERROR: Failed to create directory: " & NewFolderLocation)
                         Continue For ' Skip this iteration instead of crashing
                     End If
 
                     For Each county In Counties
 
-                        For Each ElevValue In Elevations
+                        For Each swing In swingsToProcess
+
+                            For Each ElevValue In Elevations
                             For Each valueList In AllValues
 
                                 'valueList(0) contains blockID
@@ -398,6 +436,25 @@ Namespace Arcxis_Cad_Tools
 
                                         Continue For
 
+                                    End If
+
+                                    If valueList(6).Contains(",") Then
+                                        Dim result As New List(Of String)
+                                        Dim parts() As String = valueList(6).Split(","c)
+                                        For Each part As String In parts
+                                            result.Add(part.Trim())
+                                        Next
+
+                                        If Not result.Contains(county.Trim(), StringComparer.OrdinalIgnoreCase) Then
+                                            Continue For
+                                        End If
+
+                                    ElseIf valueList(6).Length > county.Length Then
+                                        Continue For
+                                    End If
+
+                                    If Not String.IsNullOrEmpty(swing) AndAlso Not SwingsMatch(valueList(3), swing) Then
+                                        Continue For
                                     End If
 
                                     'Perform the operation when both BeamLayout And FNDElev match
@@ -447,6 +504,7 @@ Namespace Arcxis_Cad_Tools
                                     allDuplicateErrors.AppendLine($"Manufacturer: {Manufacturer}")
                                     allDuplicateErrors.AppendLine($"Fuel Type: {fuel}")
                                     allDuplicateErrors.AppendLine($"County: {county}")
+                                    allDuplicateErrors.AppendLine($"Swing: {If(String.IsNullOrEmpty(swing), "(none)", swing)}")
                                     allDuplicateErrors.AppendLine($"Elevation: {ElevValue}")
                                     allDuplicateErrors.AppendLine()
                                     allDuplicateErrors.AppendLine("Duplicate sequence numbers found:")
@@ -459,6 +517,7 @@ Namespace Arcxis_Cad_Tools
                                         For Each entry In group
                                             allDuplicateErrors.AppendLine($"  - Insertion Point: {entry(1)}")
                                             allDuplicateErrors.AppendLine($"    Plan Type: {entry(2)}")
+                                            allDuplicateErrors.AppendLine($"    Swing: {entry(3)}")
                                             allDuplicateErrors.AppendLine($"    Gas Type: {entry(9)}")
                                             allDuplicateErrors.AppendLine($"    Manufacturer: {entry(10)}")
                                             allDuplicateErrors.AppendLine($"    County: {entry(6)}")
@@ -469,7 +528,8 @@ Namespace Arcxis_Cad_Tools
                                     Next
 
                                     ' Log to editor
-                                    acEd.WriteMessage(vbLf & $"WARNING: Duplicate sequence numbers found for {Manufacturer} - {fuel} - {county} - {ElevValue}")
+                                    Dim swingNote As String = If(String.IsNullOrEmpty(swing), "", " - " & swing)
+                                    acEd.WriteMessage(vbLf & $"WARNING: Duplicate sequence numbers found for {Manufacturer} - {fuel} - {county}{swingNote} - {ElevValue}")
                                     acEd.WriteMessage(vbLf & "Skipping this iteration, proceeding to next...")
 
                                     ' Clear lists and skip to next iteration
@@ -477,11 +537,6 @@ Namespace Arcxis_Cad_Tools
                                     RightLayoutList.Clear()
                                     Continue For
                                 End If
-                            End If
-
-                            ' Process layouts only if no duplicates
-                            If RightLayoutList.Count > existingLayoutCount Then
-                                FileManipulation.EnsureLayoutCount(RightLayoutList.Count)
                             End If
 
                             For Each RightEntry In RightLayoutList
@@ -494,7 +549,8 @@ Namespace Arcxis_Cad_Tools
                             Next
 
                             If FinalRightList.Count <> 0 Then
-                                pdfname = UCase("MECH " & fuel & " - " & planname & " - " & county & " - Mechanical Design - " & Manufacturer)
+                                Dim swingSuffix As String = If(String.IsNullOrEmpty(swing), "", " - " & swing)
+                                pdfname = UCase("MECH " & fuel & " - " & planname & " - " & county & " - Mechanical Design - " & Manufacturer & swingSuffix)
                             End If
 
                             acEd.Regen()
@@ -507,6 +563,7 @@ Namespace Arcxis_Cad_Tools
 
                             FinalRightList.Clear()
                             RightLayoutList.Clear()
+                        Next
                         Next
                     Next
                 Next
@@ -540,11 +597,13 @@ Namespace Arcxis_Cad_Tools
             Elevations.Clear()
             Options.Clear()
             Counties.Clear()
+            Swings.Clear()
 
-            Dim emittedCsv As String = FileManipulation.FlushQueuedCsv(Builder, planname)
-            If Not String.IsNullOrEmpty(emittedCsv) Then
-                acEd.WriteMessage(vbLf & "CSV written: " & emittedCsv)
-            End If
+            Dim CadFileName As String = Path.GetFileNameWithoutExtension(acCurDb.Filename)
+            Dim emittedCsv As String = FileManipulation.FlushQueuedCsv(Builder, planname, CadFileName, "Mechanical")
+            'If Not String.IsNullOrEmpty(emittedCsv) Then
+            '    acEd.WriteMessage(vbLf & "CSV written: " & emittedCsv)
+            'End If
 
             If Not String.IsNullOrWhiteSpace(acDb.Filename) Then
                 DeleteStrayDsdFiles(SelectedFolder & "\" & TodaysDate & "\")
@@ -566,10 +625,10 @@ Namespace Arcxis_Cad_Tools
                     Dim bgPrev = Application.GetSystemVariable("BackGroundPlot")
                     Dim cmdPrev = Application.GetSystemVariable("CMDDIA")
                     Dim fileDiaPrev = Application.GetSystemVariable("FILEDIA")
+                    Dim pdfFile As String = String.Empty
                     Application.SetSystemVariable("BackGroundPlot", 0)
                     Application.SetSystemVariable("CMDDIA", 0)
                     Application.SetSystemVariable("FILEDIA", 0)
-                    Application.SetSystemVariable("ANNOALLVISIBLE", 1)
 
                     Try
                         ' 1) Ensure output folder exists
@@ -582,7 +641,7 @@ Namespace Arcxis_Cad_Tools
                         Dim dwgFile As String = Path.Combine(dwgprefix, DWGnm)
 
                         ' 3) Build target file paths safely
-                        Dim pdfFile As String = Path.Combine(outputDir, Pdfname & ".pdf")
+                        pdfFile = Path.Combine(outputDir, Pdfname & ".pdf")
                         Dim dsdFile As String = Path.Combine(outputDir, Pdfname & ".dsd")
 
                         If File.Exists(pdfFile) Then
@@ -669,21 +728,38 @@ Namespace Arcxis_Cad_Tools
                         dsd.ReadDsd(dsdFile)
 
                         ' 6) Pick PDF PC3 (or pass Nothing)
-                        Dim pc As PlotConfig = Nothing
-                        Try
-                            pc = PlotConfigManager.SetCurrentConfig("ARCXIS - DWG To PDF - Brics.pc3")
-                        Catch
-                            ' ignore; Publisher can still use per-layout NPS
-                        End Try
+                        Dim pc As PlotConfig = FileManipulation.ResolvePlotConfig()
+
+                        ' Force a graphics refresh before publishing (helps OLE caching)
+                        Dim doc = Application.DocumentManager.MdiActiveDocument
+                        Dim db = doc.Database
+
+                        Using tr = db.TransactionManager.StartTransaction()
+                            tr.Commit()
+                        End Using
+
+                        doc.Editor.Regen()
 
                         ' 7) Publish silently
+                        Dim auditJobId As String = HeadlessPublishAudit.StartJob("MechanicalHeadlessPrinting.PublishPdf", pdfFile, dsdEntries.Count)
                         Application.Publisher.PublishExecute(dsd, pc)
+                        HeadlessPublishAudit.MarkInfo(auditJobId, "MechanicalHeadlessPrinting.PublishPdf", pdfFile, "PublishExecute returned to caller.")
+
+                        If HeadlessPublishAudit.WaitForOutput(pdfFile, 60000) Then
+                            Dim fi As New FileInfo(pdfFile)
+                            HeadlessPublishAudit.MarkSuccess(auditJobId, "MechanicalHeadlessPrinting.PublishPdf", pdfFile, "Output ready. Size=" & fi.Length.ToString() & " bytes.")
+                        Else
+                            HeadlessPublishAudit.MarkFailed(auditJobId, "MechanicalHeadlessPrinting.PublishPdf", pdfFile, "Publish returned but output file did not appear within timeout.")
+                        End If
 
                         ' Cleanup
                         If File.Exists(dsdFile) Then File.Delete(dsdFile)
 
                         acTrans.Commit()
 
+                    Catch ex As System.Exception
+                        HeadlessPublishAudit.MarkFailed("", "MechanicalHeadlessPrinting.PublishPdf", pdfFile, ex.Message)
+                        Throw
                     Finally
                         ' Restore system vars
                         Application.SetSystemVariable("BackGroundPlot", bgPrev)
@@ -755,6 +831,22 @@ Namespace Arcxis_Cad_Tools
             Return Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
         End Function
 
+        Private Shared Function NormalizeSwingLabel(swingValue As String) As String
+            If String.IsNullOrWhiteSpace(swingValue) Then Return String.Empty
+            Select Case swingValue.Trim().ToUpperInvariant()
+                Case "L", "LEFT"
+                    Return "Left"
+                Case "R", "RIGHT"
+                    Return "Right"
+                Case Else
+                    Return swingValue.Trim()
+            End Select
+        End Function
+
+        Private Shared Function SwingsMatch(blockSwing As String, filterSwing As String) As Boolean
+            Return String.Equals(NormalizeSwingLabel(blockSwing), NormalizeSwingLabel(filterSwing), StringComparison.OrdinalIgnoreCase)
+        End Function
+
         Shared Function CreatePoint3dFromString(pointStr As String) As Point3d
             ' Split the string by commas or spaces, depending on the format
 
@@ -784,7 +876,7 @@ Namespace Arcxis_Cad_Tools
             Dim Framing As Boolean = False
             Dim OptionString As String = ""
 
-            PlanString = "PLAN " & plannumber
+            PlanString = "PLAN " & plannumber & " - " & UCase(Layout(6)) & " COUNTY"
 
             Dim Swing As String
 
@@ -799,9 +891,9 @@ Namespace Arcxis_Cad_Tools
             Dim SheetAbbrev As String = ""
             Dim PlanAbbrev As String = ""
 
-            If UCase(Layout(2)) = "ENERGY START REPORT" Then
+            If UCase(Layout(2)) = "ENERGY STAR REPORT" Or UCase(Layout(2)) = "ENERGY STAR REPORTS" Then
                 SheetAbbrev = "MR-0."
-                PlanAbbrev = "ENERGY START DESIGN REPORT"
+                PlanAbbrev = "ENERGY STAR DESIGN REPORT"
             ElseIf UCase(Layout(2)) = "ACCA 310 REPORT" Then
                 SheetAbbrev = "MR-0."
                 PlanAbbrev = "ACCA 310 DESIGN REPORT"
@@ -910,7 +1002,7 @@ Namespace Arcxis_Cad_Tools
                                             attref.TextString = SheetAbbrev & Layout(4) & ".0"
                                         ElseIf UCase(Layout(2)) = "DETAILS" Then
                                             attref.TextString = SheetAbbrev
-                                        ElseIf UCase(Layout(2)) = "ENERGY START REPORT" Or UCase(Layout(2)) = "ACCA 310 REPORT" Then
+                                        ElseIf UCase(Layout(2)) = "ENERGY STAR REPORT" Or UCase(Layout(2)) = "ENERGY STAR REPORTS" Or UCase(Layout(2)) = "ACCA 310 REPORT" Then
                                             attref.TextString = SheetAbbrev & (Layout(4) - DuctCount)
                                         End If
                                         modified = True
@@ -990,7 +1082,7 @@ Namespace Arcxis_Cad_Tools
                 For Each vpId As ObjectId In VPIDS
                     Dim vp = TryCast(tr.GetObject(vpId, OpenMode.ForRead), Viewport)
                     If vp Is Nothing Then Continue For
-                    'If vp.Number = 1 Then Continue For ' never touch overall PS viewport
+                    If vp.Number = 1 Then Continue For ' never touch overall PS viewport
 
 
                     vp.UpgradeOpen()

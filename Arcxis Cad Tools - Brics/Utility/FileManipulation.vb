@@ -105,6 +105,10 @@ Namespace Arcxis_Cad_Tools
             End Try
         End Sub
 
+        <CommandMethod("RedoPaths", CommandFlags.Modal)>
+        Sub FixPaths()
+            Module_Arcxis_TB.AddNewPaths()
+        End Sub
 
         <CommandMethod("SDFT")>
         Sub SetupDrawings()
@@ -408,28 +412,35 @@ Namespace Arcxis_Cad_Tools
 
         <CommandMethod("SCP")>
         Sub CallDrawingProps()
-
+            ArcxisActivityLog.LogCommandStart("SCP")
             Dim frm As New Form_FramingProperties
-
+            ArcxisActivityLog.LogUi("Form_FramingProperties ShowDialog")
             frm.ShowDialog()
-
+            ArcxisActivityLog.LogCommandEnd("SCP")
         End Sub
 
 
         <CommandMethod("AVS")>
         Sub CallAtticVentProps()
+            ArcxisActivityLog.LogCommandStart("AVS")
             Dim frm As New Form_AtticVentPrinting
+            ArcxisActivityLog.LogUi("Form_AtticVentPrinting ShowDialog")
             frm.ShowDialog()
+            ArcxisActivityLog.LogCommandEnd("AVS")
         End Sub
 
         <CommandMethod("AMP")>
         Sub CallMechanicalProps()
+            ArcxisActivityLog.LogCommandStart("AMP")
             Dim frm As New Form_MechanicalPrinting
+            ArcxisActivityLog.LogUi("Form_MechanicalPrinting ShowDialog")
             frm.ShowDialog()
+            ArcxisActivityLog.LogCommandEnd("AMP")
         End Sub
 
         <CommandMethod("AFP")>
         Sub AutoFramingPrint() '(ByVal BUilder As String)
+            ArcxisActivityLog.LogCommandStart("AFP")
 
             Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acDb As Database = acDoc.Database
@@ -2614,6 +2625,73 @@ Namespace Arcxis_Cad_Tools
             Return False
         End Function
 
+        Private Shared Function TryApply11x17PlotConfiguration(ps As PlotSettings, validator As PlotSettingsValidator) As Boolean
+            Dim devices As String() = {
+                "ARCXIS - DWG To PDF - Brics.pc3",
+                "ARCXIS - DWG To PDF.pc3",
+                "DWG To PDF.pc3"
+            }
+
+            Dim mediaNames As String() = {
+                "ANSI_full_bleed_B_(11.00_x_17.00_Inches)",
+                "ANSI_full_bleed_B_(17.00_x_11.00_Inches)",
+                "ANSI B (11.00 x 17.00 Inches)",
+                "ANSI_B_(11.00_x_17.00_Inches)",
+                "Tabloid (11 x 17 in)",
+                "11x17"
+            }
+
+            Dim availableDevices As StringCollection = Nothing
+            Try
+                availableDevices = validator.GetPlotDeviceList()
+            Catch
+            End Try
+
+            For Each device In devices
+                If availableDevices IsNot Nothing AndAlso
+                   Not availableDevices.Cast(Of String)().Any(Function(d) d.Equals(device, StringComparison.OrdinalIgnoreCase)) Then
+                    Continue For
+                End If
+
+                For Each mediaName In mediaNames
+                    Try
+                        validator.SetPlotConfigurationName(ps, device, mediaName)
+                        Return True
+                    Catch
+                    End Try
+                Next
+
+                Try
+                    validator.SetPlotConfigurationName(ps, device, Nothing)
+                    Dim canonicalMedia As StringCollection = validator.GetCanonicalMediaNameList(ps)
+                    If canonicalMedia IsNot Nothing AndAlso canonicalMedia.Count > 0 Then
+                        validator.SetPlotConfigurationName(ps, device, canonicalMedia(0))
+                        Return True
+                    End If
+                Catch
+                End Try
+            Next
+
+            Return False
+        End Function
+
+        Public Shared Function ResolvePlotConfig() As PlotConfig
+            Dim candidates As String() = {
+                "ARCXIS - DWG To PDF - Brics.pc3",
+                "ARCXIS - DWG To PDF.pc3",
+                "DWG To PDF.pc3"
+            }
+
+            For Each name In candidates
+                Try
+                    Return PlotConfigManager.SetCurrentConfig(name)
+                Catch
+                End Try
+            Next
+
+            Return Nothing
+        End Function
+
         Public Shared Sub PageSetUp11x17(layoutname As String, Optional ByVal CTBFile As String = "")
             Dim acDoc As Document = Application.DocumentManager.MdiActiveDocument
             Dim acCurDb As Database = acDoc.Database
@@ -2626,6 +2704,8 @@ Namespace Arcxis_Cad_Tools
                 CTBFile = "DPIS-11x17.ctb"
             ElseIf CTBFile = "PTS" Then
                 CTBFile = "PTS.ctb"
+            ElseIf CTBFile = "ARCXIS - Mechanical" Then
+                CTBFile = "ARCXIS - Mechanical.ctb"
             End If
 
             Using acLckDoc As DocumentLock = acDoc.LockDocument()
@@ -2657,7 +2737,9 @@ Namespace Arcxis_Cad_Tools
 
                     Try
                         Dim acPlSetVdr As PlotSettingsValidator = PlotSettingsValidator.Current
-                        acPlSetVdr.SetPlotConfigurationName(acPlSet, "ARCXIS - DWG To PDF - Brics.pc3", "ANSI_full_bleed_B_(11.00_x_17.00_Inches)")
+                        If Not TryApply11x17PlotConfiguration(acPlSet, acPlSetVdr) Then
+                            Throw New InvalidOperationException("Could not find a valid PC3/paper size combination for 11x17 plotting.")
+                        End If
                         acPlSetVdr.SetZoomToPaperOnUpdate(acPlSet, True)
                         acPlSetVdr.SetPlotType(acPlSet, Teigha.DatabaseServices.PlotType.Extents)
                         Dim lowerLeft As New Point2d(0, 0)
@@ -2679,7 +2761,11 @@ Namespace Arcxis_Cad_Tools
                         acPlSet.PlotPlotStyles = True
                         acPlSet.DrawViewportsFirst = False
                         acPlSetVdr.SetPlotRotation(acPlSet, PlotRotation.Degrees270)
-                        acPlSetVdr.SetCurrentStyleSheet(acPlSet, CTBFile)
+                        Try
+                            acPlSetVdr.SetCurrentStyleSheet(acPlSet, CTBFile)
+                        Catch
+                            acPlSetVdr.SetCurrentStyleSheet(acPlSet, "ARCXIS.ctb")
+                        End Try
 
                         ' Copy all settings to the layout
                         acLayout.CopyFrom(acPlSet)
@@ -2984,6 +3070,7 @@ Namespace Arcxis_Cad_Tools
 
         <CommandMethod("overnightprinting")>
         Sub OverNightPrinting()
+            ArcxisActivityLog.LogCommandStart("overnightprinting")
 
             Dim acDoc = Application.DocumentManager.MdiActiveDocument
             Dim acDb = acDoc.Database
@@ -3076,7 +3163,12 @@ Namespace Arcxis_Cad_Tools
                     ElseIf String.Equals(PropertiesPlanType, "MECHANICAL", StringComparison.OrdinalIgnoreCase) Then
 
                         MechanicalHeadlessPrinting.PrintMechanicalPlans()
+                        Exit Sub
+                    ElseIf String.Equals(PropertiesPlanType, "EOR TAMPA", StringComparison.OrdinalIgnoreCase) OrElse
+                           String.Equals(PropertiesPlanType, "EOR ORLANDO", StringComparison.OrdinalIgnoreCase) Then
 
+                        EORHeadlessPrinting.PrintEOR()
+                        Exit Sub
                     End If
 
                 End Using
