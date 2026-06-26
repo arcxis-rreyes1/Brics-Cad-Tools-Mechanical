@@ -9,19 +9,9 @@ Imports System.Runtime.InteropServices.ComTypes
 Imports System.Security.Policy
 Imports System.Threading
 Imports System.Windows.Forms
-Imports DocumentFormat.OpenXml.Drawing
-Imports DocumentFormat.OpenXml.Drawing.Charts
-Imports DocumentFormat.OpenXml.Drawing.Diagrams
-Imports DocumentFormat.OpenXml.Office2010.Drawing
-Imports DocumentFormat.OpenXml.Office2010.Excel
-Imports DocumentFormat.OpenXml.Spreadsheet
-Imports DocumentFormat.OpenXml.Wordprocessing
-Imports Microsoft.Office.Interop
-Imports Microsoft.SqlServer.Server
 Imports PdfSharp.Drawing
 Imports PdfSharp.Pdf
 Imports PdfSharp.Pdf.IO
-Imports Excel = Microsoft.Office.Interop.Excel
 Imports Path = System.IO.Path
 Imports Bricscad.ApplicationServices
 Imports Teigha.Runtime

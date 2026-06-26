@@ -1,4 +1,8 @@
 @echo off
+set "PROJECT_DIR=Arcxis Cad Tools - Brics - Mechanical"
+set "PROJECT_FILE=%PROJECT_DIR%\Arcxis Cad Tools - Brics - Mechanical.vbproj"
+set "SOLUTION_FILE=Arcxis Cad Tools - Brics - Mechanical.sln"
+
 echo ========================================
 echo Clearing NuGet Cache and Restoring Packages
 echo ========================================
@@ -20,20 +24,20 @@ if %ERRORLEVEL% NEQ 0 (
 echo.
 echo Step 2: Deleting bin and obj folders...
 echo ----------------------------------------
-if exist "Arcxis Cad Tools - Brics\bin\" (
+if exist "%PROJECT_DIR%\bin\" (
     echo Deleting bin folder...
-    rmdir /s /q "Arcxis Cad Tools - Brics\bin"
+    rmdir /s /q "%PROJECT_DIR%\bin"
 )
 
-if exist "Arcxis Cad Tools - Brics\obj\" (
+if exist "%PROJECT_DIR%\obj\" (
     echo Deleting obj folder...
-    rmdir /s /q "Arcxis Cad Tools - Brics\obj"
+    rmdir /s /q "%PROJECT_DIR%\obj"
 )
 
 echo.
 echo Step 3: Restoring NuGet packages...
 echo ----------------------------------------
-dotnet restore "Arcxis Cad Tools - Brics\Arcxis Cad Tools - Brics.vbproj"
+dotnet restore "%SOLUTION_FILE%"
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Failed to restore NuGet packages!
     pause
@@ -43,7 +47,7 @@ if %ERRORLEVEL% NEQ 0 (
 echo.
 echo Step 4: Building the project...
 echo ----------------------------------------
-dotnet build "Arcxis Cad Tools - Brics\Arcxis Cad Tools - Brics.vbproj" --configuration Debug
+dotnet build "%SOLUTION_FILE%" --configuration Debug -p:Platform=x64
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Build failed!
     pause

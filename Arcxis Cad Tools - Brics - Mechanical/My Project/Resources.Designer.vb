@@ -59,35 +59,5 @@ Namespace My.Resources
                 resourceCulture = value
             End Set
         End Property
-        
-        '''<summary>
-        '''  Looks up a localized resource of type System.Byte[].
-        '''</summary>
-        Friend ReadOnly Property DPIS_Plot_Configurations() As Byte()
-            Get
-                Dim obj As Object = ResourceManager.GetObject("DPIS_Plot_Configurations", resourceCulture)
-                Return CType(obj,Byte())
-            End Get
-        End Property
-        
-        '''<summary>
-        '''  Looks up a localized resource of type System.Byte[].
-        '''</summary>
-        Friend ReadOnly Property DPIS_RevisionBlock() As Byte()
-            Get
-                Dim obj As Object = ResourceManager.GetObject("DPIS_RevisionBlock", resourceCulture)
-                Return CType(obj,Byte())
-            End Get
-        End Property
-        
-        '''<summary>
-        '''  Looks up a localized resource of type System.Byte[].
-        '''</summary>
-        Friend ReadOnly Property DPIS_TitleBlock() As Byte()
-            Get
-                Dim obj As Object = ResourceManager.GetObject("DPIS_TitleBlock", resourceCulture)
-                Return CType(obj,Byte())
-            End Get
-        End Property
     End Module
 End Namespace

@@ -4,7 +4,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <OutputType>Library</OutputType>
     <RootNamespace>Arcxis_Cad_Tools_Brics</RootNamespace>
-    <AssemblyName>Arcxis Cad Tools - Brics Mechanical</AssemblyName>
+    <AssemblyName>Arcxis Cad Tools - Brics - Mechanical</AssemblyName>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
     
@@ -24,7 +24,6 @@
     <!-- Suppress Windows-specific warnings -->
     <NoWarn>$(NoWarn);CA1416;42016,41999,42017,42018,42019,42032,42036,42020,42021,42022,42353,42354,42355</NoWarn>
     
-    <UseWPF>true</UseWPF>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     
     <!-- Fix VB runtime ambiguity by removing auto-imports -->
@@ -49,18 +48,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
-    <PackageReference Include="Microsoft-Windows10-APICodePack-Shell" Version="1.1.8" />
     <PackageReference Include="PDFsharp" Version="6.2.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Resources\STD-CONVERT\conversion table.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\STD-CONVERT\conversion table.xlsx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -75,34 +63,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <COMReference Include="Microsoft.Office.Core">
-      <Guid>{2DF8D04C-5BFA-101B-BDE5-00AA0044DE52}</Guid>
-      <VersionMajor>2</VersionMajor>
-      <VersionMinor>8</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>primary</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
-    <COMReference Include="Microsoft.Office.Interop.Excel">
-      <Guid>{00020813-0000-0000-C000-000000000046}</Guid>
-      <VersionMajor>1</VersionMajor>
-      <VersionMinor>9</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>primary</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="Form_Arcxis_TB4.vb">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Update="Form_MechanicalPrinting.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form_MEPSetup.vb">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>

@@ -9,20 +9,9 @@ Imports System.Runtime.InteropServices.ComTypes
 Imports System.Security.Policy
 Imports System.Threading
 Imports System.Windows.Forms
-Imports Arcxis_Cad_Tools_Brics.Arcxis_Cad_Tools_Brics
-Imports DocumentFormat.OpenXml.Drawing
-Imports DocumentFormat.OpenXml.Drawing.Charts
-Imports DocumentFormat.OpenXml.Drawing.Diagrams
-Imports DocumentFormat.OpenXml.Office2010.Drawing
-Imports DocumentFormat.OpenXml.Office2010.Excel
-Imports DocumentFormat.OpenXml.Spreadsheet
-Imports DocumentFormat.OpenXml.Wordprocessing
-Imports Microsoft.Office.Interop
-Imports Microsoft.SqlServer.Server
 Imports PdfSharp.Drawing
 Imports PdfSharp.Pdf
 Imports PdfSharp.Pdf.IO
-Imports Excel = Microsoft.Office.Interop.Excel
 Imports Path = System.IO.Path
 Imports Tuple = System.Tuple
 Imports Bricscad.ApplicationServices
@@ -741,16 +730,8 @@ Namespace Arcxis_Cad_Tools
                         doc.Editor.Regen()
 
                         ' 7) Publish silently
-                        Dim auditJobId As String = HeadlessPublishAudit.StartJob("MechanicalHeadlessPrinting.PublishPdf", pdfFile, dsdEntries.Count)
                         Application.Publisher.PublishExecute(dsd, pc)
-                        HeadlessPublishAudit.MarkInfo(auditJobId, "MechanicalHeadlessPrinting.PublishPdf", pdfFile, "PublishExecute returned to caller.")
-
-                        If HeadlessPublishAudit.WaitForOutput(pdfFile, 60000) Then
-                            Dim fi As New FileInfo(pdfFile)
-                            HeadlessPublishAudit.MarkSuccess(auditJobId, "MechanicalHeadlessPrinting.PublishPdf", pdfFile, "Output ready. Size=" & fi.Length.ToString() & " bytes.")
-                        Else
-                            HeadlessPublishAudit.MarkFailed(auditJobId, "MechanicalHeadlessPrinting.PublishPdf", pdfFile, "Publish returned but output file did not appear within timeout.")
-                        End If
+                        WaitForFileExists(pdfFile, 60000)
 
                         ' Cleanup
                         If File.Exists(dsdFile) Then File.Delete(dsdFile)
@@ -758,7 +739,6 @@ Namespace Arcxis_Cad_Tools
                         acTrans.Commit()
 
                     Catch ex As System.Exception
-                        HeadlessPublishAudit.MarkFailed("", "MechanicalHeadlessPrinting.PublishPdf", pdfFile, ex.Message)
                         Throw
                     Finally
                         ' Restore system vars
