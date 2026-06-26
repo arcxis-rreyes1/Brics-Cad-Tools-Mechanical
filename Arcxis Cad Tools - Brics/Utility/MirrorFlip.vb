@@ -38,7 +38,6 @@ Namespace Arcxis_Cad_Tools
             "LIMITEDATTICSTORAGENOTE", "CEILINGLIMITEDATTICSTORAGENOTE", "BEDROOMSTORAGENOTE"
         }
 
-        <CommandMethod("fc", CommandFlags.Modal)>
         Public Sub MirrorFlipCommand()
             Dim doc As Document = Application.DocumentManager.MdiActiveDocument
             If doc Is Nothing Then Return
