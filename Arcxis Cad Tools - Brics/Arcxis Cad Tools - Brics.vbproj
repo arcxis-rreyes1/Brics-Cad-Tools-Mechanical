@@ -4,7 +4,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <OutputType>Library</OutputType>
     <RootNamespace>Arcxis_Cad_Tools_Brics</RootNamespace>
-    <AssemblyName>Arcxis Cad Tools - Brics</AssemblyName>
+    <AssemblyName>Arcxis Cad Tools - Brics Mechanical</AssemblyName>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
     
@@ -96,50 +96,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Explicitly set SubType for all form files -->
-    <Compile Update="Form_AddLayouts.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form_Arcxis_TB1.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form_Arcxis_TB2.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form_Arcxis_TB3.vb">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Update="Form_Arcxis_TB4.vb">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="Form_MechanicalPrinting.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="Form_AtticVentPrinting.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form_Automated_Printing_Info.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form_FramingProperties.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form_FramingDefinitions.vb">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Update="Form_MEPSetup.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form_PlanType.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Framing Vault Transfer.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form_AddBeam.vb">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form_TakeOffTag.vb">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>
