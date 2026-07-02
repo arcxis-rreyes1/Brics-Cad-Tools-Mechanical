@@ -53,7 +53,7 @@ Namespace Arcxis_Cad_Tools
                 End Using
 
                 Dim targetFolder As String =
-            Module_Arcxis_TB.NetworkUNCPathForEgnyte &
+            ArcxisPaths.NetworkUNCPathForEgnyte &
             "\FS2\K\DPIS Drawings\ToPrint\ConvertToCAD"
 
                 If Not IO.Directory.Exists(targetFolder) Then

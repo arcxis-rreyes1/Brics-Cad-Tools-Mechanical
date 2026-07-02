@@ -7,8 +7,7 @@ Namespace Arcxis_Cad_Tools
         Implements IExtensionApplication
 
         Public Sub Initialize() Implements IExtensionApplication.Initialize
-            UNCPath()
-            Module_Arcxis_TB.InitializeArcxisPaths()
+            ArcxisPaths.InitializeArcxisPaths()
         End Sub
 
         Public Sub Terminate() Implements IExtensionApplication.Terminate

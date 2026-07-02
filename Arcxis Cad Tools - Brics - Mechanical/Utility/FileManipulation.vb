@@ -60,7 +60,7 @@ Namespace Arcxis_Cad_Tools
 
         <CommandMethod("RedoPaths", CommandFlags.Modal)>
         Sub FixPaths()
-            Module_Arcxis_TB.AddNewPaths()
+            ArcxisPaths.AddNewPaths()
         End Sub
         Public Shared Function GetCustomDwgPropReliable(propName As String) As String
             Dim db = Application.DocumentManager.MdiActiveDocument.Database
@@ -388,7 +388,7 @@ Namespace Arcxis_Cad_Tools
 
                     ' === BLOCK NAME AND PATH ===
                     Dim blockName As String = "Arcxis Title Block"
-                    Dim sourceDwgPath As String = Module_Arcxis_TB.NetworkUNCPathForEgnyte & "\Arcxis\Engineering\Drafting Standards\CAD Blocks\Arcxis Title Block - Block.dwg"
+                    Dim sourceDwgPath As String = ArcxisPaths.NetworkUNCPathForEgnyte & "\Arcxis\Engineering\Drafting Standards\CAD Blocks\Arcxis Title Block - Block.dwg"
 
 
                     ' === Check if block is already loaded ===
@@ -1125,7 +1125,7 @@ Namespace Arcxis_Cad_Tools
         Public Shared Function FlushQueuedCsv(Optional builder As String = Nothing, Optional planName As String = Nothing, Optional FileName As String = "", Optional plantype As String = "") As String
             If _pendingRows Is Nothing OrElse _pendingRows.Count = 0 Then Return Nothing
 
-            Dim pendingDir As String = Module_Arcxis_TB.NetworkUNCPathForEgnyte & "\fs2\k\DPIS Drawings\PDF File Data\Pending"
+            Dim pendingDir As String = ArcxisPaths.NetworkUNCPathForEgnyte & "\fs2\k\DPIS Drawings\PDF File Data\Pending"
             If Not Directory.Exists(pendingDir) Then Directory.CreateDirectory(pendingDir)
 
             ' Attempt to derive builder/plan from first PLAN row if parameters not supplied.
