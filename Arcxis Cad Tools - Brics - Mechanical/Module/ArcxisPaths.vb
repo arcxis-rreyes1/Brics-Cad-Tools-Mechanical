@@ -13,22 +13,30 @@ Public Module ArcxisPaths
     Public NetworkLetterForEgnyte As String
     Public NetworkUNCPathForEgnyte As String
 
+    Private _initializing As Boolean
+
     Private Declare Function WNetGetConnection Lib "mpr.dll" Alias "WNetGetConnectionA" (
         ByVal lpszLocalName As String,
         ByVal lpszRemoteName As StringBuilder,
         ByRef cbRemoteName As Integer) As Integer
 
     Public Sub InitializeArcxisPaths()
-        EnsureDllSupportPaths()
+        If _initializing Then Return
+        _initializing = True
+        Try
+            EnsureDllSupportPaths()
 
-        Dim currentPaths = GetPathsPreserveCase()
-        Dim hasArcxisPath = currentPaths.Any(
-            Function(p) Not String.IsNullOrWhiteSpace(p) AndAlso
-                          p.IndexOf("arcxis\engineering", StringComparison.OrdinalIgnoreCase) >= 0)
+            Dim currentPaths = GetPathsPreserveCase()
+            Dim hasArcxisPath = currentPaths.Any(
+                Function(p) Not String.IsNullOrWhiteSpace(p) AndAlso
+                              p.IndexOf("arcxis\engineering", StringComparison.OrdinalIgnoreCase) >= 0)
 
-        If Not hasArcxisPath OrElse currentPaths.Count = 0 Then
-            RefreshSupportPaths(currentPaths)
-        End If
+            If Not hasArcxisPath OrElse currentPaths.Count = 0 Then
+                RefreshSupportPaths(currentPaths)
+            End If
+        Finally
+            _initializing = False
+        End Try
     End Sub
 
     Public Sub AddNewPaths()

@@ -130,9 +130,6 @@ Namespace Arcxis_Cad_Tools
             Return Nothing
         End Function
 
-
-
-
         <CommandMethod("AMP")>
         Sub CallMechanicalProps()
             Dim frm As New Form_MechanicalPrinting

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BricsCad": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\Bricsys\\BricsCAD V26 en_US\\bricscad.exe"
+    }
+  }
+}

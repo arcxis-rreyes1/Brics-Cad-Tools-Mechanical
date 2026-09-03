@@ -101,20 +101,19 @@ Public NotInheritable Class PathNormalizer
         Dim mapped As String = TryGetMappedDrivePath(normalized)
         If Not String.IsNullOrWhiteSpace(mapped) Then AddUnique(results, mapped)
 
-        If normalized.StartsWith("\\") Then
-            Dim mappedFromUnc As String = TryGetMappedDrivePath(normalized)
-            If Not String.IsNullOrWhiteSpace(mappedFromUnc) Then AddUnique(results, mappedFromUnc)
-        End If
-
         Return results
     End Function
 
     Public Shared Function IsEquivalent(pathA As String, pathB As String) As Boolean
         If String.IsNullOrWhiteSpace(pathA) OrElse String.IsNullOrWhiteSpace(pathB) Then Return False
 
-        For Each variantA In GetEquivalentPaths(pathA)
-            For Each variantB In GetEquivalentPaths(pathB)
-                If String.Equals(NormalizePath(variantA), NormalizePath(variantB), StringComparison.OrdinalIgnoreCase) Then
+        ' Build each side once; AddUnique must not call back into IsEquivalent.
+        Dim variantsA = GetEquivalentPaths(pathA)
+        Dim variantsB = GetEquivalentPaths(pathB)
+        For Each variantA In variantsA
+            Dim normalizedA = NormalizePath(variantA)
+            For Each variantB In variantsB
+                If String.Equals(normalizedA, NormalizePath(variantB), StringComparison.OrdinalIgnoreCase) Then
                     Return True
                 End If
             Next
@@ -135,7 +134,14 @@ Public NotInheritable Class PathNormalizer
 
     Private Shared Sub AddUnique(target As List(Of String), path As String)
         If String.IsNullOrWhiteSpace(path) Then Return
-        If ListContainsEquivalent(target, path) Then Return
-        target.Add(path)
+
+        Dim normalized = NormalizePath(path)
+        If String.IsNullOrWhiteSpace(normalized) Then Return
+
+        For Each existing In target
+            If String.Equals(NormalizePath(existing), normalized, StringComparison.OrdinalIgnoreCase) Then Return
+        Next
+
+        target.Add(normalized)
     End Sub
 End Class
